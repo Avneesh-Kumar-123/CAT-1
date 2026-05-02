@@ -22,7 +22,7 @@ export const Modal = ({ open, children, onClose }: Props) => (
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.85, y: 30 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="bg-card border-4 border-card-border rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+          className="bg-card border-4 border-card-border rounded-3xl shadow-2xl w-full max-w-md overflow-y-auto max-h-[88dvh]"
           onClick={(e) => e.stopPropagation()}
         >
           {children}

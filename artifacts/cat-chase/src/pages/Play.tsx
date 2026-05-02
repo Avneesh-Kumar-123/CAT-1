@@ -296,18 +296,16 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
       {/* Mobile controls bar */}
       <div
-        className="md:hidden flex-none flex items-center px-5 bg-black/25 backdrop-blur-sm"
+        className="md:hidden flex-none relative flex items-center justify-center bg-black/25 backdrop-blur-sm"
         style={{
-          height: 140,
-          paddingBottom: "max(8px, env(safe-area-inset-bottom))",
+          height: 148,
+          paddingBottom: "max(10px, env(safe-area-inset-bottom))",
         }}
       >
         <VirtualJoystick onChange={(x, y) => setJoy({ x, y })} />
-        <div className="ml-auto flex flex-col gap-3 text-white/60 text-xs font-bold text-center select-none pointer-events-none">
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-lg leading-none">🎮</span>
-            <span>Drag to move</span>
-          </div>
+        <div className="absolute right-5 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 text-white/50 text-xs font-bold select-none pointer-events-none">
+          <span className="text-lg leading-none">🎮</span>
+          <span>Drag to move</span>
         </div>
       </div>
 

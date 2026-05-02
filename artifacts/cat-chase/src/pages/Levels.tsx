@@ -16,7 +16,7 @@ export const Levels = ({ save }: Props) => {
 
   return (
     <MenuShell themeBg={["#fce7f3", "#e0e7ff"]}>
-      <div className="relative z-10 min-h-screen px-4 sm:px-6 pt-20 pb-10 max-w-5xl mx-auto">
+      <div className="relative z-10 min-h-screen px-4 sm:px-6 pt-24 pb-10 max-w-5xl mx-auto">
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
