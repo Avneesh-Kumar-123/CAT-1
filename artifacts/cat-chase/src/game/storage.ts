@@ -17,7 +17,7 @@ const defaultSave = (): SaveData => {
     highestUnlocked: 1,
     totalCaught: 0,
     levels,
-    settings: { sound: true, difficulty: "normal", catSkin: "orange" },
+    settings: { sound: true, difficulty: "normal", catSkin: "orange", controlMode: "tap" },
   };
 };
 

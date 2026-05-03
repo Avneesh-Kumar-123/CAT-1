@@ -49,10 +49,13 @@ export type LevelDef = {
 
 export type Difficulty = "easy" | "normal" | "hard";
 
+export type ControlMode = "tap" | "joystick";
+
 export type GameSettings = {
   sound: boolean;
   difficulty: Difficulty;
   catSkin: string;
+  controlMode: ControlMode;
 };
 
 export type LevelProgress = {

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type React from "react";
 import type { LevelDef, Obstacle, PowerUp, PowerUpKind, Vec2 } from "@/game/types";
 import { ARENA } from "@/game/levels";
 import { getSkin, type CatSkin } from "@/game/skins";
@@ -31,6 +32,8 @@ type GameCanvasProps = {
   paused: boolean;
   joystick: { x: number; y: number };
   catSkin?: string;
+  controlMode?: "tap" | "joystick";
+  tapTargetRef?: React.RefObject<{ x: number; y: number } | null>;
   onCatch: (timeRemaining: number, score: number) => void;
   onTimeUp: (score: number) => void;
   onTrap: () => void;
@@ -57,6 +60,8 @@ export const GameCanvas = ({
   paused,
   joystick,
   catSkin = "orange",
+  controlMode = "joystick",
+  tapTargetRef,
   onCatch,
   onTimeUp,
   onTrap,
@@ -84,6 +89,8 @@ export const GameCanvas = ({
   useLayoutEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
   useLayoutEffect(() => { onTrapRef.current = onTrap; }, [onTrap]);
   useLayoutEffect(() => { onStateRef.current = onState; }, [onState]);
+  const controlModeRef = useRef(controlMode);
+  useLayoutEffect(() => { controlModeRef.current = controlMode; }, [controlMode]);
 
   const stateRef = useRef({
     cat: { x: 80, y: 80 } as Vec2,
@@ -203,6 +210,16 @@ export const GameCanvas = ({
       const H = ARENA.h;
 
       const isPaused = pausedRef.current;
+
+      // compute canvas layout — needed for both rendering and tap-to-move
+      const cw = ctx.canvas.clientWidth;
+      const ch = ctx.canvas.clientHeight;
+      const scaleX = cw / W;
+      const scaleY = ch / H;
+      const scale = Math.min(scaleX, scaleY);
+      const offX = (cw - W * scale) / 2;
+      const offY = (ch - H * scale) / 2;
+
       // update timer
       if (!isPaused && !s.catCaught) {
         s.timeLeft -= dt;
@@ -229,10 +246,33 @@ export const GameCanvas = ({
       if (k.has("arrowright") || k.has("d")) inputX += 1;
       if (k.has("arrowup") || k.has("w")) inputY -= 1;
       if (k.has("arrowdown") || k.has("s")) inputY += 1;
-      const j = joystickRef.current;
-      if (j.x !== 0 || j.y !== 0) {
-        inputX = j.x;
-        inputY = j.y;
+      if (controlModeRef.current === "tap") {
+        const tap = tapTargetRef?.current;
+        if (tap && !isPaused && !s.catCaught) {
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const rect = canvas.getBoundingClientRect();
+            const localX = tap.x - rect.left;
+            const localY = tap.y - rect.top;
+            const worldX = (localX - offX) / scale;
+            const worldY = (localY - offY) / scale;
+            const ddx = worldX - s.cat.x;
+            const ddy = worldY - s.cat.y;
+            const dist = Math.hypot(ddx, ddy);
+            if (dist > 18) {
+              inputX = ddx / dist;
+              inputY = ddy / dist;
+            } else {
+              if (tapTargetRef) tapTargetRef.current = null;
+            }
+          }
+        }
+      } else {
+        const j = joystickRef.current;
+        if (j.x !== 0 || j.y !== 0) {
+          inputX = j.x;
+          inputY = j.y;
+        }
       }
       const mag = Math.hypot(inputX, inputY);
       if (mag > 1) {
@@ -403,18 +443,11 @@ export const GameCanvas = ({
 
       // ===== render =====
       const dpr = window.devicePixelRatio || 1;
-      const cw = ctx.canvas.clientWidth;
-      const ch = ctx.canvas.clientHeight;
       if (ctx.canvas.width !== Math.round(cw * dpr) || ctx.canvas.height !== Math.round(ch * dpr)) {
         ctx.canvas.width = Math.round(cw * dpr);
         ctx.canvas.height = Math.round(ch * dpr);
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const scaleX = cw / W;
-      const scaleY = ch / H;
-      const scale = Math.min(scaleX, scaleY);
-      const offX = (cw - W * scale) / 2;
-      const offY = (ch - H * scale) / 2;
 
       // backdrop
       ctx.fillStyle = level.theme.bgGradient[1];

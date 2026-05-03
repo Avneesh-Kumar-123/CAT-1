@@ -51,6 +51,11 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const catchFlashTimer = useRef<ReturnType<typeof setTimeout>>();
   const milestoneTimer = useRef<ReturnType<typeof setTimeout>>();
 
+  // tap-to-move target ref (shared with GameCanvas)
+  const tapTargetRef = useRef<{ x: number; y: number } | null>(null);
+
+  const controlMode = save.settings.controlMode ?? "tap";
+
   const [hud, setHud] = useState<{
     score: number;
     timeLeft: number;
@@ -111,6 +116,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const restart = () => {
     sfx.click();
     clearTimeout(milestoneTimer.current);
+    tapTargetRef.current = null;
     setOutcome(null);
     setShowMilestone(false);
     setPaused(false);
@@ -126,6 +132,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const next = () => {
     sfx.click();
     clearTimeout(milestoneTimer.current);
+    tapTargetRef.current = null;
     if (nextLevel) {
       setOutcome(null);
       setShowMilestone(false);
@@ -148,13 +155,26 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const effectivelyPaused = isCountingDown || paused || outcome !== null || showMilestone;
 
+  // Tap-to-move touch handler on the game area
+  const handleGameAreaTouch = (e: React.TouchEvent) => {
+    if (controlMode !== "tap") return;
+    if (effectivelyPaused) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    if (t) tapTargetRef.current = { x: t.clientX, y: t.clientY };
+  };
+
   return (
     <div
       className="flex flex-col w-full overflow-hidden"
       style={{ height: "100dvh", background: level.theme.bgGradient[1] }}
     >
       {/* Game area */}
-      <div className="relative flex-1 min-h-0 overflow-hidden">
+      <div
+        className="relative flex-1 min-h-0 overflow-hidden"
+        onTouchStart={handleGameAreaTouch}
+        onTouchMove={handleGameAreaTouch}
+      >
         {/* Canvas */}
         <div className="absolute inset-0">
           <GameCanvas
@@ -164,6 +184,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             paused={effectivelyPaused}
             joystick={joy}
             catSkin={catSkin}
+            controlMode={controlMode}
+            tapTargetRef={tapTargetRef}
             onCatch={handleCatch}
             onTimeUp={handleTimeUp}
             onTrap={handleTrap}
@@ -171,7 +193,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
           />
         </div>
 
-        {/* Countdown overlay — remounts on countdownKey change */}
+        {/* Countdown overlay */}
         <AnimatePresence>
           {isCountingDown && (
             <CountdownOverlay key={countdownKey} onDone={() => setIsCountingDown(false)} />
@@ -189,17 +211,11 @@ export const Play = ({ levelId, save, onSave }: Props) => {
               className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
               style={{ background: "radial-gradient(ellipse at center, rgba(250,204,21,0.25) 0%, rgba(0,0,0,0.6) 100%)" }}
             >
-              {/* Confetti burst */}
               <div className="absolute inset-0 overflow-hidden">
                 {Array.from({ length: 48 }).map((_, i) => (
                   <motion.div
                     key={i}
-                    initial={{
-                      x: "50vw",
-                      y: "45vh",
-                      scale: 0,
-                      opacity: 1,
-                    }}
+                    initial={{ x: "50vw", y: "45vh", scale: 0, opacity: 1 }}
                     animate={{
                       x: `${Math.random() * 100}vw`,
                       y: `${Math.random() * 100}vh`,
@@ -215,8 +231,6 @@ export const Play = ({ levelId, save, onSave }: Props) => {
                   />
                 ))}
               </div>
-
-              {/* Stars burst */}
               <motion.div
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: [0, 1.4, 1], rotate: 0 }}
@@ -225,7 +239,6 @@ export const Play = ({ levelId, save, onSave }: Props) => {
               >
                 ⭐⭐⭐
               </motion.div>
-
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -296,17 +309,22 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
       {/* Mobile controls bar */}
       <div
-        className="md:hidden flex-none relative flex items-center justify-center bg-black/25 backdrop-blur-sm"
+        className="md:hidden flex-none relative bg-black/25 backdrop-blur-sm"
         style={{
-          height: 148,
+          height: controlMode === "tap" ? 56 : 148,
           paddingBottom: "max(10px, env(safe-area-inset-bottom))",
         }}
       >
-        <VirtualJoystick onChange={(x, y) => setJoy({ x, y })} />
-        <div className="absolute right-5 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 text-white/50 text-xs font-bold select-none pointer-events-none">
-          <span className="text-lg leading-none">🎮</span>
-          <span>Drag to move</span>
-        </div>
+        {controlMode === "tap" ? (
+          /* Tap mode: small hint strip */
+          <div className="h-full flex items-center justify-center gap-2 text-white/50 text-xs font-bold select-none pointer-events-none">
+            <span className="text-base leading-none">👆</span>
+            <span>Tap the game to move your cat</span>
+          </div>
+        ) : (
+          /* Follow-finger mode: floating dynamic joystick fills the whole bar */
+          <VirtualJoystick floating onChange={(x, y) => setJoy({ x, y })} />
+        )}
       </div>
 
       {/* Pause modal */}
@@ -415,7 +433,6 @@ const WinPanel = ({
 
   return (
     <div className="relative overflow-hidden">
-      {/* Confetti */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: confettiCount }).map((_, i) => (
           <motion.div
@@ -433,7 +450,6 @@ const WinPanel = ({
         ))}
       </div>
 
-      {/* Header */}
       <div
         className="px-6 pt-6 pb-5 text-center text-primary-foreground"
         style={{
@@ -467,7 +483,6 @@ const WinPanel = ({
         </p>
       </div>
 
-      {/* Stats */}
       <div className="p-5 text-center space-y-4">
         <div className="flex justify-center">
           <StarRating stars={outcome.stars} size={44} animate />

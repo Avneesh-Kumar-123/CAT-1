@@ -3,7 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import { Modal } from "./Modal";
 import { sfx, setAudioMuted } from "@/game/audio";
 import { resetSave, updateSettings } from "@/game/storage";
-import type { GameSettings, SaveData, Difficulty } from "@/game/types";
+import type { GameSettings, SaveData, Difficulty, ControlMode } from "@/game/types";
 import { CAT_SKINS, getUnlockedSkins, nextLockedSkin } from "@/game/skins";
 import { useState } from "react";
 import { RotateCcw, X, Lock } from "lucide-react";
@@ -31,6 +31,11 @@ export const SettingsPanel = ({ open, onClose, save, onSave }: Props) => {
   const setDifficulty = (difficulty: Difficulty) => {
     sfx.click();
     onSave(updateSettings(save, { difficulty }));
+  };
+
+  const setControlMode = (controlMode: ControlMode) => {
+    sfx.click();
+    onSave(updateSettings(save, { controlMode }));
   };
 
   const setSkin = (skinId: string) => {
@@ -84,6 +89,39 @@ export const SettingsPanel = ({ open, onClose, save, onSave }: Props) => {
                   >
                     {labels[d]}
                   </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Control Mode — mobile only */}
+          <div className="md:hidden">
+            <div className="font-bold mb-1">Control Mode</div>
+            <div className="text-xs text-muted-foreground mb-2 font-bold">How you move on mobile</div>
+            <div className="grid grid-cols-2 gap-2">
+              {(["tap", "joystick"] as ControlMode[]).map((m) => {
+                const active = (save.settings.controlMode ?? "tap") === m;
+                const labels: Record<ControlMode, string> = {
+                  tap: "👆 Tap to Move",
+                  joystick: "🕹️ Follow Finger",
+                };
+                const descs: Record<ControlMode, string> = {
+                  tap: "Tap anywhere to walk",
+                  joystick: "Drag to steer",
+                };
+                return (
+                  <button
+                    key={m}
+                    onClick={() => setControlMode(m)}
+                    className={`rounded-xl border-2 px-3 py-2.5 text-left transition-all ${
+                      active
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-card-border bg-muted hover:border-primary/50"
+                    }`}
+                  >
+                    <div className="font-display font-bold text-sm">{labels[m]}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{descs[m]}</div>
+                  </button>
                 );
               })}
             </div>
