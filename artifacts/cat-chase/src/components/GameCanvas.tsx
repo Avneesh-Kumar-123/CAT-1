@@ -259,11 +259,12 @@ export const GameCanvas = ({
             const ddx = worldX - s.cat.x;
             const ddy = worldY - s.cat.y;
             const dist = Math.hypot(ddx, ddy);
-            if (dist > 18) {
+            // Only move if finger is not right on top of the cat — prevents jitter.
+            // Do NOT clear the ref here; Play.tsx clears it on touchend so the cat
+            // keeps following while the finger is held and stops the moment it lifts.
+            if (dist > 6) {
               inputX = ddx / dist;
               inputY = ddy / dist;
-            } else {
-              if (tapTargetRef) tapTargetRef.current = null;
             }
           }
         }

@@ -155,8 +155,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const effectivelyPaused = isCountingDown || paused || outcome !== null || showMilestone;
 
-  // Tap-to-move touch handler on the game area
-  const handleGameAreaTouch = (e: React.TouchEvent) => {
+  // Hold-and-drag touch handlers — cover the entire screen in tap mode
+  const handleTouchMove = (e: React.TouchEvent) => {
     if (controlMode !== "tap") return;
     if (effectivelyPaused) return;
     e.preventDefault();
@@ -164,16 +164,33 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     if (t) tapTargetRef.current = { x: t.clientX, y: t.clientY };
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (controlMode !== "tap") return;
+    if (effectivelyPaused) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    if (t) tapTargetRef.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (controlMode !== "tap") return;
+    e.preventDefault();
+    // All fingers lifted — stop the cat
+    if (e.touches.length === 0) tapTargetRef.current = null;
+  };
+
   return (
     <div
       className="flex flex-col w-full overflow-hidden"
       style={{ height: "100dvh", background: level.theme.bgGradient[1] }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     >
       {/* Game area */}
       <div
         className="relative flex-1 min-h-0 overflow-hidden"
-        onTouchStart={handleGameAreaTouch}
-        onTouchMove={handleGameAreaTouch}
       >
         {/* Canvas */}
         <div className="absolute inset-0">
@@ -307,25 +324,25 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         <HintBanner hint={level.hint} levelId={level.id} />
       </div>
 
-      {/* Mobile controls bar */}
-      <div
-        className="md:hidden flex-none relative bg-black/25 backdrop-blur-sm"
-        style={{
-          height: controlMode === "tap" ? 56 : 148,
-          paddingBottom: "max(10px, env(safe-area-inset-bottom))",
-        }}
-      >
-        {controlMode === "tap" ? (
-          /* Tap mode: small hint strip */
-          <div className="h-full flex items-center justify-center gap-2 text-white/50 text-xs font-bold select-none pointer-events-none">
-            <span className="text-base leading-none">👆</span>
-            <span>Tap the game to move your cat</span>
-          </div>
-        ) : (
-          /* Follow-finger mode: floating dynamic joystick fills the whole bar */
+      {/* Mobile controls bar — only shown for joystick mode */}
+      {controlMode !== "tap" && (
+        <div
+          className="md:hidden flex-none relative bg-black/25 backdrop-blur-sm"
+          style={{
+            height: 148,
+            paddingBottom: "max(10px, env(safe-area-inset-bottom))",
+          }}
+        >
           <VirtualJoystick floating onChange={(x, y) => setJoy({ x, y })} />
-        )}
-      </div>
+        </div>
+      )}
+      {/* Safe-area spacer for hold-and-drag mode so content doesn't hide behind home bar */}
+      {controlMode === "tap" && (
+        <div
+          className="md:hidden flex-none"
+          style={{ height: "max(0px, env(safe-area-inset-bottom))" }}
+        />
+      )}
 
       {/* Pause modal */}
       <Modal open={paused && !outcome && !settingsOpen && !isCountingDown}>

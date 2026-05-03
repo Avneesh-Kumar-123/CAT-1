@@ -102,12 +102,12 @@ export const SettingsPanel = ({ open, onClose, save, onSave }: Props) => {
               {(["tap", "joystick"] as ControlMode[]).map((m) => {
                 const active = (save.settings.controlMode ?? "tap") === m;
                 const labels: Record<ControlMode, string> = {
-                  tap: "👆 Tap to Move",
+                  tap: "✋ Hold & Drag",
                   joystick: "🕹️ Follow Finger",
                 };
                 const descs: Record<ControlMode, string> = {
-                  tap: "Tap anywhere to walk",
-                  joystick: "Drag to steer",
+                  tap: "Hold anywhere to move cat",
+                  joystick: "Drag joystick to steer",
                 };
                 return (
                   <button
