@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type React from "react";
-import type { LevelDef, Obstacle, PowerUp, PowerUpKind, Vec2 } from "@/game/types";
+import type { CheeseBait, LevelDef, Obstacle, PowerUp, PowerUpKind, Vec2 } from "@/game/types";
 import { ARENA } from "@/game/levels";
 import { getSkin, type CatSkin } from "@/game/skins";
 import {
@@ -34,6 +34,7 @@ type GameCanvasProps = {
   catSkin?: string;
   controlMode?: "tap" | "joystick";
   tapTargetRef?: React.RefObject<{ x: number; y: number } | null>;
+  cheesePlaceRef?: React.RefObject<{ x: number; y: number } | null>;
   onCatch: (timeRemaining: number, score: number) => void;
   onTimeUp: (score: number) => void;
   onTrap: () => void;
@@ -45,6 +46,7 @@ type GameCanvasProps = {
     miceLeft: number;
     miceTotal: number;
     combo: number;
+    cheeseAvailable: boolean;
   }) => void;
 };
 
@@ -62,6 +64,7 @@ export const GameCanvas = ({
   catSkin = "orange",
   controlMode = "joystick",
   tapTargetRef,
+  cheesePlaceRef,
   onCatch,
   onTimeUp,
   onTrap,
@@ -115,6 +118,8 @@ export const GameCanvas = ({
     catCaught: false,
     lastCatchAt: 0,
     combo: 0,
+    cheeseBait: null as CheeseBait | null,
+    cheeseUsed: false,
   });
 
   // initialize level
@@ -178,6 +183,8 @@ export const GameCanvas = ({
     s.catCaught = false;
     s.lastCatchAt = 0;
     s.combo = 0;
+    s.cheeseBait = null;
+    s.cheeseUsed = false;
   }, [level]);
 
   // keyboard
@@ -345,13 +352,34 @@ export const GameCanvas = ({
         updateMovingObstacles(s.obstacles, dt);
       }
 
+      // ── Cheese bait placement ──────────────────────────────────────────────
+      if (!isPaused && !s.catCaught && cheesePlaceRef?.current && !s.cheeseUsed) {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const place = cheesePlaceRef.current;
+          cheesePlaceRef.current = null;
+          const rect = canvas.getBoundingClientRect();
+          const localX = place.x - rect.left;
+          const localY = place.y - rect.top;
+          const wx = Math.max(20, Math.min(W - 20, (localX - offX) / scale));
+          const wy = Math.max(20, Math.min(H - 20, (localY - offY) / scale));
+          s.cheeseBait = { x: wx, y: wy, placedAt: now, duration: 4000 };
+          s.cheeseUsed = true;
+          sfx.power();
+        }
+      }
+      // Expire cheese after its duration
+      if (s.cheeseBait && now - s.cheeseBait.placedAt >= s.cheeseBait.duration) {
+        s.cheeseBait = null;
+      }
+
       // mice update + catch check
       if (!isPaused && !s.catCaught) {
         const survivors: MouseState[] = [];
         for (const m of s.mice) {
           const d = updateMouseAI(
             m, s.cat, level, s.obstacles, W, H, dt, now,
-            difficultyMulRef.current, s.frozenUntil,
+            difficultyMulRef.current, s.frozenUntil, s.cheeseBait,
           );
           const moved = moveWithCollision(
             m.pos, MOUSE_RADIUS, d.x, d.y, s.obstacles, W, H,
@@ -397,7 +425,7 @@ export const GameCanvas = ({
         for (const d of s.decoys) {
           const dd = updateMouseAI(
             d, s.cat, level, s.obstacles, W, H, dt, now,
-            difficultyMulRef.current, s.frozenUntil,
+            difficultyMulRef.current, s.frozenUntil, s.cheeseBait,
           );
           const moved = moveWithCollision(
             d.pos, MOUSE_RADIUS, dd.x, dd.y, s.obstacles, W, H,
@@ -564,6 +592,60 @@ export const GameCanvas = ({
         ctx.restore();
       }
 
+      // ── Cheese bait rendering ─────────────────────────────────────────────
+      if (s.cheeseBait) {
+        const cb = s.cheeseBait;
+        const elapsed = now - cb.placedAt;
+        const progress = Math.max(0, 1 - elapsed / cb.duration);
+        // fade out in the last 800ms
+        const fadeAlpha = elapsed > cb.duration - 800 ? (progress * cb.duration) / 800 : 1;
+        const pulse = 1 + Math.sin(now / 180) * 0.06;
+
+        ctx.save();
+        ctx.translate(cb.x, cb.y);
+        ctx.scale(pulse, pulse);
+        ctx.globalAlpha = Math.min(1, fadeAlpha);
+
+        // outer glow ring
+        const glow = ctx.createRadialGradient(0, 0, 8, 0, 0, 34);
+        glow.addColorStop(0, "rgba(253, 224, 71, 0.55)");
+        glow.addColorStop(1, "rgba(253, 224, 71, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+        ctx.fill();
+
+        // cheese body
+        ctx.beginPath();
+        ctx.arc(0, 0, 17, 0, Math.PI * 2);
+        ctx.fillStyle = "#fcd34d";
+        ctx.fill();
+        ctx.strokeStyle = "#b45309";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // cheese holes
+        ctx.fillStyle = "#a16207";
+        const holes: [number, number, number][] = [[-5, -3, 3.2], [5, 4, 2.6], [-2, 6, 2.2]];
+        for (const [hx, hy, hr] of holes) {
+          ctx.beginPath();
+          ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // shrinking timer arc (green → red)
+        const arcEnd = -Math.PI / 2 + Math.PI * 2 * progress;
+        ctx.beginPath();
+        ctx.arc(0, 0, 23, -Math.PI / 2, arcEnd);
+        ctx.strokeStyle = progress > 0.35 ? "#16a34a" : "#dc2626";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
       // mouse trail when speed boost
       if (s.activePower?.kind === "speed") {
         ctx.fillStyle = "rgba(253, 224, 71, 0.4)";
@@ -632,6 +714,7 @@ export const GameCanvas = ({
           miceLeft: s.mice.length,
           miceTotal: s.miceTotal,
           combo: now - s.lastCatchAt < 2500 ? s.combo : 0,
+          cheeseAvailable: !s.cheeseUsed,
         });
       }
     };

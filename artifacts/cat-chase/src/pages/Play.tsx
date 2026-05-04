@@ -48,11 +48,15 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const [isCountingDown, setIsCountingDown] = useState(true);
   const [countdownKey, setCountdownKey] = useState(0);
   const [showMilestone, setShowMilestone] = useState(false);
-  const catchFlashTimer = useRef<ReturnType<typeof setTimeout>>();
-  const milestoneTimer = useRef<ReturnType<typeof setTimeout>>();
+  const catchFlashTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const milestoneTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // tap-to-move target ref (shared with GameCanvas)
   const tapTargetRef = useRef<{ x: number; y: number } | null>(null);
+  // cheese bait placement ref (shared with GameCanvas)
+  const cheesePlaceRef = useRef<{ x: number; y: number } | null>(null);
+  // placing mode: next tap on game canvas places cheese
+  const [placingBait, setPlacingBait] = useState(false);
 
   const controlMode = save.settings.controlMode ?? "tap";
 
@@ -64,6 +68,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     miceLeft: number;
     miceTotal: number;
     combo: number;
+    cheeseAvailable: boolean;
   }>({
     score: 0,
     timeLeft: level.time,
@@ -72,6 +77,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     miceLeft: level.mouseCount ?? 1,
     miceTotal: level.mouseCount ?? 1,
     combo: 0,
+    cheeseAvailable: true,
   });
 
   useEffect(() => {
@@ -117,6 +123,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     sfx.click();
     clearTimeout(milestoneTimer.current);
     tapTargetRef.current = null;
+    cheesePlaceRef.current = null;
+    setPlacingBait(false);
     setOutcome(null);
     setShowMilestone(false);
     setPaused(false);
@@ -165,11 +173,23 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (controlMode !== "tap") return;
     if (effectivelyPaused) return;
     e.preventDefault();
     const t = e.changedTouches[0];
-    if (t) tapTargetRef.current = { x: t.clientX, y: t.clientY };
+    if (!t) return;
+    if (placingBait) {
+      cheesePlaceRef.current = { x: t.clientX, y: t.clientY };
+      setPlacingBait(false);
+      return;
+    }
+    if (controlMode !== "tap") return;
+    tapTargetRef.current = { x: t.clientX, y: t.clientY };
+  };
+
+  const handleGameClick = (e: React.MouseEvent) => {
+    if (!placingBait || effectivelyPaused) return;
+    cheesePlaceRef.current = { x: e.clientX, y: e.clientY };
+    setPlacingBait(false);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -181,8 +201,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   return (
     <div
-      className="flex flex-col w-full overflow-hidden"
+      className={`flex flex-col w-full overflow-hidden${placingBait ? " cursor-crosshair" : ""}`}
       style={{ height: "100dvh", background: level.theme.bgGradient[1] }}
+      onClick={handleGameClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -203,6 +224,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             catSkin={catSkin}
             controlMode={controlMode}
             tapTargetRef={tapTargetRef}
+            cheesePlaceRef={cheesePlaceRef}
             onCatch={handleCatch}
             onTimeUp={handleTimeUp}
             onTrap={handleTrap}
@@ -298,11 +320,19 @@ export const Play = ({ levelId, save, onSave }: Props) => {
           miceTotal={hud.miceTotal}
           combo={hud.combo}
           sound={save.settings.sound}
+          cheeseAvailable={hud.cheeseAvailable}
+          placingBait={placingBait}
           onPause={() => {
             sfx.click();
             setPaused(true);
           }}
           onToggleSound={toggleSound}
+          onDropBait={() => {
+            if (hud.cheeseAvailable && !effectivelyPaused) {
+              sfx.click();
+              setPlacingBait((p) => !p);
+            }
+          }}
         />
 
         {/* Catch flash overlay */}

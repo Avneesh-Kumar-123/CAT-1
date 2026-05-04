@@ -15,6 +15,13 @@ export type Obstacle = {
 
 export type PowerUpKind = "speed" | "freeze" | "magnet" | "extra";
 
+export type CheeseBait = {
+  x: number;
+  y: number;
+  placedAt: number;
+  duration: number;
+};
+
 export type PowerUp = {
   id: number;
   x: number;

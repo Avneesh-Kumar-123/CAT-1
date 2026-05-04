@@ -16,8 +16,11 @@ type HUDProps = {
   miceTotal: number;
   combo: number;
   sound: boolean;
+  cheeseAvailable: boolean;
+  placingBait: boolean;
   onPause: () => void;
   onToggleSound: () => void;
+  onDropBait: () => void;
 };
 
 const HUDInner = ({
@@ -32,8 +35,11 @@ const HUDInner = ({
   miceTotal,
   combo,
   sound,
+  cheeseAvailable,
+  placingBait,
   onPause,
   onToggleSound,
+  onDropBait,
 }: HUDProps) => {
   const pct = Math.max(0, Math.min(1, timeLeft / totalTime));
   const isLow = timeLeft < 10;
@@ -125,9 +131,38 @@ const HUDInner = ({
             >
               {sound ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
             </Button>
+            {/* Cheese bait button */}
+            <button
+              onClick={onDropBait}
+              disabled={!cheeseAvailable}
+              title={placingBait ? "Tap game to place bait!" : cheeseAvailable ? "Drop cheese bait (B)" : "Bait used"}
+              className={`
+                rounded-full shadow-md h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center text-base sm:text-lg
+                border-2 transition-all duration-150 select-none
+                ${!cheeseAvailable
+                  ? "opacity-30 cursor-not-allowed bg-card/60 border-card-border"
+                  : placingBait
+                    ? "bg-yellow-400 border-yellow-600 animate-pulse scale-110 cursor-crosshair"
+                    : "bg-yellow-100 border-yellow-400 hover:bg-yellow-200 hover:scale-105 cursor-pointer"
+                }
+              `}
+              data-testid="button-cheese"
+            >
+              🧀
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Placing bait banner */}
+      {placingBait && (
+        <div className="max-w-5xl mx-auto mt-2 flex justify-center pointer-events-none">
+          <div className="flex items-center gap-2 bg-yellow-400 text-yellow-900 border-2 border-yellow-600 rounded-full px-4 py-1 shadow-lg font-display font-bold text-sm animate-pulse">
+            <span>🧀</span>
+            <span>Tap anywhere to place your bait!</span>
+          </div>
+        </div>
+      )}
 
       {/* Combo indicator */}
       {combo >= 2 && (

@@ -1,4 +1,4 @@
-import type { LevelDef, Obstacle, Vec2 } from "./types";
+import type { CheeseBait, LevelDef, Obstacle, Vec2 } from "./types";
 import { rectsOverlap } from "./engine";
 
 export type MouseState = {
@@ -111,6 +111,7 @@ export const updateMouseAI = (
   now: number,
   speedMul: number,
   frozenUntil: number,
+  cheeseBait?: CheeseBait | null,
 ): Vec2 => {
   if (now < frozenUntil) {
     m.vel.x *= 0.6;
@@ -166,6 +167,27 @@ export const updateMouseAI = (
       const a = pickFleeAngle(m, cat, obstacles, arenaW, arenaH, now, 0.8);
       targetDx = Math.cos(a);
       targetDy = Math.sin(a);
+    }
+  }
+
+  // ── Cheese bait attraction ────────────────────────────────────────────────
+  // After 300ms sniff delay, non-decoy mice are strongly attracted to cheese.
+  // Boss mice are partially resistant (60% attract vs 88% for others).
+  if (cheeseBait && !m.isDecoy) {
+    const cheeseAge = now - cheeseBait.placedAt;
+    if (cheeseAge > 300 && cheeseAge < cheeseBait.duration) {
+      const cdx = cheeseBait.x - m.pos.x;
+      const cdy = cheeseBait.y - m.pos.y;
+      const cdist = Math.hypot(cdx, cdy);
+      if (cdist > 1) {
+        const attractNx = cdx / cdist;
+        const attractNy = cdy / cdist;
+        const strength = ai === "boss" ? 0.60 : 0.88;
+        targetDx = attractNx * strength + targetDx * (1 - strength);
+        targetDy = attractNy * strength + targetDy * (1 - strength);
+        // Force a steering re-evaluation so cheese attraction isn't masked
+        m.steerUntil = 0;
+      }
     }
   }
 
