@@ -46,20 +46,52 @@
         position: absolute;
         pointer-events: none;
         font-size: 1.6rem;
-        opacity: 0.18;
+        opacity: 0.22;
         animation: cc-float 4s ease-in-out infinite;
       }
+      /* original 8 */
       .cc-bg-deco:nth-child(1)  { top: 8%;  left: 6%;  animation-delay: 0s;    font-size: 1.2rem; }
       .cc-bg-deco:nth-child(2)  { top: 15%; right: 8%; animation-delay: 0.7s;  font-size: 2rem; }
       .cc-bg-deco:nth-child(3)  { top: 72%; left: 5%;  animation-delay: 1.4s;  font-size: 1.4rem; }
       .cc-bg-deco:nth-child(4)  { top: 78%; right: 6%; animation-delay: 0.3s;  font-size: 1.8rem; }
       .cc-bg-deco:nth-child(5)  { top: 42%; left: 2%;  animation-delay: 2s;    font-size: 1rem; }
       .cc-bg-deco:nth-child(6)  { top: 50%; right: 3%; animation-delay: 1.1s;  font-size: 1.1rem; }
-      .cc-bg-deco:nth-child(7)  { top: 28%; left: 14%; animation-delay: 0.5s;  font-size: 0.9rem; opacity: 0.1; }
-      .cc-bg-deco:nth-child(8)  { top: 60%; right: 14%;animation-delay: 1.8s;  font-size: 0.9rem; opacity: 0.1; }
+      .cc-bg-deco:nth-child(7)  { top: 28%; left: 14%; animation-delay: 0.5s;  font-size: 0.9rem; opacity: 0.12; }
+      .cc-bg-deco:nth-child(8)  { top: 60%; right: 14%;animation-delay: 1.8s;  font-size: 0.9rem; opacity: 0.12; }
+      /* extra cheese pieces */
+      .cc-bg-deco:nth-child(9)  { top: 22%; left: 22%; animation-delay: 0.9s;  font-size: 2.2rem; opacity: 0.28; animation-duration: 3.2s; }
+      .cc-bg-deco:nth-child(10) { top: 18%; right: 22%;animation-delay: 1.6s;  font-size: 1.7rem; opacity: 0.25; animation-duration: 3.8s; }
+      .cc-bg-deco:nth-child(11) { top: 65%; left: 20%; animation-delay: 0.4s;  font-size: 2.4rem; opacity: 0.3;  animation-duration: 4.5s; }
+      .cc-bg-deco:nth-child(12) { top: 68%; right: 20%;animation-delay: 2.2s;  font-size: 1.5rem; opacity: 0.26; animation-duration: 3.5s; }
+      .cc-bg-deco:nth-child(13) { top: 35%; left: 30%; animation-delay: 1.3s;  font-size: 1.1rem; opacity: 0.18; animation-duration: 5s; }
+      .cc-bg-deco:nth-child(14) { top: 55%; right: 28%;animation-delay: 0.8s;  font-size: 1.3rem; opacity: 0.2;  animation-duration: 4.2s; }
+      .cc-bg-deco:nth-child(15) { top: 82%; left: 35%; animation-delay: 2.5s;  font-size: 1.8rem; opacity: 0.24; animation-duration: 3.6s; }
+      .cc-bg-deco:nth-child(16) { top: 5%;  left: 42%; animation-delay: 1.0s;  font-size: 1.4rem; opacity: 0.2;  animation-duration: 4.8s; }
+
       @keyframes cc-float {
-        0%,100% { transform: translateY(0) rotate(-4deg); }
-        50%      { transform: translateY(-10px) rotate(4deg); }
+        0%,100% { transform: translateY(0) rotate(-5deg) scale(1); }
+        40%      { transform: translateY(-14px) rotate(6deg) scale(1.08); }
+        70%      { transform: translateY(-7px) rotate(-2deg) scale(0.96); }
+      }
+
+      /* spinning cheese variant */
+      .cc-cheese-spin {
+        position: absolute;
+        pointer-events: none;
+        font-size: 1.5rem;
+        opacity: 0.2;
+        animation: cc-spin-float 6s ease-in-out infinite;
+      }
+      .cc-cheese-spin:nth-of-type(1) { top: 30%; left: 8%;  animation-delay: 0s;   font-size: 2rem;   opacity: 0.22; }
+      .cc-cheese-spin:nth-of-type(2) { top: 45%; right: 8%; animation-delay: 1.5s; font-size: 1.6rem; opacity: 0.18; }
+      .cc-cheese-spin:nth-of-type(3) { top: 88%; left: 55%; animation-delay: 3s;   font-size: 1.3rem; opacity: 0.16; }
+      .cc-cheese-spin:nth-of-type(4) { top: 10%; left: 55%; animation-delay: 2.2s; font-size: 1.1rem; opacity: 0.15; }
+      @keyframes cc-spin-float {
+        0%   { transform: translateY(0) rotate(0deg); }
+        25%  { transform: translateY(-12px) rotate(90deg); }
+        50%  { transform: translateY(-6px) rotate(180deg); }
+        75%  { transform: translateY(-16px) rotate(270deg); }
+        100% { transform: translateY(0) rotate(360deg); }
       }
 
       /* ── cat-chase run strip ── */
@@ -227,6 +259,20 @@
       <span class="cc-bg-deco">⭐</span>
       <span class="cc-bg-deco">🧀</span>
       <span class="cc-bg-deco">🐾</span>
+      <!-- extra floating cheese -->
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🧀</span>
+      <!-- spinning cheese -->
+      <span class="cc-cheese-spin">🧀</span>
+      <span class="cc-cheese-spin">🧀</span>
+      <span class="cc-cheese-spin">🧀</span>
+      <span class="cc-cheese-spin">🧀</span>
 
       <!-- cat chasing mouse -->
       <div class="cc-run-strip">
