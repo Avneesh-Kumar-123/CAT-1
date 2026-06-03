@@ -76,7 +76,7 @@ export const AboutUs = () => {
             </ul>
           </section>
 
-          <AdBanner slot="2345678901" testLabel="about" />
+          <AdBanner slot="2345678901" />
 
           <section>
             <h2 className="font-display font-bold text-xl mb-2 text-primary">Get In Touch</h2>

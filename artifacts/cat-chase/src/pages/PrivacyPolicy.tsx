@@ -87,7 +87,7 @@ export const PrivacyPolicy = () => {
             </p>
           </section>
 
-          <AdBanner slot="3456789012" testLabel="privacy" />
+          <AdBanner slot="3456789012" />
 
           <section>
             <h2 className="font-display font-bold text-xl mb-2 text-primary">7. Contact Us</h2>

@@ -113,7 +113,7 @@ export const ContactUs = () => {
             We usually reply within 2&ndash;3 business days.
           </p>
 
-          <AdBanner slot="4567890123" testLabel="contact" />
+          <AdBanner slot="4567890123" />
 
           <div className="pt-2">
             <a href={`mailto:${SUPPORT_EMAIL}?subject=Cat%20Chase%20Feedback`}>

@@ -18,6 +18,9 @@ const defaultSave = (): SaveData => {
     totalCaught: 0,
     levels,
     settings: { sound: true, difficulty: "normal", catSkin: "orange", controlMode: "tap" },
+    earnedAchievements: [],
+    timeAttackBest: 0,
+    survivalBest: 0,
   };
 };
 
@@ -31,7 +34,10 @@ export const loadSave = (): SaveData => {
       highestUnlocked: parsed.highestUnlocked ?? base.highestUnlocked,
       totalCaught: parsed.totalCaught ?? base.totalCaught,
       levels: { ...base.levels, ...(parsed.levels ?? {}) },
-      settings: { catSkin: "orange", ...base.settings, ...(parsed.settings ?? {}) },
+      settings: { ...base.settings, ...(parsed.settings ?? {}) },
+      earnedAchievements: parsed.earnedAchievements ?? [],
+      timeAttackBest: parsed.timeAttackBest ?? 0,
+      survivalBest: parsed.survivalBest ?? 0,
     };
   } catch {
     return defaultSave();
@@ -60,6 +66,7 @@ export const recordLevelComplete = (
   stars: number,
   timeRemaining: number,
   score = 0,
+  miceCount = 1,
 ): SaveData => {
   const cur = data.levels[levelId] ?? { unlocked: true, bestStars: 0, bestTimeRemaining: 0, bestScore: 0 };
   const next: LevelProgress = {
@@ -69,16 +76,19 @@ export const recordLevelComplete = (
     bestScore: Math.max(cur.bestScore ?? 0, score),
   };
   const updatedLevels = { ...data.levels, [levelId]: next };
-  const nextLevel = data.levels[levelId + 1];
-  if (nextLevel && !nextLevel.unlocked) {
-    updatedLevels[levelId + 1] = { ...nextLevel, unlocked: true };
+  const nextLevelProgress = data.levels[levelId + 1];
+  if (nextLevelProgress && !nextLevelProgress.unlocked) {
+    updatedLevels[levelId + 1] = { ...nextLevelProgress, unlocked: true };
   }
-  const highestUnlocked = Math.max(data.highestUnlocked, levelId + 1);
+  const highestUnlocked = Math.min(
+    Math.max(data.highestUnlocked, levelId + 1),
+    LEVELS.length,
+  );
   const updated: SaveData = {
     ...data,
     levels: updatedLevels,
     highestUnlocked,
-    totalCaught: data.totalCaught + 1,
+    totalCaught: data.totalCaught + Math.max(1, miceCount),
   };
   saveSave(updated);
   return updated;

@@ -50,6 +50,8 @@ export type LevelDef = {
   obstacles: Obstacle[];
   /** uncatchable distractors (boss levels only) */
   decoyMice?: number;
+  /** override cat spawn position (needed when border walls fully enclose the arena) */
+  catSpawn?: Vec2;
   theme: LevelTheme;
   hint: string;
 };
@@ -77,4 +79,7 @@ export type SaveData = {
   totalCaught: number;
   levels: Record<number, LevelProgress>;
   settings: GameSettings;
+  earnedAchievements: string[];
+  timeAttackBest: number;
+  survivalBest: number;
 };

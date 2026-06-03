@@ -12,6 +12,9 @@ import { Play } from "@/pages/Play";
 import { PrivacyPolicy } from "@/pages/PrivacyPolicy";
 import { AboutUs } from "@/pages/AboutUs";
 import { ContactUs } from "@/pages/ContactUs";
+import { Achievements } from "@/pages/Achievements";
+import { TimeAttack } from "@/pages/TimeAttack";
+import { Survival } from "@/pages/Survival";
 import { LEVELS } from "@/game/levels";
 import { loadSave } from "@/game/storage";
 import { setAudioMuted } from "@/game/audio";
@@ -61,6 +64,15 @@ function App() {
           </Route>
           <Route path="/contact">
             <ContactUs />
+          </Route>
+          <Route path="/achievements">
+            <Achievements save={save} />
+          </Route>
+          <Route path="/time-attack">
+            <TimeAttack save={save} onSave={setSave} />
+          </Route>
+          <Route path="/survival">
+            <Survival save={save} onSave={setSave} />
           </Route>
           <Route>
             <NotFound />
