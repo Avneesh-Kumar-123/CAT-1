@@ -19,10 +19,290 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+      #cc-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(ellipse at 50% 40%, #3d2408 0%, #1e1005 55%, #0d0703 100%);
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+        overflow: hidden;
+        user-select: none;
+        transition: opacity 0.45s ease, visibility 0.45s ease;
+      }
+      #cc-loader.hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      /* ── floating background decorations ── */
+      .cc-bg-deco {
+        position: absolute;
+        pointer-events: none;
+        font-size: 1.6rem;
+        opacity: 0.18;
+        animation: cc-float 4s ease-in-out infinite;
+      }
+      .cc-bg-deco:nth-child(1)  { top: 8%;  left: 6%;  animation-delay: 0s;    font-size: 1.2rem; }
+      .cc-bg-deco:nth-child(2)  { top: 15%; right: 8%; animation-delay: 0.7s;  font-size: 2rem; }
+      .cc-bg-deco:nth-child(3)  { top: 72%; left: 5%;  animation-delay: 1.4s;  font-size: 1.4rem; }
+      .cc-bg-deco:nth-child(4)  { top: 78%; right: 6%; animation-delay: 0.3s;  font-size: 1.8rem; }
+      .cc-bg-deco:nth-child(5)  { top: 42%; left: 2%;  animation-delay: 2s;    font-size: 1rem; }
+      .cc-bg-deco:nth-child(6)  { top: 50%; right: 3%; animation-delay: 1.1s;  font-size: 1.1rem; }
+      .cc-bg-deco:nth-child(7)  { top: 28%; left: 14%; animation-delay: 0.5s;  font-size: 0.9rem; opacity: 0.1; }
+      .cc-bg-deco:nth-child(8)  { top: 60%; right: 14%;animation-delay: 1.8s;  font-size: 0.9rem; opacity: 0.1; }
+      @keyframes cc-float {
+        0%,100% { transform: translateY(0) rotate(-4deg); }
+        50%      { transform: translateY(-10px) rotate(4deg); }
+      }
+
+      /* ── cat-chase run strip ── */
+      .cc-run-strip {
+        position: relative;
+        width: min(420px, 90vw);
+        height: 72px;
+        margin-bottom: 10px;
+        overflow: hidden;
+      }
+      .cc-runner {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 2.8rem;
+        line-height: 1;
+        animation: cc-run 2.8s linear infinite;
+        filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6));
+      }
+      .cc-runner.mouse { animation-delay: 0s; }
+      .cc-runner.cat   { animation-delay: -0.5s; font-size: 3.4rem; }
+      @keyframes cc-run {
+        0%   { left: -60px; }
+        100% { left: calc(100% + 60px); }
+      }
+      .cc-run-floor {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(255,165,0,0.3), transparent);
+        border-radius: 999px;
+      }
+
+      /* ── logo ── */
+      .cc-logo {
+        text-align: center;
+        margin-bottom: 6px;
+        line-height: 1;
+        filter: drop-shadow(0 4px 16px rgba(0,0,0,0.7));
+      }
+      .cc-logo-cat {
+        display: block;
+        font-size: clamp(4rem, 14vw, 6.5rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #f97316;
+        text-shadow:
+          4px 4px 0 #7c2d00,
+          8px 8px 0 rgba(0,0,0,0.4);
+        animation: cc-pulse 2s ease-in-out infinite;
+      }
+      .cc-logo-chase {
+        display: block;
+        font-size: clamp(3.2rem, 12vw, 5.5rem);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: #fde68a;
+        text-shadow:
+          3px 3px 0 #92400e,
+          6px 6px 0 rgba(0,0,0,0.5);
+        margin-top: -8px;
+        animation: cc-pulse 2s ease-in-out infinite;
+        animation-delay: 0.1s;
+      }
+      @keyframes cc-pulse {
+        0%,100% { transform: scale(1); }
+        50%      { transform: scale(1.03); }
+      }
+
+      /* ── badge ── */
+      .cc-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #ea580c, #c2410c);
+        border: 2.5px solid #fed7aa;
+        border-radius: 999px;
+        padding: 5px 20px;
+        color: #fff7ed;
+        font-size: clamp(0.7rem, 3vw, 0.9rem);
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      }
+
+      /* ── progress bar wrapper ── */
+      .cc-progress-wrap {
+        width: min(340px, 82vw);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .cc-loading-label {
+        color: #fcd34d;
+        font-size: clamp(0.85rem, 3.5vw, 1.05rem);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        opacity: 0.9;
+      }
+      .cc-bar-track {
+        width: 100%;
+        height: 18px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 999px;
+        border: 2px solid #92400e;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+      }
+      .cc-bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #d97706, #f59e0b, #fbbf24, #fcd34d);
+        position: relative;
+        transition: width 0.12s ease-out;
+        box-shadow: 0 0 10px rgba(251,191,36,0.6);
+      }
+      .cc-bar-fill::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+        border-radius: 999px;
+        animation: cc-shimmer 1.2s linear infinite;
+      }
+      @keyframes cc-shimmer {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(250%); }
+      }
+      .cc-bar-paw {
+        position: absolute;
+        right: -2px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        line-height: 1;
+        filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+        transition: left 0.12s ease-out;
+      }
+      .cc-pct {
+        color: #fcd34d;
+        font-size: clamp(1.3rem, 5vw, 1.7rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+        min-width: 64px;
+        text-align: center;
+      }
+    </style>
   </head>
 
   <body>
+    <!-- ═══════════ LOADING SCREEN ═══════════ -->
+    <div id="cc-loader" aria-hidden="true">
+      <!-- background decorations -->
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">⭐</span>
+      <span class="cc-bg-deco">🐾</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🐾</span>
+      <span class="cc-bg-deco">⭐</span>
+      <span class="cc-bg-deco">🧀</span>
+      <span class="cc-bg-deco">🐾</span>
+
+      <!-- cat chasing mouse -->
+      <div class="cc-run-strip">
+        <div class="cc-runner mouse">🐭</div>
+        <div class="cc-runner cat">🐱</div>
+        <div class="cc-run-floor"></div>
+      </div>
+
+      <!-- logo -->
+      <div class="cc-logo">
+        <span class="cc-logo-cat">CAT</span>
+        <span class="cc-logo-chase">CHASE</span>
+      </div>
+
+      <!-- badge -->
+      <div class="cc-badge">CHASE &middot; CATCH &middot; WIN</div>
+
+      <!-- progress bar -->
+      <div class="cc-progress-wrap">
+        <div class="cc-loading-label">Loading...</div>
+        <div class="cc-bar-track">
+          <div class="cc-bar-fill" id="cc-fill">
+            <span class="cc-bar-paw">🐾</span>
+          </div>
+        </div>
+        <div class="cc-pct" id="cc-pct">0%</div>
+      </div>
+    </div>
+    <!-- ═══════════ END LOADING SCREEN ═══════════ -->
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      (function () {
+        var fill   = document.getElementById('cc-fill');
+        var pctEl  = document.getElementById('cc-pct');
+        var loader = document.getElementById('cc-loader');
+        if (!fill || !pctEl || !loader) return;
+
+        var pct = 0;
+        var done = false;
+
+        function setProgress(v) {
+          pct = Math.min(v, 100);
+          fill.style.width = pct + '%';
+          pctEl.textContent = Math.round(pct) + '%';
+        }
+
+        function dismiss() {
+          if (done) return;
+          done = true;
+          setProgress(100);
+          setTimeout(function () {
+            loader.classList.add('hide');
+            setTimeout(function () { loader.remove(); }, 500);
+          }, 180);
+        }
+
+        /* fake progress: ramp to ~88% while JS loads */
+        var fakeTimer = setInterval(function () {
+          if (done) { clearInterval(fakeTimer); return; }
+          var step = pct < 30 ? 3.5 : pct < 60 ? 2.2 : pct < 80 ? 1.1 : 0.35;
+          if (pct < 88) setProgress(pct + step);
+        }, 80);
+
+        /* dismiss as soon as React puts something inside #root */
+        var root = document.getElementById('root');
+        var obs = new MutationObserver(function () {
+          if (root.firstChild) { obs.disconnect(); clearInterval(fakeTimer); dismiss(); }
+        });
+        obs.observe(root, { childList: true });
+
+        /* hard fallback: 6s max */
+        setTimeout(function () { obs.disconnect(); clearInterval(fakeTimer); dismiss(); }, 6000);
+      })();
+    </script>
   </body>
 </html>
