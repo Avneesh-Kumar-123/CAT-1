@@ -269,6 +269,10 @@
 
         var pct = 0;
         var done = false;
+        var reactReady = false;
+        var minTimePassed = false;
+
+        var MIN_MS = 1800;
 
         function setProgress(v) {
           pct = Math.min(v, 100);
@@ -279,29 +283,44 @@
         function dismiss() {
           if (done) return;
           done = true;
+          clearInterval(fakeTimer);
           setProgress(100);
           setTimeout(function () {
             loader.classList.add('hide');
             setTimeout(function () { loader.remove(); }, 500);
-          }, 180);
+          }, 200);
         }
 
-        /* fake progress: ramp to ~88% while JS loads */
+        function tryDismiss() {
+          if (reactReady && minTimePassed) dismiss();
+        }
+
+        /* minimum display time — never leave before 1800ms */
+        setTimeout(function () {
+          minTimePassed = true;
+          tryDismiss();
+        }, MIN_MS);
+
+        /* slow fake progress: crawls to ~88% over ~3s */
         var fakeTimer = setInterval(function () {
           if (done) { clearInterval(fakeTimer); return; }
-          var step = pct < 30 ? 3.5 : pct < 60 ? 2.2 : pct < 80 ? 1.1 : 0.35;
+          var step = pct < 20 ? 1.4 : pct < 45 ? 0.9 : pct < 70 ? 0.55 : pct < 88 ? 0.25 : 0;
           if (pct < 88) setProgress(pct + step);
         }, 80);
 
-        /* dismiss as soon as React puts something inside #root */
+        /* watch for React mounting into #root */
         var root = document.getElementById('root');
         var obs = new MutationObserver(function () {
-          if (root.firstChild) { obs.disconnect(); clearInterval(fakeTimer); dismiss(); }
+          if (root.firstChild) {
+            obs.disconnect();
+            reactReady = true;
+            tryDismiss();
+          }
         });
         obs.observe(root, { childList: true });
 
-        /* hard fallback: 6s max */
-        setTimeout(function () { obs.disconnect(); clearInterval(fakeTimer); dismiss(); }, 6000);
+        /* hard fallback: 7s max no matter what */
+        setTimeout(function () { obs.disconnect(); dismiss(); }, 7000);
       })();
     </script>
   </body>
