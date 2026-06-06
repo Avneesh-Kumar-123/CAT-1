@@ -11,7 +11,6 @@ import { StarRating } from "@/components/StarRating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ShareButton } from "@/components/ShareButton";
 import { CountdownOverlay } from "@/components/CountdownOverlay";
-import { LandscapePrompt } from "@/components/LandscapePrompt";
 import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/game/levels";
 import { sfx, setAudioMuted } from "@/game/audio";
@@ -320,9 +319,6 @@ export const Play = ({ levelId, save, onSave }: Props) => {
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      {/* Landscape prompt — fixed overlay, mobile portrait only */}
-      <LandscapePrompt />
-
       {/* Game area */}
       <div
         className="relative flex-1 min-h-0 overflow-hidden"
