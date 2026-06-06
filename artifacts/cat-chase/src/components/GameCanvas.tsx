@@ -679,27 +679,15 @@ export const GameCanvas = ({
         }
       }
 
-      // mice — 25% smaller on mobile for more visual breathing room
-      const spriteScale = isMobile ? 0.75 : 1;
+      // mice
       for (const m of s.mice) {
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
-        ctx.save();
-        if (isMobile) { ctx.translate(m.pos.x, m.pos.y); ctx.scale(spriteScale, spriteScale); ctx.translate(-m.pos.x, -m.pos.y); }
         drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent);
-        ctx.restore();
       }
-      for (const d of s.decoys) {
-        ctx.save();
-        if (isMobile) { ctx.translate(d.pos.x, d.pos.y); ctx.scale(spriteScale, spriteScale); ctx.translate(-d.pos.x, -d.pos.y); }
-        drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
-        ctx.restore();
-      }
+      for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
 
-      // cat — also 25% smaller on mobile
-      ctx.save();
-      if (isMobile) { ctx.translate(s.cat.x, s.cat.y); ctx.scale(spriteScale, spriteScale); ctx.translate(-s.cat.x, -s.cat.y); }
+      // cat
       drawCat(ctx, s.cat.x, s.cat.y, s.catFacing, s.catBounce, getSkin(catSkinRef.current));
-      ctx.restore();
 
       // particles
       for (const p of s.particles) {
