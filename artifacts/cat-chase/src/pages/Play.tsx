@@ -14,7 +14,8 @@ import { CountdownOverlay } from "@/components/CountdownOverlay";
 import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/game/levels";
 import { sfx, setAudioMuted } from "@/game/audio";
-import { recordLevelComplete, updateSettings } from "@/game/storage";
+import { recordLevelComplete, updateSettings, saveSave } from "@/game/storage";
+import { checkAchievements, ACHIEVEMENTS } from "@/game/achievements";
 import type { PowerUpKind, SaveData } from "@/game/types";
 
 type Props = {
@@ -62,6 +63,14 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   // Auto-hide HUD on mobile after 3s of inactivity
   const [hudVisible, setHudVisible] = useState(true);
   const hudTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Tutorial active → pause the game so touch events don't bleed through
+  const [tutorialActive, setTutorialActive] = useState(false);
+
+  // Achievement tracking
+  const sessionWinsRef = useRef(0);
+  const usedPowerUpRef = useRef(false);
+  const [toastAchievements, setToastAchievements] = useState<string[]>([]);
 
   // Double-tap to place cheese (joystick mode)
   const lastTapRef = useRef<number>(0);
@@ -111,8 +120,26 @@ export const Play = ({ levelId, save, onSave }: Props) => {
       setCatchFlash(true);
       catchFlashTimer.current = setTimeout(() => setCatchFlash(false), 350);
 
-      const updated = recordLevelComplete(save, level.id, stars, timeRemaining, score);
-      onSave(updated);
+      const prev = save;
+      const updated = recordLevelComplete(prev, level.id, stars, timeRemaining, score);
+      sessionWinsRef.current += 1;
+      const newAchIds = checkAchievements(prev, updated, {
+        timeRemaining,
+        totalTime: level.time,
+        sessionWins: sessionWinsRef.current,
+        usedPowerUp: usedPowerUpRef.current,
+      });
+      if (newAchIds.length > 0) {
+        const withAchs: SaveData = {
+          ...updated,
+          earnedAchievements: [...(updated.earnedAchievements ?? []), ...newAchIds],
+        };
+        saveSave(withAchs);
+        onSave(withAchs);
+        setToastAchievements(newAchIds);
+      } else {
+        onSave(updated);
+      }
 
       if (isMilestone) {
         setShowMilestone(true);
@@ -177,7 +204,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const catSkin = save.settings.catSkin ?? "orange";
 
-  const effectivelyPaused = isCountingDown || paused || outcome !== null || showMilestone;
+  const effectivelyPaused = isCountingDown || paused || outcome !== null || showMilestone || tutorialActive;
 
   // Keep a ref so the cheese-drag document listener can read the latest value
   const effectivelyPausedRef = useRef(effectivelyPaused);
@@ -338,7 +365,11 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             onCatch={handleCatch}
             onTimeUp={handleTimeUp}
             onTrap={handleTrap}
-            onState={(s) => { cheeseAvailableRef.current = s.cheeseAvailable; setHud(s); }}
+            onState={(s) => {
+              cheeseAvailableRef.current = s.cheeseAvailable;
+              if (s.activePower) usedPowerUpRef.current = true;
+              setHud(s);
+            }}
           />
         </div>
 
@@ -471,7 +502,11 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         <HintBanner hint={level.hint} levelId={level.id} />
 
         {/* Level 1 tutorial coach marks */}
-        <TutorialOverlay levelId={level.id} controlMode={controlMode} />
+        <TutorialOverlay
+          levelId={level.id}
+          controlMode={controlMode}
+          onActiveChange={setTutorialActive}
+        />
       </div>
 
       {/* Cheese drag ghost — follows finger when dragging from button */}
@@ -583,6 +618,42 @@ export const Play = ({ levelId, save, onSave }: Props) => {
           <LosePanel reason={outcome.reason} score={outcome.score} onRestart={restart} />
         )}
       </Modal>
+
+      {/* Achievement toasts */}
+      <AnimatePresence>
+        {toastAchievements.length > 0 && (
+          <motion.div
+            key="ach-toasts"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.35 }}
+            className="fixed bottom-24 inset-x-0 z-[300] flex flex-col items-center gap-2 pointer-events-none px-4"
+            onAnimationComplete={() => {
+              const t = setTimeout(() => setToastAchievements([]), 2800);
+              return () => clearTimeout(t);
+            }}
+          >
+            {toastAchievements.map((id) => {
+              const ach = ACHIEVEMENTS.find((a) => a.id === id);
+              if (!ach) return null;
+              return (
+                <div
+                  key={id}
+                  className="flex items-center gap-3 bg-card border-2 border-primary rounded-2xl shadow-2xl px-4 py-3 max-w-xs w-full"
+                >
+                  <span className="text-2xl">{ach.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-primary">Achievement Unlocked</div>
+                    <div className="font-display font-bold text-sm truncate">{ach.title}</div>
+                  </div>
+                  <span className="text-primary text-lg">✓</span>
+                </div>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

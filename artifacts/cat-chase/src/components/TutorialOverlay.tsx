@@ -24,18 +24,21 @@ const STEPS = [
   },
 ];
 
-type Props = { levelId: number; controlMode: string };
+type Props = { levelId: number; controlMode: string; onActiveChange?: (active: boolean) => void };
 
-export const TutorialOverlay = ({ levelId, controlMode }: Props) => {
+export const TutorialOverlay = ({ levelId, controlMode, onActiveChange }: Props) => {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (levelId !== 1) return;
     if (localStorage.getItem(TUTORIAL_KEY)) return;
-    const t = setTimeout(() => setVisible(true), 900);
+    const t = setTimeout(() => {
+      setVisible(true);
+      onActiveChange?.(true);
+    }, 900);
     return () => clearTimeout(t);
-  }, [levelId]);
+  }, [levelId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dismiss = () => {
     if (step < STEPS.length - 1) {
@@ -43,6 +46,7 @@ export const TutorialOverlay = ({ levelId, controlMode }: Props) => {
     } else {
       localStorage.setItem(TUTORIAL_KEY, "1");
       setVisible(false);
+      onActiveChange?.(false);
     }
   };
 
