@@ -202,7 +202,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   return (
     <div
       className={`flex flex-col w-full overflow-hidden${placingBait ? " cursor-crosshair" : ""}`}
-      style={{ height: "100dvh", background: level.theme.bgGradient[1] }}
+      style={{ height: "100dvh", background: level.theme.bgGradient[1], touchAction: "none", overscrollBehavior: "none" }}
       onClick={handleGameClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -354,24 +354,19 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         <HintBanner hint={level.hint} levelId={level.id} />
       </div>
 
-      {/* Mobile controls bar — only shown for joystick mode */}
+      {/* Fixed joystick overlay — bottom-left corner, always visible, mobile only */}
       {controlMode !== "tap" && (
         <div
-          className="md:hidden flex-none relative bg-black/25 backdrop-blur-sm"
+          className="md:hidden absolute z-20 pointer-events-none"
           style={{
-            height: 148,
-            paddingBottom: "max(10px, env(safe-area-inset-bottom))",
+            bottom: "max(20px, calc(env(safe-area-inset-bottom) + 14px))",
+            left: 14,
           }}
         >
-          <VirtualJoystick floating onChange={(x, y) => setJoy({ x, y })} />
+          <div className="pointer-events-auto">
+            <VirtualJoystick onChange={(x, y) => setJoy({ x, y })} />
+          </div>
         </div>
-      )}
-      {/* Safe-area spacer for hold-and-drag mode so content doesn't hide behind home bar */}
-      {controlMode === "tap" && (
-        <div
-          className="md:hidden flex-none"
-          style={{ height: "max(0px, env(safe-area-inset-bottom))" }}
-        />
       )}
 
       {/* Pause modal */}

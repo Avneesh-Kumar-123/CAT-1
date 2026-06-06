@@ -5,8 +5,8 @@ type Props = {
   floating?: boolean;
 };
 
-const RADIUS = 64;
-const KNOB = 52;
+const RADIUS = 82;
+const KNOB = 66;
 
 export const VirtualJoystick = ({ onChange, floating = false }: Props) => {
   const activeId = useRef<number | null>(null);
@@ -46,6 +46,7 @@ export const VirtualJoystick = ({ onChange, floating = false }: Props) => {
     return (
       <div
         className="touch-none select-none absolute inset-0"
+        style={{ touchAction: "none" }}
         onTouchStart={(e) => {
           e.preventDefault();
           const t = e.changedTouches[0];
@@ -73,41 +74,9 @@ export const VirtualJoystick = ({ onChange, floating = false }: Props) => {
         {base && (
           <div
             className="pointer-events-none absolute"
-            style={{
-              left: base.x,
-              top: base.y,
-              transform: "translate(-50%, -50%)",
-            }}
+            style={{ left: base.x, top: base.y, transform: "translate(-50%, -50%)" }}
           >
-            <div
-              className="relative rounded-full"
-              style={{
-                width: RADIUS * 2,
-                height: RADIUS * 2,
-                border: "3px solid rgba(255,255,255,0.45)",
-                background: "rgba(255,255,255,0.18)",
-                backdropFilter: "blur(6px)",
-              }}
-            >
-              <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.35 }}>
-                <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-white text-xs font-bold">▲</span>
-                <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-white text-xs font-bold">▼</span>
-                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-white text-xs font-bold">◀</span>
-                <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white text-xs font-bold">▶</span>
-              </div>
-              <div
-                className="absolute rounded-full shadow-md"
-                style={{
-                  width: KNOB,
-                  height: KNOB,
-                  left: `calc(50% - ${KNOB / 2}px + ${stick?.x ?? 0}px)`,
-                  top: `calc(50% - ${KNOB / 2}px + ${stick?.y ?? 0}px)`,
-                  background: "rgba(255,255,255,0.92)",
-                  border: "3px solid rgba(255,255,255,0.95)",
-                  transition: stick ? "none" : "all 150ms ease-out",
-                }}
-              />
-            </div>
+            <JoystickBase stick={stick} radius={RADIUS} knob={KNOB} />
           </div>
         )}
         {!base && (
@@ -122,9 +91,11 @@ export const VirtualJoystick = ({ onChange, floating = false }: Props) => {
     );
   }
 
+  /* ── Fixed joystick: always-visible base, bottom-left ── */
   return (
     <div
       className="touch-none select-none"
+      style={{ touchAction: "none" }}
       onTouchStart={(e) => {
         e.preventDefault();
         const t = e.changedTouches[0];
@@ -145,36 +116,69 @@ export const VirtualJoystick = ({ onChange, floating = false }: Props) => {
       }}
       onTouchCancel={release}
     >
-      <div
-        ref={baseRef}
-        className="relative rounded-full shadow-lg"
-        style={{
-          width: RADIUS * 2,
-          height: RADIUS * 2,
-          border: "3px solid rgba(255,255,255,0.35)",
-          background: "rgba(255,255,255,0.18)",
-          backdropFilter: "blur(6px)",
-        }}
-      >
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: stick ? 0.25 : 0.45 }}>
-          <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-white text-xs font-bold">▲</span>
-          <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 text-white text-xs font-bold">▼</span>
-          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-white text-xs font-bold">◀</span>
-          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-white text-xs font-bold">▶</span>
-        </div>
-        <div
-          className="absolute rounded-full shadow-md"
-          style={{
-            width: KNOB,
-            height: KNOB,
-            left: `calc(50% - ${KNOB / 2}px + ${stick?.x ?? 0}px)`,
-            top: `calc(50% - ${KNOB / 2}px + ${stick?.y ?? 0}px)`,
-            background: stick ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.75)",
-            border: "3px solid rgba(255,255,255,0.95)",
-            transition: stick ? "none" : "all 150ms ease-out",
-          }}
-        />
+      <div ref={baseRef}>
+        <JoystickBase stick={stick} radius={RADIUS} knob={KNOB} fixed />
       </div>
+    </div>
+  );
+};
+
+/* ── Shared visual base ── */
+const JoystickBase = ({
+  stick,
+  radius,
+  knob,
+  fixed = false,
+}: {
+  stick: { x: number; y: number } | null;
+  radius: number;
+  knob: number;
+  fixed?: boolean;
+}) => {
+  const active = !!stick;
+  return (
+    <div
+      className="relative rounded-full"
+      style={{
+        width: radius * 2,
+        height: radius * 2,
+        background: fixed
+          ? "rgba(0,0,0,0.38)"
+          : "rgba(255,255,255,0.18)",
+        border: `3.5px solid ${active ? "rgba(249,115,22,0.85)" : "rgba(255,255,255,0.42)"}`,
+        backdropFilter: "blur(8px)",
+        boxShadow: active
+          ? "0 0 0 4px rgba(249,115,22,0.25), 0 4px 20px rgba(0,0,0,0.45)"
+          : "0 4px 20px rgba(0,0,0,0.4)",
+        transition: "border-color 0.15s, box-shadow 0.15s",
+      }}
+    >
+      {/* Direction indicators */}
+      <div className="absolute inset-0 pointer-events-none" style={{ opacity: active ? 0.2 : 0.5 }}>
+        <span className="absolute top-2 left-1/2 -translate-x-1/2 text-white font-bold text-sm leading-none">▲</span>
+        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-white font-bold text-sm leading-none">▼</span>
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-white font-bold text-sm leading-none">◀</span>
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-white font-bold text-sm leading-none">▶</span>
+      </div>
+
+      {/* Knob */}
+      <div
+        className="absolute rounded-full"
+        style={{
+          width: knob,
+          height: knob,
+          left: `calc(50% - ${knob / 2}px + ${stick?.x ?? 0}px)`,
+          top: `calc(50% - ${knob / 2}px + ${stick?.y ?? 0}px)`,
+          background: active
+            ? "radial-gradient(circle at 35% 35%, #fbbf24, #f97316)"
+            : "radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95), rgba(255,255,255,0.75))",
+          border: active ? "3px solid rgba(255,255,255,0.9)" : "3px solid rgba(255,255,255,0.85)",
+          boxShadow: active
+            ? "0 2px 12px rgba(249,115,22,0.6), inset 0 1px 2px rgba(255,255,255,0.5)"
+            : "0 3px 10px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.6)",
+          transition: stick ? "none" : "all 180ms cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      />
     </div>
   );
 };
