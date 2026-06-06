@@ -167,6 +167,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (controlMode !== "tap") return;
     if (effectivelyPaused) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, [role="button"]')) return;
     e.preventDefault();
     const t = e.changedTouches[0];
     if (t) tapTargetRef.current = { x: t.clientX, y: t.clientY };
@@ -174,6 +176,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (effectivelyPaused) return;
+    // Let button/link touches through so onClick still fires on mobile
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, [role="button"]')) return;
     e.preventDefault();
     const t = e.changedTouches[0];
     if (!t) return;
