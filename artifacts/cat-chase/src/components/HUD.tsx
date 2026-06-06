@@ -21,6 +21,7 @@ type HUDProps = {
   onPause: () => void;
   onToggleSound: () => void;
   onDropBait: () => void;
+  onCheeseDragStart?: (x: number, y: number, touchId: number) => void;
 };
 
 const HUDInner = ({
@@ -40,6 +41,7 @@ const HUDInner = ({
   onPause,
   onToggleSound,
   onDropBait,
+  onCheeseDragStart,
 }: HUDProps) => {
   const pct = Math.max(0, Math.min(1, timeLeft / totalTime));
   const isLow = timeLeft < 10;
@@ -131,11 +133,17 @@ const HUDInner = ({
             >
               {sound ? <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />}
             </Button>
-            {/* Cheese bait button */}
+            {/* Cheese bait button — tap OR drag onto game canvas */}
             <button
               onClick={onDropBait}
               disabled={!cheeseAvailable}
-              title={placingBait ? "Tap game to place bait!" : cheeseAvailable ? "Drop cheese bait (B)" : "Bait used"}
+              title={placingBait ? "Tap game to place bait!" : cheeseAvailable ? "Tap or drag 🧀 to place bait" : "Bait used"}
+              onTouchStart={(e) => {
+                if (!cheeseAvailable) return;
+                e.stopPropagation();
+                const t = e.changedTouches[0];
+                if (t && onCheeseDragStart) onCheeseDragStart(t.clientX, t.clientY, t.identifier);
+              }}
               className={`
                 rounded-full shadow-md h-9 w-9 sm:h-10 sm:w-10 flex items-center justify-center text-base sm:text-lg
                 border-2 transition-all duration-150 select-none

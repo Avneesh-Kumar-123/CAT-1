@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy } from "lucide-react";
 import { GameCanvas } from "@/components/GameCanvas";
 import { HUD } from "@/components/HUD";
+import { TutorialOverlay } from "@/components/TutorialOverlay";
 import { VirtualJoystick } from "@/components/VirtualJoystick";
 import { Modal } from "@/components/Modal";
 import { StarRating } from "@/components/StarRating";
@@ -57,6 +58,21 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const cheesePlaceRef = useRef<{ x: number; y: number } | null>(null);
   // placing mode: next tap on game canvas places cheese
   const [placingBait, setPlacingBait] = useState(false);
+
+  // Auto-hide HUD on mobile after 3s of inactivity
+  const [hudVisible, setHudVisible] = useState(true);
+  const hudTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Double-tap to place cheese (joystick mode)
+  const lastTapRef = useRef<number>(0);
+
+  // Long-press to place cheese (tap mode)
+  const longPressRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Drag-from-cheese-button state
+  const [cheeseDragPos, setCheeseDragPos] = useState<{ x: number; y: number } | null>(null);
+  const cheeseAvailableRef = useRef(true);
 
   const controlMode = save.settings.controlMode ?? "tap";
 
@@ -163,18 +179,77 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const effectivelyPaused = isCountingDown || paused || outcome !== null || showMilestone;
 
+  // Keep a ref so the cheese-drag document listener can read the latest value
+  const effectivelyPausedRef = useRef(effectivelyPaused);
+  useEffect(() => { effectivelyPausedRef.current = effectivelyPaused; }, [effectivelyPaused]);
+
+  // Reset HUD visibility timer on any interaction (auto-hide after 3s on mobile)
+  const resetHudTimer = useCallback(() => {
+    setHudVisible(true);
+    clearTimeout(hudTimerRef.current);
+    hudTimerRef.current = setTimeout(() => setHudVisible(false), 3000);
+  }, []);
+
+  // Start a drag from the cheese button — tracks finger via document listeners
+  const startCheeseDrag = useCallback((startX: number, startY: number, touchId: number) => {
+    if (!cheeseAvailableRef.current || effectivelyPausedRef.current) return;
+    setCheeseDragPos({ x: startX, y: startY });
+    let dragged = false;
+
+    const onMove = (ev: TouchEvent) => {
+      for (const t of Array.from(ev.changedTouches)) {
+        if (t.identifier === touchId) {
+          setCheeseDragPos({ x: t.clientX, y: t.clientY });
+          if (Math.hypot(t.clientX - startX, t.clientY - startY) > 12) dragged = true;
+        }
+      }
+    };
+
+    const onEnd = (ev: TouchEvent) => {
+      for (const t of Array.from(ev.changedTouches)) {
+        if (t.identifier === touchId) {
+          if (dragged) {
+            cheesePlaceRef.current = { x: t.clientX, y: t.clientY };
+            sfx.click();
+          }
+          setCheeseDragPos(null);
+          document.removeEventListener("touchmove", onMove);
+          document.removeEventListener("touchend", onEnd);
+          document.removeEventListener("touchcancel", onEnd);
+          break;
+        }
+      }
+    };
+
+    document.addEventListener("touchmove", onMove, { passive: true });
+    document.addEventListener("touchend", onEnd);
+    document.addEventListener("touchcancel", onEnd);
+  }, []);
+
   // Hold-and-drag touch handlers — cover the entire screen in tap mode
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (controlMode !== "tap") return;
+    resetHudTimer();
     if (effectivelyPaused) return;
     const target = e.target as HTMLElement;
     if (target.closest('button, a, [role="button"]')) return;
+    if (controlMode !== "tap") return;
     e.preventDefault();
     const t = e.changedTouches[0];
-    if (t) tapTargetRef.current = { x: t.clientX, y: t.clientY };
+    if (!t) return;
+    // Cancel long-press if finger moved significantly
+    if (longPressStartRef.current) {
+      const dx = t.clientX - longPressStartRef.current.x;
+      const dy = t.clientY - longPressStartRef.current.y;
+      if (Math.hypot(dx, dy) > 12) {
+        clearTimeout(longPressRef.current);
+        longPressStartRef.current = null;
+      }
+    }
+    tapTargetRef.current = { x: t.clientX, y: t.clientY };
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    resetHudTimer();
     if (effectivelyPaused) return;
     // Let button/link touches through so onClick still fires on mobile
     const target = e.target as HTMLElement;
@@ -182,13 +257,41 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     e.preventDefault();
     const t = e.changedTouches[0];
     if (!t) return;
+
+    // Placing bait mode — any tap places it
     if (placingBait) {
       cheesePlaceRef.current = { x: t.clientX, y: t.clientY };
       setPlacingBait(false);
       return;
     }
-    if (controlMode !== "tap") return;
+
+    if (controlMode !== "tap") {
+      // Joystick mode: double-tap anywhere to place cheese
+      if (cheeseAvailableRef.current) {
+        const now = Date.now();
+        if (now - lastTapRef.current < 300) {
+          cheesePlaceRef.current = { x: t.clientX, y: t.clientY };
+          sfx.click();
+          lastTapRef.current = 0;
+          return;
+        }
+        lastTapRef.current = now;
+      }
+      return;
+    }
+
+    // Tap mode: start movement + long-press-to-cheese timer
     tapTargetRef.current = { x: t.clientX, y: t.clientY };
+    if (cheeseAvailableRef.current) {
+      longPressStartRef.current = { x: t.clientX, y: t.clientY };
+      longPressRef.current = setTimeout(() => {
+        if (longPressStartRef.current) {
+          cheesePlaceRef.current = { ...longPressStartRef.current };
+          sfx.click();
+          longPressStartRef.current = null;
+        }
+      }, 480);
+    }
   };
 
   const handleGameClick = (e: React.MouseEvent) => {
@@ -198,6 +301,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    clearTimeout(longPressRef.current);
+    longPressStartRef.current = null;
     if (controlMode !== "tap") return;
     e.preventDefault();
     // All fingers lifted — stop the cat
@@ -233,7 +338,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             onCatch={handleCatch}
             onTimeUp={handleTimeUp}
             onTrap={handleTrap}
-            onState={setHud}
+            onState={(s) => { cheeseAvailableRef.current = s.cheeseAvailable; setHud(s); }}
           />
         </div>
 
@@ -313,32 +418,39 @@ export const Play = ({ levelId, save, onSave }: Props) => {
           )}
         </AnimatePresence>
 
-        <HUD
-          level={level.id}
-          levelName={level.name}
-          score={hud.score}
-          timeLeft={hud.timeLeft}
-          totalTime={level.time}
-          activePower={hud.activePower}
-          now={hud.now}
-          miceLeft={hud.miceLeft}
-          miceTotal={hud.miceTotal}
-          combo={hud.combo}
-          sound={save.settings.sound}
-          cheeseAvailable={hud.cheeseAvailable}
-          placingBait={placingBait}
-          onPause={() => {
-            sfx.click();
-            setPaused(true);
-          }}
-          onToggleSound={toggleSound}
-          onDropBait={() => {
-            if (hud.cheeseAvailable && !effectivelyPaused) {
+        {/* HUD — auto-hides on mobile after 3s; always visible on desktop */}
+        <div
+          className="transition-opacity duration-700 md:!opacity-100 md:!pointer-events-auto"
+          style={{ opacity: hudVisible ? 1 : 0, pointerEvents: hudVisible ? undefined : "none" }}
+        >
+          <HUD
+            level={level.id}
+            levelName={level.name}
+            score={hud.score}
+            timeLeft={hud.timeLeft}
+            totalTime={level.time}
+            activePower={hud.activePower}
+            now={hud.now}
+            miceLeft={hud.miceLeft}
+            miceTotal={hud.miceTotal}
+            combo={hud.combo}
+            sound={save.settings.sound}
+            cheeseAvailable={hud.cheeseAvailable}
+            placingBait={placingBait}
+            onPause={() => {
               sfx.click();
-              setPlacingBait((p) => !p);
-            }
-          }}
-        />
+              setPaused(true);
+            }}
+            onToggleSound={toggleSound}
+            onDropBait={() => {
+              if (hud.cheeseAvailable && !effectivelyPaused) {
+                sfx.click();
+                setPlacingBait((p) => !p);
+              }
+            }}
+            onCheeseDragStart={startCheeseDrag}
+          />
+        </div>
 
         {/* Catch flash overlay */}
         <AnimatePresence>
@@ -357,7 +469,20 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
         {/* Hint banner */}
         <HintBanner hint={level.hint} levelId={level.id} />
+
+        {/* Level 1 tutorial coach marks */}
+        <TutorialOverlay levelId={level.id} controlMode={controlMode} />
       </div>
+
+      {/* Cheese drag ghost — follows finger when dragging from button */}
+      {cheeseDragPos && (
+        <div
+          className="fixed z-[200] pointer-events-none select-none"
+          style={{ left: cheeseDragPos.x, top: cheeseDragPos.y, transform: "translate(-50%, -50%)", fontSize: 40, filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }}
+        >
+          🧀
+        </div>
+      )}
 
       {/* Fixed joystick overlay — bottom-left corner, always visible, mobile only */}
       {controlMode !== "tap" && (
