@@ -226,6 +226,8 @@ export const GameCanvas = ({
       const scale = Math.min(scaleX, scaleY);
       const offX = (cw - W * scale) / 2;
       const offY = (ch - H * scale) / 2;
+      // mobile: narrower canvas, portrait orientation
+      const isMobile = cw < 768;
 
       // update timer
       if (!isPaused && !s.catCaught) {
@@ -289,7 +291,8 @@ export const GameCanvas = ({
       }
 
       const speedMul = s.activePower?.kind === "speed" ? 1.6 : 1;
-      let catSpeed = CAT_SPEED_BASE * speedMul;
+      // Give cat a 12% speed boost on mobile to compensate for thumb lag
+      let catSpeed = CAT_SPEED_BASE * speedMul * (isMobile ? 1.12 : 1);
 
       let inWater = false;
       if (!isPaused && !s.catCaught) {
@@ -376,10 +379,12 @@ export const GameCanvas = ({
       // mice update + catch check
       if (!isPaused && !s.catCaught) {
         const survivors: MouseState[] = [];
+        // On mobile, slow mouse by 12% — compensates for thumb lag vs mouse precision
+        const mobileDiffMul = isMobile ? 0.88 : 1;
         for (const m of s.mice) {
           const d = updateMouseAI(
             m, s.cat, level, s.obstacles, W, H, dt, now,
-            difficultyMulRef.current, s.frozenUntil, s.cheeseBait,
+            difficultyMulRef.current * mobileDiffMul, s.frozenUntil, s.cheeseBait,
           );
           const moved = moveWithCollision(
             m.pos, MOUSE_RADIUS, d.x, d.y, s.obstacles, W, H,
@@ -478,23 +483,41 @@ export const GameCanvas = ({
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // backdrop
-      ctx.fillStyle = level.theme.bgGradient[1];
+      // ── Full-canvas background (fills letterbox dead zones on mobile) ──────
+      const fullGrad = ctx.createLinearGradient(0, 0, 0, ch);
+      fullGrad.addColorStop(0, level.theme.bgGradient[0]);
+      fullGrad.addColorStop(1, level.theme.bgGradient[1]);
+      ctx.fillStyle = fullGrad;
       ctx.fillRect(0, 0, cw, ch);
+      // Extend tile pattern across the whole canvas so dead zones look seamless
+      if (scale > 0) {
+        const tilePx = 80 * scale;
+        ctx.globalAlpha = 0.11;
+        ctx.fillStyle = level.theme.floorTile;
+        const sx = ((offX % (tilePx * 2)) + tilePx * 2) % (tilePx * 2) - tilePx * 2;
+        const sy = ((offY % (tilePx * 2)) + tilePx * 2) % (tilePx * 2) - tilePx * 2;
+        for (let i = sx; i < cw; i += tilePx * 2) {
+          for (let j = sy; j < ch; j += tilePx * 2) {
+            ctx.fillRect(i, j, tilePx, tilePx);
+            ctx.fillRect(i + tilePx, j + tilePx, tilePx, tilePx);
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
 
       // arena bg
       ctx.save();
       ctx.translate(offX, offY);
       ctx.scale(scale, scale);
 
-      // arena floor
+      // arena floor (brighter shade to distinguish play area from dead zones)
       const grad = ctx.createLinearGradient(0, 0, 0, H);
       grad.addColorStop(0, level.theme.bgGradient[0]);
       grad.addColorStop(1, level.theme.bgGradient[1]);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, W, H);
 
-      // tile pattern
+      // tile pattern (inside arena — slightly stronger than full-canvas tiles)
       ctx.globalAlpha = 0.18;
       ctx.fillStyle = level.theme.floorTile;
       for (let i = 0; i < W; i += 80) {
@@ -506,10 +529,10 @@ export const GameCanvas = ({
       }
       ctx.globalAlpha = 1;
 
-      // arena border
+      // arena border — thinner on mobile to save visual space
       ctx.strokeStyle = level.theme.accent;
-      ctx.lineWidth = 8;
-      ctx.strokeRect(4, 4, W - 8, H - 8);
+      ctx.lineWidth = isMobile ? 4 : 8;
+      ctx.strokeRect(2, 2, W - 4, H - 4);
 
       // obstacles
       for (const o of s.obstacles) {
@@ -656,15 +679,27 @@ export const GameCanvas = ({
         }
       }
 
-      // mice
+      // mice — 25% smaller on mobile for more visual breathing room
+      const spriteScale = isMobile ? 0.75 : 1;
       for (const m of s.mice) {
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
+        ctx.save();
+        if (isMobile) { ctx.translate(m.pos.x, m.pos.y); ctx.scale(spriteScale, spriteScale); ctx.translate(-m.pos.x, -m.pos.y); }
         drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent);
+        ctx.restore();
       }
-      for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
+      for (const d of s.decoys) {
+        ctx.save();
+        if (isMobile) { ctx.translate(d.pos.x, d.pos.y); ctx.scale(spriteScale, spriteScale); ctx.translate(-d.pos.x, -d.pos.y); }
+        drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
+        ctx.restore();
+      }
 
-      // cat
+      // cat — also 25% smaller on mobile
+      ctx.save();
+      if (isMobile) { ctx.translate(s.cat.x, s.cat.y); ctx.scale(spriteScale, spriteScale); ctx.translate(-s.cat.x, -s.cat.y); }
       drawCat(ctx, s.cat.x, s.cat.y, s.catFacing, s.catBounce, getSkin(catSkinRef.current));
+      ctx.restore();
 
       // particles
       for (const p of s.particles) {
