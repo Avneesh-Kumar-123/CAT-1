@@ -24,6 +24,8 @@ export const Modal = ({ open, children, onClose }: Props) => (
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className="bg-card border-4 border-card-border rounded-3xl shadow-2xl w-full max-w-md overflow-y-auto max-h-[88dvh]"
           onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => e.stopPropagation()}
         >
           {children}
         </motion.div>
