@@ -207,7 +207,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   return (
     <div
       className={`flex flex-col w-full overflow-hidden${placingBait ? " cursor-crosshair" : ""}`}
-      style={{ height: "100dvh", background: level.theme.bgGradient[1], touchAction: "none", overscrollBehavior: "none" }}
+      style={{ height: "100dvh", background: level.theme.bgGradient[1], overscrollBehavior: "none" }}
       onClick={handleGameClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

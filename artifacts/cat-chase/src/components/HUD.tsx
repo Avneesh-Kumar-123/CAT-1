@@ -52,7 +52,7 @@ const HUDInner = ({
       <div className="max-w-5xl mx-auto flex items-start justify-between gap-1 sm:gap-3">
 
         {/* Left cluster */}
-        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto">
+        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
           <div className="bg-card/90 backdrop-blur border-2 border-card-border rounded-xl sm:rounded-2xl px-2 sm:px-4 py-1.5 sm:py-2 shadow-md">
             <div className="text-[9px] sm:text-xs uppercase font-bold text-muted-foreground tracking-wider">Lvl</div>
             <div className="font-display text-lg sm:text-2xl font-bold leading-none text-primary">{level}</div>
@@ -93,7 +93,7 @@ const HUDInner = ({
         </div>
 
         {/* Right cluster */}
-        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto">
+        <div className="flex items-center gap-1.5 sm:gap-3 pointer-events-auto" onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
           <div className="bg-card/90 backdrop-blur border-2 border-card-border rounded-xl sm:rounded-2xl px-2 sm:px-4 py-1.5 sm:py-2 shadow-md text-right">
             <div className="text-[9px] sm:text-xs uppercase font-bold text-muted-foreground tracking-wider">Score</div>
             <div className="font-display text-lg sm:text-2xl font-bold leading-none tabular-nums">
