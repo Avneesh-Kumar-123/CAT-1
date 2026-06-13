@@ -229,30 +229,64 @@ export const Splash = ({ save, onSave }: Props) => {
             </p>
           </motion.div>
 
-          {/* Cat & mouse animation */}
+          {/* Cat & mouse animation — larger + paw-print trail */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring" }}
-            className="relative h-20 sm:h-32 w-full max-w-md mb-5 sm:mb-8"
+            className="relative h-32 sm:h-40 w-full max-w-lg mb-5 sm:mb-8 overflow-hidden"
           >
+            {/* Cheese bait at the right edge — what the mouse is racing toward */}
+            <motion.span
+              className="absolute right-4 top-3 text-3xl select-none pointer-events-none"
+              animate={{ rotate: [-8, 8, -8], y: [0, -4, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              🧀
+            </motion.span>
+
+            {/* Paw-print trail — each synced to when the cat passes that spot */}
+            {/* Cat center reaches xPos at time (xPos + 42) / 85 s (340 px / 4 s = 85 px/s) */}
+            {[10, 65, 120, 175, 230].map((xPos) => (
+              <motion.span
+                key={xPos}
+                className="absolute bottom-8 text-base select-none pointer-events-none"
+                style={{ left: xPos }}
+                animate={{ opacity: [0, 0.65, 0], scale: [0.3, 1, 0.7], y: [4, 0, 2] }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  repeatDelay: 2.8,          // 1.2 + 2.8 = 4 s total, stays in sync
+                  delay: (xPos + 42) / 85,   // initial offset so paw appears right as cat passes
+                  ease: "easeOut",
+                }}
+              >
+                🐾
+              </motion.span>
+            ))}
+
+            {/* Mouse — slightly ahead, bigger */}
             <motion.div
-              className="absolute top-2"
-              animate={{ x: [-20, 320, -20] }}
+              className="absolute top-1"
+              animate={{ x: [-10, 290, -10] }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
-              <MouseSprite size={48} />
+              <MouseSprite size={68} />
             </motion.div>
+
+            {/* Cat — bigger, wiggling */}
             <motion.div
-              className="absolute top-2"
-              animate={{ x: [-90, 250, -90] }}
+              className="absolute top-0"
+              animate={{ x: [-100, 210, -100] }}
               transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             >
               <div className="animate-wiggle">
-                <CatSprite size={72} />
+                <CatSprite size={100} />
               </div>
             </motion.div>
-            <div className="absolute bottom-0 inset-x-0 h-2 bg-gradient-to-r from-transparent via-foreground/20 to-transparent rounded-full" />
+
+            {/* Ground shadow */}
+            <div className="absolute bottom-4 inset-x-0 h-2 bg-gradient-to-r from-transparent via-foreground/20 to-transparent rounded-full" />
           </motion.div>
 
           {/* Stats */}
