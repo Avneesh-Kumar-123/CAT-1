@@ -30,8 +30,7 @@ export const CountdownOverlay = ({ onDone }: Props) => {
       onDoneRef.current();
       return;
     }
-    if (step === "GO!") sfx.countdownGo();
-    else sfx.countdownTick(step);
+    if (step !== "GO!") sfx.click();
     const delay = DURATION[String(step)] ?? 900;
     const t = setTimeout(() => setIdx((i) => i + 1), delay);
     return () => clearTimeout(t);
