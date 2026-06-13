@@ -121,6 +121,56 @@ export const Splash = ({ save, onSave }: Props) => {
             </div>
           </div>
 
+          {/* Overall progress */}
+          {(() => {
+            const completed = Math.max(0, (save.highestUnlocked ?? 1) - 1);
+            const pct = Math.round((completed / LEVELS.length) * 100);
+            const maxStars = LEVELS.length * 3;
+            return (
+              <div className="bg-card/80 backdrop-blur border-2 border-card-border rounded-3xl p-5 shadow-lg">
+                <div className="font-display font-bold text-xs uppercase tracking-widest text-primary mb-3">
+                  Overall Progress
+                </div>
+                <div className="flex items-end gap-3 mb-3">
+                  <motion.div
+                    className="font-display font-bold leading-none"
+                    style={{ fontSize: 48 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <span className="text-primary">{pct}</span>
+                    <span className="text-2xl text-muted-foreground">%</span>
+                  </motion.div>
+                  <div className="pb-1 text-xs text-muted-foreground font-semibold leading-snug">
+                    <div>{completed} / {LEVELS.length} levels</div>
+                    <div>⭐ {totalStars} / {maxStars} stars</div>
+                  </div>
+                </div>
+                {/* Bar */}
+                <div className="w-full bg-foreground/10 rounded-full h-3 overflow-hidden">
+                  <motion.div
+                    className="h-3 rounded-full"
+                    style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))" }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ delay: 0.7, duration: 1, ease: "easeOut" }}
+                  />
+                </div>
+                {pct === 100 && (
+                  <div className="mt-2 text-center text-xs font-bold text-primary">
+                    🏆 Champion! All levels complete!
+                  </div>
+                )}
+                {pct === 0 && (
+                  <div className="mt-2 text-center text-xs font-bold text-muted-foreground">
+                    Start playing to track your progress!
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* World progress */}
           <div className="bg-card/80 backdrop-blur border-2 border-card-border rounded-3xl p-5 shadow-lg">
             <div className="font-display font-bold text-xs uppercase tracking-widest text-secondary mb-3">
