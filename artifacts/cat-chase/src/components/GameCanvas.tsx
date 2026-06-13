@@ -13,6 +13,9 @@ import {
 import { updateMouseAI, type MouseState } from "@/game/ai";
 import { sfx } from "@/game/audio";
 
+// Module-level flag for edge-triggered water-entry sound (one GameCanvas at a time)
+let _wasInWater = false;
+
 type Particle = {
   x: number;
   y: number;
@@ -311,6 +314,9 @@ export const GameCanvas = ({
           }
         }
         if (inWater) catSpeed *= 0.5;
+        // Edge-trigger: play water splash only on entry, never on every frame
+        if (inWater && !_wasInWater) sfx.water();
+        _wasInWater = inWater;
 
         const dx = inputX * catSpeed * dt;
         const dy = inputY * catSpeed * dt;
@@ -368,7 +374,7 @@ export const GameCanvas = ({
           const wy = Math.max(20, Math.min(H - 20, (localY - offY) / scale));
           s.cheeseBait = { x: wx, y: wy, placedAt: now, duration: 4000 };
           s.cheeseUsed = true;
-          sfx.power();
+          sfx.cheese();
         }
       }
       // Expire cheese after its duration
@@ -392,8 +398,9 @@ export const GameCanvas = ({
           );
           m.pos = moved.pos;
           if (circleHits(s.cat, CAT_RADIUS, m.pos, MOUSE_RADIUS)) {
-            // caught one!
-            sfx.catch();
+            // caught one! — combo-aware: pitch rises with each chained catch
+            const nextCombo = now - s.lastCatchAt < 2500 ? s.combo + 1 : 1;
+            sfx.catchCombo(nextCombo);
             sfx.squeak();
             spawnCatchParticles(s, m.pos.x, m.pos.y);
             // combo: chain catches within 2.5s
@@ -449,7 +456,10 @@ export const GameCanvas = ({
         // pickup
         s.powerUps = s.powerUps.filter((p) => {
           if (circleHits(s.cat, CAT_RADIUS, { x: p.x, y: p.y }, POWER_RADIUS)) {
-            sfx.power();
+            if (p.kind === "speed")   sfx.powerSpeed();
+            else if (p.kind === "freeze")  sfx.powerFreeze();
+            else if (p.kind === "magnet")  sfx.powerMagnet();
+            else                           sfx.powerExtra();
             spawnPickupParticles(s, p.x, p.y);
             s.score += 50;
             if (p.kind === "speed") s.activePower = { kind: "speed", until: now + 5000 };

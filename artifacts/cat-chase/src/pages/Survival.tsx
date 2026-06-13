@@ -90,6 +90,7 @@ export const Survival = ({ save, onSave }: Props) => {
       doSaveBest(waveRef.current);
       setPhase("game-over");
     } else {
+      sfx.lifeLost();
       setPhase("life-lost");
     }
   }, [doSaveBest]);

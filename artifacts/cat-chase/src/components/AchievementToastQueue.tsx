@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ACHIEVEMENTS } from "@/game/achievements";
+import { sfx } from "@/game/audio";
 
 type Props = {
   ids: string[];
@@ -12,6 +13,11 @@ export const AchievementToastQueue = ({ ids, onDone }: Props) => {
   const [showing, setShowing] = useState(true);
   const onDoneRef = useRef(onDone);
   useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
+
+  // Play achievement sound when a new toast appears
+  useEffect(() => {
+    if (showing) sfx.achievement();
+  }, [index, showing]);
 
   // Auto-hide current toast after 2.5 s
   useEffect(() => {
