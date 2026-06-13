@@ -39,9 +39,12 @@ const DECO_EMOJIS = [
 export const Splash = ({ save, onSave }: Props) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Start bg music when home screen mounts; stop cleanly when navigating away
+  // Start world-aware bg music on mount; stop cleanly when navigating away
   useEffect(() => {
-    startBgMusic();
+    const world = (save.highestUnlocked ?? 1) >= 21 ? 3
+                : (save.highestUnlocked ?? 1) >= 11 ? 2
+                : 1;
+    startBgMusic(world as 1 | 2 | 3);
     return () => stopBgMusic();
   }, []);
   const [modesOpen, setModesOpen] = useState(false);
