@@ -244,6 +244,21 @@ export const sfx = {
     tone(1760, 0.40, "sine", 0.16, gliss.length * 0.06);
   },
 
+  // Countdown: each number steps up a major third (A4 → C#5 → E5), building tension
+  countdownTick: (n: 3 | 2 | 1) => {
+    const freqs: Record<number, number> = { 3: 440, 2: 554, 1: 659 };
+    const f = freqs[n] ?? 440;
+    tone(f,     0.10, "square",   0.22, 0);
+    tone(f * 2, 0.08, "triangle", 0.10, 0.07, f * 1.6);
+  },
+  // GO! — bright C major triad stab + rising sparkle
+  countdownGo: () => {
+    tone(523,  0.30, "triangle", 0.18, 0);       // C5
+    tone(659,  0.30, "triangle", 0.16, 0);       // E5
+    tone(784,  0.34, "triangle", 0.14, 0);       // G5
+    tone(1046, 0.22, "triangle", 0.12, 0.05, 1400); // sparkle tail
+  },
+
   click: () => {
     tone(700, 0.04, "square", 0.10, 0);
   },
