@@ -297,56 +297,53 @@ export const Splash = ({ save, onSave }: Props) => {
               </motion.div>
             </Link>
 
-            {/* Secondary grid */}
-            <div className="grid grid-cols-2 gap-2">
-              <Link href="/levels">
-                <Button
-                  variant="secondary"
-                  className="w-full h-14 flex-col gap-0.5 font-display font-bold shadow-sm game-button text-sm"
-                  onClick={() => sfx.click()}
+            {/* Secondary grid — purple card style matching canvas mockup */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <Link href="/levels" onClick={() => sfx.click()}>
+                <motion.div
+                  whileTap={{ scale: 0.93 }}
                   data-testid="button-levels"
+                  className="h-16 flex flex-col items-center justify-center gap-1 bg-violet-100 border-2 border-violet-200 rounded-2xl shadow-sm cursor-pointer hover:bg-violet-200 transition-colors select-none"
                 >
-                  <Map className="h-5 w-5" />
-                  Levels
-                </Button>
+                  <span className="text-2xl leading-none">🗺️</span>
+                  <span className="font-display font-bold text-xs text-violet-700">Levels</span>
+                </motion.div>
               </Link>
-              <Link href="/how-to-play">
-                <Button
-                  variant="secondary"
-                  className="w-full h-14 flex-col gap-0.5 font-display font-bold shadow-sm game-button text-sm"
-                  onClick={() => sfx.click()}
+              <Link href="/how-to-play" onClick={() => sfx.click()}>
+                <motion.div
+                  whileTap={{ scale: 0.93 }}
                   data-testid="button-how"
+                  className="h-16 flex flex-col items-center justify-center gap-1 bg-violet-100 border-2 border-violet-200 rounded-2xl shadow-sm cursor-pointer hover:bg-violet-200 transition-colors select-none"
                 >
-                  <BookOpen className="h-5 w-5" />
-                  How To
-                </Button>
+                  <span className="text-2xl leading-none">📖</span>
+                  <span className="font-display font-bold text-xs text-violet-700">How To</span>
+                </motion.div>
               </Link>
-              <Button
-                variant="secondary"
-                className="w-full h-14 flex-col gap-0.5 font-display font-bold shadow-sm game-button text-sm"
-                onClick={() => { sfx.click(); setModesOpen(true); }}
+              <motion.button
+                whileTap={{ scale: 0.93 }}
                 data-testid="button-modes"
+                onClick={() => { sfx.click(); setModesOpen(true); }}
+                className="h-16 flex flex-col items-center justify-center gap-1 bg-violet-100 border-2 border-violet-200 rounded-2xl shadow-sm cursor-pointer hover:bg-violet-200 transition-colors select-none"
               >
-                <Gamepad2 className="h-5 w-5" />
-                Modes
-              </Button>
-              <Link href="/achievements">
-                <Button
-                  variant="secondary"
-                  className="w-full h-14 flex-col gap-0.5 font-display font-bold shadow-sm game-button text-sm"
-                  onClick={() => sfx.click()}
+                <span className="text-2xl leading-none">🎮</span>
+                <span className="font-display font-bold text-xs text-violet-700">Modes</span>
+              </motion.button>
+              <Link href="/achievements" onClick={() => sfx.click()}>
+                <motion.div
+                  whileTap={{ scale: 0.93 }}
                   data-testid="button-achievements"
+                  className="relative h-16 flex flex-col items-center justify-center gap-1 bg-violet-100 border-2 border-violet-200 rounded-2xl shadow-sm cursor-pointer hover:bg-violet-200 transition-colors select-none"
                 >
-                  <Medal className="h-5 w-5" />
-                  <span className="flex items-center gap-1">
+                  <span className="text-2xl leading-none">🏅</span>
+                  <span className="font-display font-bold text-xs text-violet-700 flex items-center gap-1">
                     Badges
                     {earned.length > 0 && (
-                      <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1 py-0.5 rounded-full leading-none">
+                      <span className="bg-primary text-primary-foreground text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center leading-none">
                         {earned.length}
                       </span>
                     )}
                   </span>
-                </Button>
+                </motion.div>
               </Link>
             </div>
 
@@ -366,21 +363,22 @@ export const Splash = ({ save, onSave }: Props) => {
             <AdBanner slot="1234567890" />
           </div>
 
-          <div className="mt-6 mb-2 flex flex-col items-center gap-1.5 text-xs text-foreground/60 font-bold px-4">
-            <div className="flex items-center gap-3 flex-wrap justify-center">
-              <Link href="/about" className="hover:text-foreground transition-colors" data-testid="link-about">
-                About Us
-              </Link>
-              <span className="opacity-40">·</span>
-              <Link href="/contact" className="hover:text-foreground transition-colors" data-testid="link-contact">
-                Contact Us
-              </Link>
-              <span className="opacity-40">·</span>
-              <Link href="/privacy" className="hover:text-foreground transition-colors" data-testid="link-privacy">
-                Privacy Policy
-              </Link>
+          <div className="mt-6 mb-2 flex flex-col items-center gap-2.5 px-4">
+            <div className="w-full max-w-xs h-px bg-foreground/10 rounded-full" />
+            <div className="flex items-center gap-2 flex-wrap justify-center">
+              {[
+                { href: "/about",   label: "About Us",       testId: "link-about" },
+                { href: "/contact", label: "Contact Us",      testId: "link-contact" },
+                { href: "/privacy", label: "Privacy Policy",  testId: "link-privacy" },
+              ].map((l) => (
+                <Link key={l.href} href={l.href} data-testid={l.testId}>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 text-[11px] font-bold text-foreground/55 hover:text-foreground/80 transition-all cursor-pointer">
+                    {l.label}
+                  </span>
+                </Link>
+              ))}
             </div>
-            <p className="opacity-70">v1.0 · Made with paws and pixels</p>
+            <p className="text-[11px] text-foreground/45 font-semibold">v1.0 · Made with paws and pixels 🐾</p>
           </div>
         </div>
 
