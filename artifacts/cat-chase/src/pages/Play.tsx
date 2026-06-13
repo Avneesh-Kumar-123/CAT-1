@@ -11,6 +11,7 @@ import { StarRating } from "@/components/StarRating";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ShareButton } from "@/components/ShareButton";
 import { CountdownOverlay } from "@/components/CountdownOverlay";
+import { AchievementToastQueue } from "@/components/AchievementToastQueue";
 import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/game/levels";
 import { sfx, setAudioMuted } from "@/game/audio";
@@ -619,41 +620,14 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         )}
       </Modal>
 
-      {/* Achievement toasts */}
-      <AnimatePresence>
-        {toastAchievements.length > 0 && (
-          <motion.div
-            key="ach-toasts"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.35 }}
-            className="fixed bottom-24 inset-x-0 z-[300] flex flex-col items-center gap-2 pointer-events-none px-4"
-            onAnimationComplete={() => {
-              const t = setTimeout(() => setToastAchievements([]), 2800);
-              return () => clearTimeout(t);
-            }}
-          >
-            {toastAchievements.map((id) => {
-              const ach = ACHIEVEMENTS.find((a) => a.id === id);
-              if (!ach) return null;
-              return (
-                <div
-                  key={id}
-                  className="flex items-center gap-3 bg-card border-2 border-primary rounded-2xl shadow-2xl px-4 py-3 max-w-xs w-full"
-                >
-                  <span className="text-2xl">{ach.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-primary">Achievement Unlocked</div>
-                    <div className="font-display font-bold text-sm truncate">{ach.title}</div>
-                  </div>
-                  <span className="text-primary text-lg">✓</span>
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Achievement toasts — queued one at a time, top-center */}
+      {toastAchievements.length > 0 && (
+        <AchievementToastQueue
+          key={toastAchievements.join(",")}
+          ids={toastAchievements}
+          onDone={() => setToastAchievements([])}
+        />
+      )}
     </div>
   );
 };
