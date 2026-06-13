@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { MenuShell } from "@/components/MenuShell";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AdBanner } from "@/components/AdBanner";
 import { CatSprite, MouseSprite } from "@/game/sprites";
-import { sfx } from "@/game/audio";
+import { sfx, startBgMusic, stopBgMusic } from "@/game/audio";
 import { LEVELS } from "@/game/levels";
 import { ACHIEVEMENTS } from "@/game/achievements";
 import type { SaveData } from "@/game/types";
@@ -38,6 +38,12 @@ const DECO_EMOJIS = [
 
 export const Splash = ({ save, onSave }: Props) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Start bg music when home screen mounts; stop cleanly when navigating away
+  useEffect(() => {
+    startBgMusic();
+    return () => stopBgMusic();
+  }, []);
   const [modesOpen, setModesOpen] = useState(false);
 
   const currentLevel = Math.min(save.highestUnlocked, LEVELS.length);

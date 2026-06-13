@@ -21,6 +21,105 @@ const getCtx = (): AudioContext | null => {
 
 export const setAudioMuted = (m: boolean) => {
   muted = m;
+  // When unmuting, reset the music clock so notes don't burst all at once
+  if (!m) {
+    const c = getCtx();
+    if (c && _bgRunning) _bgNextNoteTime = c.currentTime + 0.1;
+  }
+};
+
+// ── Background music ────────────────────────────────────────────────────────
+// Procedural marimba-style loop — no audio files, pure Web Audio API synthesis
+
+const BPM = 72;
+const BEAT = 60 / BPM; // ~0.833s per beat
+
+// 12-beat melody in C major — pleasant, unhurried, loops seamlessly
+// [frequency Hz, duration in beats]
+const BG_MELODY: [number, number][] = [
+  [784, 0.5], [659, 0.5], [523, 1.0],   // G5 E5 C5(hold)
+  [659, 0.5], [784, 0.5], [880, 1.0],   // E5 G5 A5(hold)
+  [784, 0.5], [659, 0.5], [523, 0.5], [587, 0.5], // G5 E5 C5 D5
+  [659, 1.0], [523, 2.0],               // E5 C5(long hold)
+];
+// Soft bass pedal notes under the melody — C and A roots
+const BG_BASS: [number, number][] = [
+  [130, 4.0], [110, 4.0], [130, 4.0],  // C3 A2 C3
+];
+
+let _bgRunning = false;
+let _bgTimer: ReturnType<typeof setTimeout> | null = null;
+let _bgMelIdx = 0;
+let _bgBassIdx = 0;
+let _bgNextNoteTime = 0;
+let _bgNextBassTime = 0;
+
+function _scheduleMarimba(c: AudioContext, freq: number, start: number, beats: number, vol: number) {
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  const dur = beats * BEAT;
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(freq, start);
+  g.gain.setValueAtTime(0, start);
+  g.gain.linearRampToValueAtTime(vol, start + 0.008);
+  // Marimba decays quickly — fade out at 60% of the note duration
+  g.gain.exponentialRampToValueAtTime(0.0001, start + Math.max(0.05, dur * 0.65));
+  osc.connect(g).connect(c.destination);
+  osc.start(start);
+  osc.stop(start + dur);
+}
+
+function _bgSchedule() {
+  if (!_bgRunning) return;
+  const c = getCtx();
+
+  if (muted || !c) {
+    // Muted: keep clock current so unmuting never causes a note burst
+    if (c) {
+      _bgNextNoteTime = c.currentTime + 0.1;
+      _bgNextBassTime = c.currentTime + 0.1;
+    }
+  } else {
+    const LOOKAHEAD = 0.18; // seconds of notes to pre-schedule each tick
+
+    // Melody voice
+    while (_bgNextNoteTime < c.currentTime + LOOKAHEAD) {
+      const [freq, beats] = BG_MELODY[_bgMelIdx % BG_MELODY.length];
+      _scheduleMarimba(c, freq, _bgNextNoteTime, beats, 0.09);
+      _bgNextNoteTime += beats * BEAT;
+      _bgMelIdx++;
+    }
+    // Bass voice (softer, longer notes)
+    while (_bgNextBassTime < c.currentTime + LOOKAHEAD) {
+      const [freq, beats] = BG_BASS[_bgBassIdx % BG_BASS.length];
+      _scheduleMarimba(c, freq, _bgNextBassTime, beats, 0.04);
+      _bgNextBassTime += beats * BEAT;
+      _bgBassIdx++;
+    }
+  }
+
+  _bgTimer = setTimeout(_bgSchedule, 25);
+}
+
+export const startBgMusic = () => {
+  if (_bgRunning) return; // already playing
+  const c = getCtx();
+  if (!c) return;
+  _bgRunning = true;
+  _bgMelIdx = 0;
+  _bgBassIdx = 0;
+  _bgNextNoteTime = c.currentTime + 0.3;
+  _bgNextBassTime = c.currentTime + 0.3;
+  _bgSchedule();
+};
+
+export const stopBgMusic = () => {
+  _bgRunning = false;
+  if (_bgTimer !== null) {
+    clearTimeout(_bgTimer);
+    _bgTimer = null;
+  }
+  // Already-scheduled short notes trail off naturally within one beat
 };
 
 const tone = (
