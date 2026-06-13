@@ -831,7 +831,7 @@ export const LEVELS: LevelDef[] = [
     name: "Mouse Apocalypse",
     subtitle: "The true final battle",
     time: 90,
-    mouseSpeed: 250,
+    mouseSpeed: 220,
     mouseAI: "boss",
     mouseCount: 6,
     hint: "Six boss mice, every trap in the book. You wanted this.",
