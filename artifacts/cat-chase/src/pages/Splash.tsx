@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Link } from "wouter";
-import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves } from "lucide-react";
+import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MenuShell } from "@/components/MenuShell";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -18,6 +18,7 @@ type Props = {
 
 export const Splash = ({ save, onSave }: Props) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modesOpen, setModesOpen] = useState(false);
 
   return (
     <MenuShell onSettings={() => setSettingsOpen(true)} showBack={false}>
@@ -148,24 +149,15 @@ export const Splash = ({ save, onSave }: Props) => {
                 How To
               </Button>
             </Link>
-            <Link href="/time-attack">
-              <Button
-                variant="secondary"
-                className="w-full h-14 flex-col gap-0.5 font-display font-bold shadow-sm game-button text-sm"
-                onClick={() => sfx.click()}
-                data-testid="button-time-attack"
-              >
-                <Timer className="h-5 w-5" />
-                <span className="flex items-center gap-1">
-                  Time Attack
-                  {(save.timeAttackBest ?? 0) > 0 && (
-                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1 py-0.5 rounded-full leading-none">
-                      {save.timeAttackBest}
-                    </span>
-                  )}
-                </span>
-              </Button>
-            </Link>
+            <Button
+              variant="secondary"
+              className="w-full h-14 flex-col gap-0.5 font-display font-bold shadow-sm game-button text-sm"
+              onClick={() => { sfx.click(); setModesOpen(true); }}
+              data-testid="button-modes"
+            >
+              <Gamepad2 className="h-5 w-5" />
+              Modes
+            </Button>
             <Link href="/achievements">
               <Button
                 variant="secondary"
@@ -179,25 +171,6 @@ export const Splash = ({ save, onSave }: Props) => {
                   {(save.earnedAchievements ?? []).length > 0 && (
                     <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1 py-0.5 rounded-full leading-none">
                       {save.earnedAchievements.length}
-                    </span>
-                  )}
-                </span>
-              </Button>
-            </Link>
-
-            <Link href="/survival" className="col-span-2">
-              <Button
-                variant="secondary"
-                className="w-full h-14 flex-row gap-2 font-display font-bold shadow-sm game-button text-sm"
-                onClick={() => sfx.click()}
-                data-testid="button-survival"
-              >
-                <Waves className="h-5 w-5" />
-                <span className="flex items-center gap-1.5">
-                  Survival
-                  {(save.survivalBest ?? 0) > 0 && (
-                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                      W{save.survivalBest}
                     </span>
                   )}
                 </span>
@@ -245,6 +218,107 @@ export const Splash = ({ save, onSave }: Props) => {
         save={save}
         onSave={onSave}
       />
+
+      {/* Modes modal */}
+      <AnimatePresence>
+        {modesOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="modes-backdrop"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setModesOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              key="modes-panel"
+              className="fixed z-50 bottom-0 inset-x-0 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-80"
+              initial={{ y: "100%", opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <div className="bg-card border-4 border-primary rounded-t-3xl sm:rounded-3xl shadow-2xl px-6 pt-6 pb-10 sm:pb-6">
+                {/* Handle */}
+                <div className="w-10 h-1.5 bg-foreground/20 rounded-full mx-auto mb-5 sm:hidden" />
+
+                {/* Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <Gamepad2 className="h-6 w-6 text-primary" />
+                    <h2 className="font-display font-bold text-2xl">Game Modes</h2>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="rounded-full h-9 w-9 opacity-60 hover:opacity-100"
+                    onClick={() => setModesOpen(false)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* Mode buttons */}
+                <div className="flex flex-col gap-3">
+                  <Link href="/time-attack" onClick={() => { sfx.click(); setModesOpen(false); }}>
+                    <motion.div whileTap={{ scale: 0.97 }}>
+                      <Button
+                        variant="secondary"
+                        className="w-full h-16 justify-start gap-4 font-display font-bold shadow-sm game-button text-base"
+                        data-testid="button-time-attack"
+                      >
+                        <div className="bg-primary/20 rounded-xl p-2">
+                          <Timer className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="text-left">
+                          <div className="flex items-center gap-2">
+                            Time Attack
+                            {(save.timeAttackBest ?? 0) > 0 && (
+                              <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                                {save.timeAttackBest}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs font-normal text-muted-foreground">Catch as many as you can</div>
+                        </div>
+                      </Button>
+                    </motion.div>
+                  </Link>
+
+                  <Link href="/survival" onClick={() => { sfx.click(); setModesOpen(false); }}>
+                    <motion.div whileTap={{ scale: 0.97 }}>
+                      <Button
+                        variant="secondary"
+                        className="w-full h-16 justify-start gap-4 font-display font-bold shadow-sm game-button text-base"
+                        data-testid="button-survival"
+                      >
+                        <div className="bg-secondary/40 rounded-xl p-2">
+                          <Waves className="h-6 w-6 text-secondary-foreground" />
+                        </div>
+                        <div className="text-left">
+                          <div className="flex items-center gap-2">
+                            Survival
+                            {(save.survivalBest ?? 0) > 0 && (
+                              <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                                W{save.survivalBest}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs font-normal text-muted-foreground">Survive endless waves</div>
+                        </div>
+                      </Button>
+                    </motion.div>
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </MenuShell>
   );
 };
