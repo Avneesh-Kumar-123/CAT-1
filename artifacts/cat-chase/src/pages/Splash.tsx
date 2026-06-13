@@ -316,7 +316,7 @@ export const Splash = ({ save, onSave }: Props) => {
                   className="h-16 flex flex-col items-center justify-center gap-1 bg-violet-100 border-2 border-violet-200 rounded-2xl shadow-sm cursor-pointer hover:bg-violet-200 transition-colors select-none"
                 >
                   <span className="text-2xl leading-none">📖</span>
-                  <span className="font-display font-bold text-xs text-violet-700">How To</span>
+                  <span className="font-display font-bold text-xs text-violet-700">How to Play</span>
                 </motion.div>
               </Link>
               <motion.button
@@ -367,12 +367,13 @@ export const Splash = ({ save, onSave }: Props) => {
             <div className="w-full max-w-xs h-px bg-foreground/10 rounded-full" />
             <div className="flex items-center gap-2 flex-wrap justify-center">
               {[
-                { href: "/about",   label: "About Us",       testId: "link-about" },
-                { href: "/contact", label: "Contact Us",      testId: "link-contact" },
-                { href: "/privacy", label: "Privacy Policy",  testId: "link-privacy" },
+                { href: "/about",   icon: "👋", label: "About Us",       testId: "link-about" },
+                { href: "/contact", icon: "💬", label: "Contact Us",      testId: "link-contact" },
+                { href: "/privacy", icon: "🔒", label: "Privacy Policy",  testId: "link-privacy" },
               ].map((l) => (
                 <Link key={l.href} href={l.href} data-testid={l.testId}>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 text-[11px] font-bold text-foreground/55 hover:text-foreground/80 transition-all cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/5 hover:bg-foreground/10 border border-foreground/10 text-[11px] font-bold text-foreground/55 hover:text-foreground/80 transition-all cursor-pointer">
+                    <span className="text-sm leading-none">{l.icon}</span>
                     {l.label}
                   </span>
                 </Link>
