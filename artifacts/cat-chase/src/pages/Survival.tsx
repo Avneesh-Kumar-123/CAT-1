@@ -295,7 +295,13 @@ export const Survival = ({ save, onSave }: Props) => {
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      <div className="flex-none flex items-center justify-between px-3 sm:px-4 py-1.5 sm:py-2 bg-card/90 backdrop-blur border-b-2 border-card-border shadow-sm" style={{ paddingTop: "max(6px, env(safe-area-inset-top))" }}>
+      <div
+        className="flex-none flex items-center justify-between px-3 sm:px-4 py-1.5 sm:py-2 bg-card/90 backdrop-blur border-b-2 border-card-border shadow-sm"
+        style={{ paddingTop: "max(6px, env(safe-area-inset-top))" }}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-1 sm:gap-1.5">
           <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
           <span className="font-display font-bold text-base sm:text-xl">Wave {wave}</span>

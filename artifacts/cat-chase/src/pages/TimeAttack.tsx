@@ -260,7 +260,12 @@ export const TimeAttack = ({ save, onSave }: Props) => {
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
-      <div className="flex-none flex items-center justify-between px-4 py-2 bg-card/90 backdrop-blur border-b-2 border-card-border shadow-sm gap-3">
+      <div
+        className="flex-none flex items-center justify-between px-4 py-2 bg-card/90 backdrop-blur border-b-2 border-card-border shadow-sm gap-3"
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-1.5 min-w-[60px]">
           <Timer className="h-4 w-4 text-primary flex-shrink-0" />
           <span
