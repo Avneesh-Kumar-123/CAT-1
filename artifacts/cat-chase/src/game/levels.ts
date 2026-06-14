@@ -419,7 +419,7 @@ export const LEVELS: LevelDef[] = [
     name: "Underwater Reef",
     subtitle: "Slow motion chase",
     time: 65,
-    mouseSpeed: 195,
+    mouseSpeed: 160,
     mouseAI: "scared",
     mouseCount: 4,
     hint: "Almost everything is water. You're slow — be patient.",
