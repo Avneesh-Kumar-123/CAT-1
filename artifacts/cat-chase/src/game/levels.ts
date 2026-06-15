@@ -506,27 +506,23 @@ export const LEVELS: LevelDef[] = [
     decoyMice: 4,
     hint: "Catch the BIG mouse — decoys can't be caught.",
     obstacles: [
-      // Left side wall (top segment)
+      // LEFT WALL (gap in center)
       wall(80, 80, 60, 180, "#450a0a"),
+      wall(80, 400, 60, 180, "#450a0a"),
 
-      // Left side wall (bottom segment)
-      wall(80, 400, 60, 230, "#450a0a"),
-
-      // Right side wall (top segment)
+      // RIGHT WALL (gap in center)
       wall(860, 80, 60, 180, "#450a0a"),
+      wall(860, 400, 60, 180, "#450a0a"),
 
-      // Right side wall (bottom segment)
-      wall(860, 400, 60, 230, "#450a0a"),
-
-      // Top wall with center opening
+      // TOP WALL (gap in center)
       wall(80, 80, 300, 50, "#450a0a"),
       wall(620, 80, 300, 50, "#450a0a"),
 
-      // Bottom wall with center opening
+      // BOTTOM WALL (gap in center)
       wall(80, 580, 300, 50, "#450a0a"),
       wall(620, 580, 300, 50, "#450a0a"),
 
-      // Corner traps
+      // Traps
       trap(250, 250, 50, 50),
       trap(700, 250, 50, 50),
       trap(250, 450, 50, 50),
@@ -535,7 +531,7 @@ export const LEVELS: LevelDef[] = [
       // Moving obstacle
       moving(400, 320, 200, 60, 60, 0, 200, "#dc2626"),
 
-      // Inner structures
+      // Inner walls
       wall(450, 180, 100, 60, "#7f1d1d"),
       wall(450, 460, 100, 60, "#7f1d1d"),
     ],
