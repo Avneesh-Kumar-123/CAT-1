@@ -553,17 +553,36 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 5,
     hint: "Five royal mice. Use every power-up — show them who rules.",
     obstacles: [
-      wall(80, 80, 60, 540, "#7f1d1d"),
-      wall(860, 80, 60, 540, "#7f1d1d"),
-      wall(140, 80, 720, 40, "#7f1d1d"),
-      wall(140, 580, 720, 40, "#7f1d1d"),
+      // LEFT WALL (gap in center)
+      wall(80, 80, 60, 180, "#7f1d1d"),
+      wall(80, 400, 60, 180, "#7f1d1d"),
+
+      // RIGHT WALL (gap in center)
+      wall(860, 80, 60, 180, "#7f1d1d"),
+      wall(860, 400, 60, 180, "#7f1d1d"),
+
+      // TOP WALL (gap in center)
+      wall(140, 80, 220, 40, "#7f1d1d"),
+      wall(640, 80, 220, 40, "#7f1d1d"),
+
+      // BOTTOM WALL (gap in center)
+      wall(140, 580, 220, 40, "#7f1d1d"),
+      wall(640, 580, 220, 40, "#7f1d1d"),
+
+      // Corner traps
       trap(220, 220, 50, 50),
       trap(730, 220, 50, 50),
       trap(220, 430, 50, 50),
       trap(730, 430, 50, 50),
+
+      // Moving royal guards
       moving(380, 200, 240, 50, 80, 0, 180, "#dc2626"),
       moving(380, 450, 240, 50, -80, 0, 180, "#dc2626"),
+
+      // Center slow zone
       water(440, 320, 120, 60),
+
+      // Center pillars
       wall(340, 320, 60, 60, "#fbbf24"),
       wall(600, 320, 60, 60, "#fbbf24"),
     ],
