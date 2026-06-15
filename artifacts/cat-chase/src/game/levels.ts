@@ -747,18 +747,32 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 240,
     mouseAI: "boss",
     mouseCount: 4,
-    hint: "Gaps between walls are the only safe path — memorise them.",
+    hint: "Use the fortress openings to outsmart the boss mice.",
     obstacles: [
-      wall(80, 80, 60, 540, "#7f1d1d"),
-      wall(860, 80, 60, 540, "#7f1d1d"),
-      wall(140, 80, 720, 40, "#7f1d1d"),
-      wall(140, 580, 720, 40, "#7f1d1d"),
+      // LEFT WALL (gap)
+      wall(80, 80, 60, 180, "#7f1d1d"),
+      wall(80, 400, 60, 180, "#7f1d1d"),
+
+      // RIGHT WALL (gap)
+      wall(860, 80, 60, 180, "#7f1d1d"),
+      wall(860, 400, 60, 180, "#7f1d1d"),
+
+      // TOP WALL (gap)
+      wall(140, 80, 220, 40, "#7f1d1d"),
+      wall(640, 80, 220, 40, "#7f1d1d"),
+
+      // BOTTOM WALL (gap)
+      wall(140, 580, 220, 40, "#7f1d1d"),
+      wall(640, 580, 220, 40, "#7f1d1d"),
+
       trap(260, 220, 55, 55),
       trap(685, 220, 55, 55),
       trap(260, 425, 55, 55),
       trap(685, 425, 55, 55),
+
       moving(350, 195, 300, 55, 90, 0, 190, "#dc2626"),
       moving(350, 450, 300, 55, -90, 0, 190, "#b91c1c"),
+
       water(440, 305, 120, 90),
     ],
     theme: {
@@ -769,14 +783,13 @@ export const LEVELS: LevelDef[] = [
       particles: "spark",
     },
   },
-
   // ── WORLD 5: ENDGAME ───────────────────────────────────────────────────────
   {
     id: 27,
     name: "Crystal Cavern",
     subtitle: "Dazzling and deadly",
     time: 55,
-    mouseSpeed: 245,
+    mouseSpeed: 224,
     mouseAI: "smart",
     mouseCount: 4,
     hint: "Crystal walls channel mice into corners — use that.",
@@ -807,7 +820,7 @@ export const LEVELS: LevelDef[] = [
     name: "Mirror Maze",
     subtitle: "Which way is out?",
     time: 50,
-    mouseSpeed: 245,
+    mouseSpeed: 222,
     mouseAI: "darty",
     mouseCount: 3,
     hint: "Dead ends everywhere — keep moving or get boxed in.",
@@ -838,7 +851,7 @@ export const LEVELS: LevelDef[] = [
     name: "Thunder Dome",
     subtitle: "Electric mayhem",
     time: 55,
-    mouseSpeed: 248,
+    mouseSpeed: 220,
     mouseAI: "boss",
     mouseCount: 4,
     hint: "Sweeping bolts from all sides — stay in the eye of the storm.",
@@ -870,22 +883,37 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 220,
     mouseAI: "boss",
     mouseCount: 6,
-    hint: "Six boss mice, every trap in the book. You wanted this.",
+    hint: "The arena has openings now — use them wisely.",
     obstacles: [
-      wall(80, 80, 60, 540, "#450a0a"),
-      wall(860, 80, 60, 540, "#450a0a"),
-      wall(140, 80, 720, 40, "#450a0a"),
-      wall(140, 580, 720, 40, "#450a0a"),
+      // LEFT WALL (gap)
+      wall(80, 80, 60, 180, "#450a0a"),
+      wall(80, 400, 60, 180, "#450a0a"),
+
+      // RIGHT WALL (gap)
+      wall(860, 80, 60, 180, "#450a0a"),
+      wall(860, 400, 60, 180, "#450a0a"),
+
+      // TOP WALL (gap)
+      wall(140, 80, 220, 40, "#450a0a"),
+      wall(640, 80, 220, 40, "#450a0a"),
+
+      // BOTTOM WALL (gap)
+      wall(140, 580, 220, 40, "#450a0a"),
+      wall(640, 580, 220, 40, "#450a0a"),
+
       trap(255, 210, 50, 50),
       trap(695, 210, 50, 50),
       trap(255, 440, 50, 50),
       trap(695, 440, 50, 50),
       trap(475, 325, 55, 55),
+
       moving(280, 295, 160, 50, 85, 0, 190, "#dc2626"),
       moving(560, 355, 160, 50, -85, 0, 190, "#b91c1c"),
       moving(455, 155, 90, 65, 0, 85, 200, "#ef4444"),
+
       water(200, 460, 180, 55),
       water(620, 185, 180, 55),
+
       soft(360, 295, 80, 80, "#7f1d1d"),
     ],
     theme: {
