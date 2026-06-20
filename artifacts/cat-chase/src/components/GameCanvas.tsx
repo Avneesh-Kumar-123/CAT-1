@@ -163,6 +163,7 @@ export const GameCanvas = ({
         pauseUntil: 0,
         dartUntil: 0,
         dartDir: { x: 1, y: 0 },
+        mouseType: level.mouseType ?? "normal",
       });
     }
     s.decoys = [];
@@ -415,6 +416,19 @@ export const GameCanvas = ({
         // On mobile, slow mouse by 12% — compensates for thumb lag vs mouse precision
         const mobileDiffMul = isMobile ? 0.88 : 1;
         for (const m of s.mice) {
+          // ── Teleport Mouse: snap to open position every 8 seconds ──────────
+          if (m.mouseType === "teleport" && !m.isDecoy) {
+            if (m.teleportNextAt === undefined) m.teleportNextAt = now + 8000;
+            if (now >= m.teleportNextAt) {
+              m.teleportPoofPos = { ...m.pos };
+              m.teleportPoofAt = now;
+              m.pos = findOpenPosition(W, H, s.obstacles, MOUSE_RADIUS);
+              m.vel = { x: 0, y: 0 };
+              m.teleportNextAt = now + 8000;
+              sfx.pounce();
+            }
+          }
+
           const prevDashUntil = m.dashUntil;
           const rageMul = 1; // no speed penalty — rage is visual/audio only
           const d = updateMouseAI(
@@ -745,6 +759,89 @@ export const GameCanvas = ({
           ctx.fill();
           ctx.restore();
         }
+
+        // ── Dash Mouse: orange speed streak while bursting ───────────────────
+        if (m.mouseType === "dash" && m.dashUntil && now < m.dashUntil && m.dashDir) {
+          ctx.save();
+          for (let i = 1; i <= 4; i++) {
+            const tx = m.pos.x - m.dashDir.x * i * 10;
+            const ty = m.pos.y - m.dashDir.y * i * 10;
+            ctx.globalAlpha = 0.38 - i * 0.07;
+            ctx.fillStyle = "#f97316";
+            ctx.beginPath();
+            ctx.arc(tx, ty, MOUSE_RADIUS - i * 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        // ── Teleport Mouse: poof sparkle at old position ─────────────────────
+        if (m.mouseType === "teleport" && m.teleportPoofAt && m.teleportPoofPos) {
+          const poofAge = now - m.teleportPoofAt;
+          if (poofAge < 550) {
+            const t = poofAge / 550;
+            ctx.save();
+            ctx.globalAlpha = (1 - t) * 0.9;
+            for (let i = 0; i < 8; i++) {
+              const angle = (i / 8) * Math.PI * 2;
+              const r = 6 + t * 30;
+              const sx = m.teleportPoofPos.x + Math.cos(angle) * r;
+              const sy = m.teleportPoofPos.y + Math.sin(angle) * r;
+              ctx.fillStyle = i % 2 === 0 ? "#a78bfa" : "#c4b5fd";
+              ctx.beginPath();
+              ctx.arc(sx, sy, 4 - t * 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            // centre flash
+            ctx.globalAlpha = (1 - t) * 0.6;
+            ctx.fillStyle = "#ede9fe";
+            ctx.beginPath();
+            ctx.arc(m.teleportPoofPos.x, m.teleportPoofPos.y, (1 - t) * 18, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        // ── Teleport Mouse: cooldown arc under mouse ─────────────────────────
+        if (m.mouseType === "teleport" && m.teleportNextAt !== undefined) {
+          const coolTotal = 8000;
+          const coolLeft = Math.max(0, m.teleportNextAt - now);
+          const progress = 1 - coolLeft / coolTotal;
+          ctx.save();
+          ctx.globalAlpha = 0.7;
+          ctx.strokeStyle = "#a78bfa";
+          ctx.lineWidth = 3;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.arc(m.pos.x, m.pos.y + 20, 10, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // ── Sleepy Mouse: ZZZ animation while napping ────────────────────────
+        if (m.mouseType === "sleepy" && now < m.pauseUntil) {
+          ctx.save();
+          ctx.globalAlpha = 0.82;
+          // dim the mouse area slightly
+          ctx.fillStyle = "rgba(148,163,184,0.35)";
+          ctx.beginPath();
+          ctx.arc(m.pos.x, m.pos.y, MOUSE_RADIUS + 4, 0, Math.PI * 2);
+          ctx.fill();
+          // three floating Zs at different sizes + offsets
+          const zPhase = (now % 1200) / 1200;
+          const zOffsets = [{ dx: 0, size: 14, delay: 0 }, { dx: 8, size: 11, delay: 0.33 }, { dx: 16, size: 9, delay: 0.66 }];
+          for (const z of zOffsets) {
+            const t = (zPhase + z.delay) % 1;
+            ctx.globalAlpha = Math.sin(t * Math.PI) * 0.9;
+            ctx.font = `bold ${z.size}px Fredoka, sans-serif`;
+            ctx.fillStyle = "#60a5fa";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("Z", m.pos.x + z.dx - 8, m.pos.y - 24 - t * 18);
+          }
+          ctx.restore();
+        }
+
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
         drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent);
       }

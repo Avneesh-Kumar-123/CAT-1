@@ -38,6 +38,8 @@ export type LevelTheme = {
   particles?: "dust" | "leaves" | "snow" | "neon" | "spark";
 };
 
+export type MouseType = "normal" | "dash" | "teleport" | "sleepy";
+
 export type LevelDef = {
   id: number;
   name: string;
@@ -52,6 +54,8 @@ export type LevelDef = {
   decoyMice?: number;
   /** override cat spawn position (needed when border walls fully enclose the arena) */
   catSpawn?: Vec2;
+  /** special mouse behaviour type applied to all mice on this level */
+  mouseType?: MouseType;
   theme: LevelTheme;
   hint: string;
 };

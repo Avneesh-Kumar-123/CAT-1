@@ -196,7 +196,8 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 155,
     mouseAI: "smart",
     mouseCount: 2,
-    hint: "Zigzag alley — cut through the purple archways.",
+    mouseType: "dash",
+    hint: "Dash mice burst away every few seconds — time your pounce between bursts!",
     obstacles: [
       // Zigzag corridor walls
       wall(80, 80, 300, 50, "#1e1b4b"),    // Top-left horizontal
@@ -255,7 +256,8 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 155,
     mouseAI: "darty",
     mouseCount: 3,
-    hint: "The deck shifts. Watch the moving crates.",
+    mouseType: "teleport",
+    hint: "Teleport mice vanish every 8 seconds — watch the purple arc to time your catch!",
     obstacles: [
       // Ship rails (top and bottom of deck)
       wall(80, 80, 840, 30, "#78350f"),
@@ -319,6 +321,7 @@ export const LEVELS: LevelDef[] = [
     subtitle: "Mice in the gears",
     time: 55,
     mouseSpeed: 168,
+    mouseType: "sleepy",
     mouseAI: "darty",
     mouseCount: 3,
     hint: "Pinball lanes — moving toys bounce side to side.",

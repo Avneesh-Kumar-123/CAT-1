@@ -16,6 +16,18 @@ export type MouseState = {
   dashUntil?: number;
   /** Direction of the current dash burst */
   dashDir?: Vec2;
+  // ── Special mouse type ──────────────────────────────────────
+  mouseType?: "normal" | "dash" | "teleport" | "sleepy";
+  /** Dash Mouse: timestamp for next auto-burst */
+  autoDashNextAt?: number;
+  /** Teleport Mouse: timestamp for next teleport */
+  teleportNextAt?: number;
+  /** Teleport Mouse: timestamp the last poof started (for render) */
+  teleportPoofAt?: number;
+  /** Teleport Mouse: arena position where the last poof appeared */
+  teleportPoofPos?: Vec2;
+  /** Sleepy Mouse: timestamp for next sleep onset */
+  sleepNextAt?: number;
 };
 
 const MOUSE_RADIUS = 14;
@@ -121,6 +133,28 @@ export const updateMouseAI = (
     m.vel.x *= 0.6;
     m.vel.y *= 0.6;
     return { x: 0, y: 0 };
+  }
+
+  // ── Dash Mouse: auto-burst every 4-5 seconds ────────────────────────────
+  if (m.mouseType === "dash" && !m.isDecoy) {
+    if (m.autoDashNextAt === undefined) m.autoDashNextAt = now + 4000 + Math.random() * 1000;
+    if (now >= m.autoDashNextAt) {
+      const ex = m.pos.x - cat.x;
+      const ey = m.pos.y - cat.y;
+      const el = Math.hypot(ex, ey) || 1;
+      m.dashDir = { x: ex / el, y: ey / el };
+      m.dashUntil = now + 420;
+      m.autoDashNextAt = now + 4000 + Math.random() * 1000;
+    }
+  }
+
+  // ── Sleepy Mouse: random 2-second naps ──────────────────────────────────
+  if (m.mouseType === "sleepy" && !m.isDecoy) {
+    if (m.sleepNextAt === undefined) m.sleepNextAt = now + 2000 + Math.random() * 4000;
+    if (now >= m.sleepNextAt && now > m.pauseUntil) {
+      m.pauseUntil = now + 2000;
+      m.sleepNextAt = now + 4000 + Math.random() * 5000;
+    }
   }
 
   // ── Close-call Dash Burst ────────────────────────────────────────────────
