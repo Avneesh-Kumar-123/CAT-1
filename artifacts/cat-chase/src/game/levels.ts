@@ -22,6 +22,7 @@ const moving = (x: number, y: number, w: number, h: number, vx: number, vy: numb
 export const ARENA = { w: W, h: H };
 
 export const LEVELS: LevelDef[] = [
+  // ── WORLD 1: SUNNY FIELDS ─────────────────────────────────────────────────
   {
     id: 1,
     name: "Cozy Kitchen",
@@ -32,11 +33,16 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 1,
     hint: "Use arrow keys or WASD to chase the mouse!",
     obstacles: [
-      wall(180, 140, 120, 90, "#b45309"),
-      wall(700, 200, 90, 120, "#b45309"),
-      wall(420, 380, 160, 100, "#92400e"),
-      wall(120, 480, 90, 90, "#b45309"),
-      wall(820, 480, 100, 110, "#b45309"),
+      // Kitchen counters — L-shaped in corners
+      wall(80, 80, 200, 40, "#b45309"),    // Top counter
+      wall(80, 80, 40, 180, "#b45309"),    // Left counter side
+      wall(720, 80, 200, 40, "#b45309"),   // Top-right counter
+      wall(880, 80, 40, 180, "#b45309"),   // Right counter side
+      // Kitchen island in center
+      wall(380, 310, 240, 80, "#92400e"),  // Island
+      // Bottom stove + fridge
+      wall(80, 570, 120, 50, "#b45309"),   // Stove
+      wall(800, 570, 120, 50, "#b45309"),  // Fridge
     ],
     theme: {
       bg: "#fef3c7",
@@ -54,13 +60,19 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 145,
     mouseAI: "scared",
     mouseCount: 2,
-    hint: "Two mice to catch — corner them one at a time.",
+    hint: "The sofa cuts the room in two — chase through the gap.",
     obstacles: [
-      wall(150, 100, 280, 80, "#7c2d12"),
-      wall(600, 100, 250, 80, "#7c2d12"),
-      soft(150, 320, 320, 100, "#a78bfa"),
-      wall(620, 380, 120, 80, "#475569"),
-      wall(200, 520, 100, 100, "#78350f"),
+      // Long sofa cuts the room horizontally with a center doorway
+      soft(80, 310, 340, 80, "#a78bfa"),    // Left sofa section
+      soft(580, 310, 340, 80, "#a78bfa"),   // Right sofa section (gap 420–580 = 160px)
+      // Central bookcase column creates H-shape
+      wall(460, 80, 80, 180, "#7c2d12"),    // Bookcase top
+      wall(460, 440, 80, 180, "#7c2d12"),   // Bookcase bottom
+      // Side tables in all four quadrants
+      soft(150, 130, 100, 60, "#c4b5fd"),
+      soft(750, 130, 100, 60, "#c4b5fd"),
+      soft(150, 510, 100, 60, "#c4b5fd"),
+      soft(750, 510, 100, 60, "#c4b5fd"),
     ],
     theme: {
       bg: "#fce7f3",
@@ -78,15 +90,20 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 160,
     mouseAI: "darty",
     mouseCount: 2,
-    hint: "Avoid the water — you'll slow down.",
+    hint: "A water river splits the garden — cross at the gaps.",
     obstacles: [
-      water(420, 280, 160, 140),
-      wall(120, 100, 60, 60, "#16a34a"),
-      wall(820, 120, 60, 60, "#16a34a"),
-      wall(200, 540, 60, 60, "#16a34a"),
-      wall(780, 520, 60, 60, "#16a34a"),
-      wall(80, 320, 80, 80, "#15803d"),
-      wall(840, 340, 80, 80, "#15803d"),
+      // Water river cuts across the middle with TWO crossing points
+      water(0, 270, 260, 160),             // Left pool
+      water(380, 270, 240, 160),           // Center pool (crossings: 260–380 & 620–780)
+      water(780, 270, 220, 160),           // Right pool
+      // Corner bushes
+      wall(80, 80, 60, 150, "#16a34a"),
+      wall(860, 80, 60, 150, "#16a34a"),
+      wall(80, 470, 60, 150, "#16a34a"),
+      wall(860, 470, 60, 150, "#16a34a"),
+      // Flower beds above and below the river
+      soft(430, 110, 140, 60, "#86efac"),
+      soft(430, 530, 140, 60, "#86efac"),
     ],
     theme: {
       bg: "#dcfce7",
@@ -99,20 +116,20 @@ export const LEVELS: LevelDef[] = [
   {
     id: 4,
     name: "The Library",
-    subtitle: "Quiet... too quiet",
+    subtitle: "Quiet… too quiet",
     time: 55,
     mouseSpeed: 170,
     mouseAI: "smart",
     mouseCount: 2,
-    hint: "Smart mice. Predict their moves and cut them off.",
+    hint: "Bookshelves create a winding path — predict where mice will run.",
     obstacles: [
-      wall(80, 80, 60, 320, "#7c2d12"),
-      wall(220, 80, 60, 320, "#7c2d12"),
-      wall(720, 80, 60, 320, "#7c2d12"),
-      wall(860, 80, 60, 320, "#7c2d12"),
-      wall(380, 460, 240, 60, "#92400e"),
-      wall(380, 560, 240, 30, "#78350f"),
-      wall(480, 200, 60, 200, "#92400e"),
+      // 4 bookshelves alternating top/bottom — creates a true serpentine corridor
+      wall(200, 80, 40, 380, "#7c2d12"),   // Shelf 1: top-anchored, gap below
+      wall(400, 240, 40, 380, "#7c2d12"),  // Shelf 2: bottom-anchored, gap above (80–240)
+      wall(600, 80, 40, 380, "#7c2d12"),   // Shelf 3: top-anchored
+      wall(800, 240, 40, 380, "#7c2d12"),  // Shelf 4: bottom-anchored
+      // Reading desk near center
+      soft(450, 140, 100, 60, "#fbbf24"),
     ],
     theme: {
       bg: "#fef3c7",
@@ -130,16 +147,22 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 180,
     mouseAI: "darty",
     mouseCount: 2,
-    hint: "Mousetraps will end your run instantly!",
+    hint: "Mousetraps line the corridors — hug the center path.",
     obstacles: [
-      trap(300, 200, 50, 50),
-      trap(650, 350, 50, 50),
-      trap(450, 540, 50, 50),
-      wall(80, 120, 140, 80, "#44403c"),
-      wall(800, 120, 120, 80, "#44403c"),
-      wall(120, 480, 100, 100, "#3f3f46"),
-      wall(800, 460, 120, 120, "#44403c"),
-      wall(450, 280, 100, 80, "#52525b"),
+      // Cross of traps forces careful routing
+      trap(260, 190, 55, 55),
+      trap(685, 190, 55, 55),
+      trap(260, 455, 55, 55),
+      trap(685, 455, 55, 55),
+      trap(455, 320, 90, 60),           // Center trap (biggest danger)
+      // Crate walls in corners
+      wall(80, 80, 140, 80, "#44403c"),
+      wall(780, 80, 140, 80, "#44403c"),
+      wall(80, 540, 140, 80, "#3f3f46"),
+      wall(780, 540, 140, 80, "#44403c"),
+      // Narrow passages between traps and walls
+      wall(350, 130, 50, 120, "#52525b"),  // Divider creates tight gap with trap
+      wall(600, 450, 50, 120, "#52525b"),
     ],
     theme: {
       bg: "#1f2937",
@@ -159,12 +182,14 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 3,
     hint: "Conveyor belts shift — time your moves!",
     obstacles: [
-      moving(200, 200, 140, 60, 80, 0, 280, "#fbbf24"),
-      moving(600, 380, 140, 60, -80, 0, 280, "#fbbf24"),
-      moving(450, 100, 60, 100, 0, 60, 200, "#facc15"),
-      wall(100, 500, 80, 100, "#a16207"),
-      wall(820, 500, 80, 100, "#a16207"),
-      wall(450, 540, 100, 80, "#a16207"),
+      moving(160, 200, 160, 55, 90, 0, 300, "#fbbf24"),
+      moving(680, 340, 160, 55, -90, 0, 300, "#fbbf24"),
+      moving(430, 100, 55, 120, 0, 70, 200, "#facc15"),
+      moving(430, 480, 55, 120, 0, -70, 200, "#facc15"),
+      wall(80, 500, 80, 120, "#a16207"),
+      wall(840, 80, 80, 120, "#a16207"),
+      trap(160, 540, 45, 45),
+      trap(795, 115, 45, 45),
     ],
     theme: {
       bg: "#fef9c3",
@@ -182,16 +207,19 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 200,
     mouseAI: "smart",
     mouseCount: 2,
-    hint: "Speed power-ups are your best friend.",
+    hint: "Zigzag alley — cut through the purple archways.",
     obstacles: [
-      wall(100, 100, 100, 200, "#1e1b4b"),
-      wall(800, 100, 100, 200, "#1e1b4b"),
-      wall(100, 400, 100, 200, "#1e1b4b"),
-      wall(800, 400, 100, 200, "#1e1b4b"),
-      water(420, 280, 160, 140),
-      trap(380, 540, 50, 50),
-      trap(580, 110, 50, 50),
-      moving(440, 350, 120, 30, 100, 0, 200, "#a855f7"),
+      // Zigzag corridor walls
+      wall(80, 80, 300, 50, "#1e1b4b"),    // Top-left horizontal
+      wall(80, 80, 50, 260, "#1e1b4b"),    // Left vertical top
+      wall(80, 430, 50, 190, "#1e1b4b"),   // Left vertical bottom
+      wall(620, 570, 300, 50, "#1e1b4b"),  // Bottom-right horizontal
+      wall(870, 190, 50, 380, "#1e1b4b"),  // Right vertical
+      // Center water + moving blocker
+      water(400, 280, 200, 140),
+      moving(400, 360, 200, 35, 110, 0, 200, "#a855f7"),
+      trap(340, 550, 50, 50),
+      trap(610, 80, 50, 50),
     ],
     theme: {
       bg: "#0f172a",
@@ -204,19 +232,23 @@ export const LEVELS: LevelDef[] = [
   {
     id: 8,
     name: "Snowy Cabin",
-    subtitle: "Mice in the rafters",
+    subtitle: "Two rooms, one mouse hunt",
     time: 60,
     mouseSpeed: 175,
     mouseAI: "scared",
     mouseCount: 3,
-    hint: "Three little mice are hiding — round them up!",
+    hint: "The cabin has two rooms — mice scatter between them.",
     obstacles: [
-      wall(120, 100, 200, 60, "#cbd5e1"),
-      wall(680, 100, 200, 60, "#cbd5e1"),
-      wall(120, 540, 200, 60, "#cbd5e1"),
-      wall(680, 540, 200, 60, "#cbd5e1"),
-      wall(450, 300, 100, 100, "#94a3b8"),
-      water(400, 480, 200, 60),
+      // Central dividing wall with doorway
+      wall(440, 80, 120, 210, "#cbd5e1"),  // Divider top
+      wall(440, 410, 120, 210, "#cbd5e1"), // Divider bottom (doorway gap 290–410 = 120px)
+      // Room furniture
+      soft(140, 150, 120, 60, "#94a3b8"),  // Left room — fireplace
+      soft(740, 150, 120, 60, "#94a3b8"),  // Right room — wardrobe
+      soft(140, 490, 120, 60, "#94a3b8"),  // Left room — bed
+      soft(740, 490, 120, 60, "#94a3b8"),  // Right room — chest
+      // Frozen puddle
+      water(380, 300, 240, 100),
     ],
     theme: {
       bg: "#e0f2fe",
@@ -236,13 +268,20 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 3,
     hint: "The deck shifts. Watch the moving crates.",
     obstacles: [
+      // Ship rails (top and bottom of deck)
       wall(80, 80, 840, 30, "#78350f"),
       wall(80, 590, 840, 30, "#78350f"),
-      moving(200, 250, 100, 80, 0, 60, 200, "#92400e"),
-      moving(700, 350, 100, 80, 0, -60, 200, "#92400e"),
-      wall(440, 300, 120, 100, "#451a03"),
-      water(80, 350, 60, 200),
-      water(860, 350, 60, 200),
+      // Mast in the center
+      wall(470, 200, 60, 300, "#451a03"),
+      // Moving crates on deck
+      moving(160, 250, 100, 80, 0, 65, 200, "#92400e"),
+      moving(740, 350, 100, 80, 0, -65, 200, "#92400e"),
+      // Water on port and starboard
+      water(80, 350, 50, 180),
+      water(870, 200, 50, 180),
+      // Cannon balls as traps
+      trap(250, 540, 40, 40),
+      trap(710, 110, 40, 40),
     ],
     theme: {
       bg: "#451a03",
@@ -255,20 +294,25 @@ export const LEVELS: LevelDef[] = [
   {
     id: 10,
     name: "Candy Land",
-    subtitle: "Sticky situations",
+    subtitle: "Sweet & sticky maze",
     time: 55,
     mouseSpeed: 195,
     mouseAI: "smart",
     mouseCount: 3,
-    hint: "Smart mice with extra candy obstacles.",
+    hint: "Weave through the candy cane maze — dead ends everywhere.",
     obstacles: [
-      soft(150, 150, 100, 100, "#f472b6"),
-      soft(750, 150, 100, 100, "#a78bfa"),
-      soft(150, 450, 100, 100, "#fbbf24"),
-      soft(750, 450, 100, 100, "#34d399"),
-      soft(420, 280, 160, 140, "#fb7185"),
-      trap(400, 100, 50, 50),
-      trap(550, 550, 50, 50),
+      // Candy cane maze — interlocking rows
+      soft(160, 80, 40, 280, "#f472b6"),   // Candy pillar 1 (top-anchored)
+      soft(360, 340, 40, 280, "#a78bfa"),  // Candy pillar 2 (bottom-anchored)
+      soft(560, 80, 40, 280, "#fbbf24"),   // Candy pillar 3 (top-anchored)
+      soft(760, 340, 40, 280, "#34d399"),  // Candy pillar 4 (bottom-anchored)
+      // Candy arch tops
+      soft(160, 80, 240, 40, "#fb7185"),   // Top arch left
+      soft(560, 80, 280, 40, "#fbbf24"),   // Top arch right
+      soft(160, 580, 240, 40, "#a78bfa"),  // Bottom arch left
+      soft(560, 580, 280, 40, "#34d399"),  // Bottom arch right
+      trap(450, 220, 50, 50),
+      trap(450, 430, 50, 50),
     ],
     theme: {
       bg: "#fce7f3",
@@ -278,6 +322,8 @@ export const LEVELS: LevelDef[] = [
       particles: "dust",
     },
   },
+
+  // ── WORLD 2: MYSTIC FOREST ────────────────────────────────────────────────
   {
     id: 11,
     name: "Toy Workshop",
@@ -286,15 +332,22 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 200,
     mouseAI: "darty",
     mouseCount: 3,
-    hint: "Time the moving toys — slip through the gaps.",
+    hint: "Pinball lanes — moving toys bounce side to side.",
     obstacles: [
-      moving(150, 200, 80, 80, 70, 0, 250, "#dc2626"),
-      moving(150, 420, 80, 80, 70, 0, 250, "#16a34a"),
-      moving(800, 200, 80, 80, -70, 0, 250, "#2563eb"),
-      moving(800, 420, 80, 80, -70, 0, 250, "#9333ea"),
-      wall(450, 300, 100, 100, "#7c3aed"),
-      trap(50, 620, 40, 40),
-      trap(910, 620, 40, 40),
+      // Four moving toys in two lanes (left/right)
+      moving(80, 200, 80, 80, 75, 0, 280, "#dc2626"),
+      moving(80, 420, 80, 80, 75, 0, 280, "#16a34a"),
+      moving(840, 240, 80, 80, -75, 0, 280, "#2563eb"),
+      moving(840, 460, 80, 80, -75, 0, 280, "#9333ea"),
+      // Lane dividers
+      wall(430, 80, 140, 40, "#7c3aed"),   // Top lane cap
+      wall(430, 580, 140, 40, "#7c3aed"),  // Bottom lane cap
+      wall(430, 290, 140, 120, "#7c3aed"), // Center hub
+      // Corner traps
+      trap(80, 80, 40, 40),
+      trap(880, 80, 40, 40),
+      trap(80, 580, 40, 40),
+      trap(880, 580, 40, 40),
     ],
     theme: {
       bg: "#dbeafe",
@@ -335,22 +388,29 @@ export const LEVELS: LevelDef[] = [
   {
     id: 13,
     name: "Jungle Ruins",
-    subtitle: "Vine traps & temple cats",
+    subtitle: "Temple with an inner courtyard",
     time: 55,
     mouseSpeed: 205,
     mouseAI: "darty",
     mouseCount: 3,
-    hint: "Watch the moving vines and the deep pools.",
+    hint: "Outer walls with gaps lead to an inner courtyard — mice guard the water.",
     obstacles: [
-      wall(180, 100, 100, 100, "#166534"),
-      wall(720, 100, 100, 100, "#166534"),
-      wall(180, 500, 100, 100, "#166534"),
-      wall(720, 500, 100, 100, "#166534"),
-      water(420, 280, 160, 140),
-      moving(380, 100, 240, 30, 60, 0, 150, "#15803d"),
-      moving(380, 570, 240, 30, -60, 0, 150, "#15803d"),
-      trap(80, 340, 40, 40),
-      trap(880, 340, 40, 40),
+      // Outer temple wall segments (4 gaps for entry)
+      wall(80, 80, 280, 40, "#166534"),     // Top-left wall
+      wall(640, 80, 280, 40, "#166534"),    // Top-right wall (gap 360–640)
+      wall(80, 580, 280, 40, "#166534"),    // Bottom-left wall
+      wall(640, 580, 280, 40, "#166534"),   // Bottom-right wall (gap 360–640)
+      wall(80, 80, 40, 220, "#166534"),     // Left-top wall
+      wall(80, 400, 40, 220, "#166534"),    // Left-bottom wall (gap 300–400)
+      wall(880, 80, 40, 220, "#166534"),    // Right-top wall
+      wall(880, 400, 40, 220, "#166534"),   // Right-bottom wall
+      // Inner water courtyard
+      water(330, 240, 340, 220),
+      // Moving vine
+      moving(330, 240, 340, 30, 55, 0, 120, "#15803d"),
+      // Side traps at outer wall gaps
+      trap(80, 310, 40, 80),
+      trap(880, 310, 40, 80),
     ],
     theme: {
       bg: "#14532d",
@@ -363,20 +423,29 @@ export const LEVELS: LevelDef[] = [
   {
     id: 14,
     name: "Sky Castle",
-    subtitle: "Mice in the clouds",
+    subtitle: "Battlement chase",
     time: 55,
     mouseSpeed: 210,
     mouseAI: "smart",
     mouseCount: 4,
-    hint: "Castle walls block easy chase paths — go around.",
+    // Surprise: 2 decoy mice in the battlements
+    decoyMice: 2,
+    hint: "Two of those mice are decoys — only the real ones count!",
     obstacles: [
-      wall(150, 150, 60, 400, "#94a3b8"),
-      wall(790, 150, 60, 400, "#94a3b8"),
-      wall(280, 100, 60, 60, "#cbd5e1"),
-      wall(660, 100, 60, 60, "#cbd5e1"),
-      wall(280, 540, 60, 60, "#cbd5e1"),
-      wall(660, 540, 60, 60, "#cbd5e1"),
-      wall(450, 320, 100, 60, "#64748b"),
+      // Castle battlement — 4 towers connected by walls with gaps
+      wall(80, 80, 200, 50, "#94a3b8"),     // Top wall left
+      wall(720, 80, 200, 50, "#94a3b8"),    // Top wall right (gap 280–720)
+      wall(80, 570, 200, 50, "#94a3b8"),    // Bottom wall left
+      wall(720, 570, 200, 50, "#94a3b8"),   // Bottom wall right
+      wall(80, 80, 50, 200, "#94a3b8"),     // Left wall top
+      wall(80, 420, 50, 200, "#94a3b8"),    // Left wall bottom (gap 280–420)
+      wall(870, 80, 50, 200, "#94a3b8"),    // Right wall top
+      wall(870, 420, 50, 200, "#94a3b8"),   // Right wall bottom
+      // Inner keep
+      wall(380, 220, 240, 50, "#64748b"),   // Keep top wall
+      wall(380, 430, 240, 50, "#64748b"),   // Keep bottom wall
+      wall(380, 220, 50, 260, "#64748b"),   // Keep left wall
+      wall(570, 220, 50, 260, "#64748b"),   // Keep right wall (inner space ~140px sq)
     ],
     theme: {
       bg: "#e0f2fe",
@@ -389,22 +458,28 @@ export const LEVELS: LevelDef[] = [
   {
     id: 15,
     name: "Lava Cavern",
-    subtitle: "Hot pursuit",
+    subtitle: "Lava river corridors",
     time: 50,
     mouseSpeed: 215,
     mouseAI: "darty",
     mouseCount: 3,
-    hint: "The lava is deadly — treat it like a trap.",
+    hint: "Three lava pools in each row — find the gap and dart through!",
     obstacles: [
-      trap(200, 150, 80, 50),
-      trap(720, 150, 80, 50),
-      trap(200, 500, 80, 50),
-      trap(720, 500, 80, 50),
-      trap(440, 320, 120, 60),
-      wall(80, 320, 60, 60, "#7c2d12"),
-      wall(860, 320, 60, 60, "#7c2d12"),
-      wall(440, 100, 120, 40, "#7c2d12"),
-      wall(440, 560, 120, 40, "#7c2d12"),
+      // Upper lava row: 3 pools with gaps between (crossing at ~220 and ~550)
+      trap(80, 210, 120, 60),
+      trap(350, 210, 120, 60),
+      trap(620, 210, 120, 60),
+      trap(860, 210, 60, 60),
+      // Lower lava row: offset gaps (crossing at ~350 and ~680)
+      trap(80, 430, 60, 60),
+      trap(210, 430, 120, 60),
+      trap(490, 430, 120, 60),
+      trap(750, 430, 170, 60),
+      // Side walls
+      wall(80, 300, 50, 130, "#7c2d12"),
+      wall(870, 300, 50, 130, "#7c2d12"),
+      // Center rock pillar
+      wall(450, 290, 100, 120, "#7c2d12"),
     ],
     theme: {
       bg: "#7f1d1d",
@@ -443,22 +518,29 @@ export const LEVELS: LevelDef[] = [
   {
     id: 17,
     name: "Haunted Manor",
-    subtitle: "Traps in every room",
+    subtitle: "Three rooms, five traps",
     time: 55,
     mouseSpeed: 215,
     mouseAI: "darty",
     mouseCount: 4,
-    hint: "Five traps! Take it slow and stay focused.",
+    hint: "The manor has three rooms — mice dart between them through doorways.",
     obstacles: [
-      trap(200, 180, 50, 50),
-      trap(750, 180, 50, 50),
-      trap(200, 500, 50, 50),
-      trap(750, 500, 50, 50),
-      trap(475, 340, 50, 50),
-      wall(80, 80, 60, 540, "#1e1b4b"),
-      wall(860, 80, 60, 540, "#1e1b4b"),
-      soft(380, 200, 240, 60, "#7c3aed"),
-      soft(380, 460, 240, 60, "#7c3aed"),
+      // Three-room mansion: left room | hallway | right room
+      wall(310, 80, 50, 220, "#1e1b4b"),   // Left room right wall top
+      wall(310, 400, 50, 220, "#1e1b4b"),  // Left room right wall bottom (gap 300–400)
+      wall(640, 80, 50, 220, "#1e1b4b"),   // Right room left wall top
+      wall(640, 400, 50, 220, "#1e1b4b"),  // Right room left wall bottom (gap 300–400)
+      // Traps in each room + hallway
+      trap(160, 200, 50, 50),              // Left room
+      trap(160, 450, 50, 50),              // Left room
+      trap(475, 320, 90, 60),              // Hallway center (big)
+      trap(800, 200, 50, 50),              // Right room
+      trap(800, 450, 50, 50),              // Right room
+      // Furniture
+      soft(100, 80, 160, 60, "#7c3aed"),   // Left room sofa
+      soft(740, 80, 160, 60, "#7c3aed"),   // Right room wardrobe
+      soft(100, 560, 160, 60, "#7c3aed"),  // Left room table
+      soft(740, 560, 160, 60, "#7c3aed"),  // Right room table
     ],
     theme: {
       bg: "#0f172a",
@@ -506,32 +588,19 @@ export const LEVELS: LevelDef[] = [
     decoyMice: 4,
     hint: "Catch the BIG mouse — decoys can't be caught.",
     obstacles: [
-      // LEFT WALL (gap in center)
       wall(80, 80, 60, 180, "#450a0a"),
       wall(80, 400, 60, 180, "#450a0a"),
-
-      // RIGHT WALL (gap in center)
       wall(860, 80, 60, 180, "#450a0a"),
       wall(860, 400, 60, 180, "#450a0a"),
-
-      // TOP WALL (gap in center)
       wall(80, 80, 300, 50, "#450a0a"),
       wall(620, 80, 300, 50, "#450a0a"),
-
-      // BOTTOM WALL (gap in center)
       wall(80, 580, 300, 50, "#450a0a"),
       wall(620, 580, 300, 50, "#450a0a"),
-
-      // Traps
       trap(250, 250, 50, 50),
       trap(700, 250, 50, 50),
       trap(250, 450, 50, 50),
       trap(700, 450, 50, 50),
-
-      // Moving obstacle
       moving(400, 320, 200, 60, 60, 0, 200, "#dc2626"),
-
-      // Inner walls
       wall(450, 180, 100, 60, "#7f1d1d"),
       wall(450, 460, 100, 60, "#7f1d1d"),
     ],
@@ -553,36 +622,21 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 5,
     hint: "Five royal mice. Use every power-up — show them who rules.",
     obstacles: [
-      // LEFT WALL (gap in center)
       wall(80, 80, 60, 180, "#7f1d1d"),
       wall(80, 400, 60, 180, "#7f1d1d"),
-
-      // RIGHT WALL (gap in center)
       wall(860, 80, 60, 180, "#7f1d1d"),
       wall(860, 400, 60, 180, "#7f1d1d"),
-
-      // TOP WALL (gap in center)
       wall(140, 80, 220, 40, "#7f1d1d"),
       wall(640, 80, 220, 40, "#7f1d1d"),
-
-      // BOTTOM WALL (gap in center)
       wall(140, 580, 220, 40, "#7f1d1d"),
       wall(640, 580, 220, 40, "#7f1d1d"),
-
-      // Corner traps
       trap(220, 220, 50, 50),
       trap(730, 220, 50, 50),
       trap(220, 430, 50, 50),
       trap(730, 430, 50, 50),
-
-      // Moving royal guards
       moving(380, 200, 240, 50, 80, 0, 180, "#dc2626"),
       moving(380, 450, 240, 50, -80, 0, 180, "#dc2626"),
-
-      // Center slow zone
       water(440, 320, 120, 60),
-
-      // Center pillars
       wall(340, 320, 60, 60, "#fbbf24"),
       wall(600, 320, 60, 60, "#fbbf24"),
     ],
@@ -604,17 +658,23 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 230,
     mouseAI: "darty",
     mouseCount: 3,
-    hint: "Floating crates drift across — time your path.",
+    hint: "Rockets line the walls — stay in the central launch corridor.",
     obstacles: [
+      // Launch pad rails top and bottom
       wall(80, 80, 840, 40, "#1e1b4b"),
       wall(80, 580, 840, 40, "#1e1b4b"),
-      moving(160, 220, 110, 50, 85, 0, 280, "#6366f1"),
-      moving(730, 350, 110, 50, -85, 0, 280, "#818cf8"),
-      moving(460, 160, 50, 110, 0, 75, 220, "#a855f7"),
-      wall(300, 320, 60, 60, "#1e1b4b"),
-      wall(640, 320, 60, 60, "#1e1b4b"),
-      trap(180, 480, 45, 45),
-      trap(775, 140, 45, 45),
+      // Rocket bays on left and right
+      wall(80, 120, 80, 160, "#6366f1"),   // Rocket bay left top
+      wall(80, 420, 80, 160, "#6366f1"),   // Rocket bay left bottom
+      wall(840, 120, 80, 160, "#818cf8"),  // Rocket bay right top
+      wall(840, 420, 80, 160, "#818cf8"),  // Rocket bay right bottom
+      // Moving crates crossing the corridor
+      moving(200, 230, 110, 50, 90, 0, 280, "#6366f1"),
+      moving(690, 420, 110, 50, -90, 0, 280, "#818cf8"),
+      moving(440, 150, 50, 110, 0, 80, 200, "#a855f7"),
+      // Traps at bay entrances
+      trap(80, 280, 80, 140),              // Left bay gap trap
+      trap(840, 280, 80, 140),             // Right bay gap trap
     ],
     theme: {
       bg: "#0f172a",
@@ -627,22 +687,27 @@ export const LEVELS: LevelDef[] = [
   {
     id: 22,
     name: "Zero-G Lab",
-    subtitle: "No gravity, full chaos",
+    subtitle: "Floating island platforms",
     time: 55,
     mouseSpeed: 235,
     mouseAI: "smart",
     mouseCount: 3,
-    hint: "Asteroid belts criss-cross — dodge them on the run.",
+    hint: "Floating platforms isolate sections — orbit the outside to cut mice off.",
     obstacles: [
-      moving(120, 180, 120, 45, 90, 0, 340, "#6366f1"),
-      moving(760, 380, 120, 45, -90, 0, 340, "#818cf8"),
-      moving(440, 120, 45, 120, 0, 80, 240, "#a78bfa"),
-      moving(440, 460, 45, 120, 0, -80, 240, "#c084fc"),
-      wall(240, 300, 60, 100, "#1e1b4b"),
-      wall(700, 300, 60, 100, "#1e1b4b"),
-      trap(150, 540, 45, 45),
-      trap(805, 115, 45, 45),
+      // Four floating island platforms at cardinal positions
+      soft(120, 130, 200, 140, "#1e1b4b"),  // Island NW
+      soft(680, 130, 200, 140, "#1e1b4b"),  // Island NE
+      soft(120, 430, 200, 140, "#1e1b4b"),  // Island SW
+      soft(680, 430, 200, 140, "#1e1b4b"),  // Island SE
+      // Asteroid belt moving obstacles through the gaps
+      moving(330, 80, 45, 120, 0, 80, 240, "#a78bfa"),
+      moving(625, 500, 45, 120, 0, -80, 240, "#c084fc"),
+      moving(120, 300, 120, 45, 90, 0, 340, "#6366f1"),
+      moving(760, 355, 120, 45, -90, 0, 340, "#818cf8"),
+      // Central core
       water(420, 295, 160, 110),
+      trap(180, 540, 45, 45),
+      trap(775, 120, 45, 45),
     ],
     theme: {
       bg: "#020617",
@@ -749,30 +814,20 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 4,
     hint: "Use the fortress openings to outsmart the boss mice.",
     obstacles: [
-      // LEFT WALL (gap)
       wall(80, 80, 60, 180, "#7f1d1d"),
       wall(80, 400, 60, 180, "#7f1d1d"),
-
-      // RIGHT WALL (gap)
       wall(860, 80, 60, 180, "#7f1d1d"),
       wall(860, 400, 60, 180, "#7f1d1d"),
-
-      // TOP WALL (gap)
       wall(140, 80, 220, 40, "#7f1d1d"),
       wall(640, 80, 220, 40, "#7f1d1d"),
-
-      // BOTTOM WALL (gap)
       wall(140, 580, 220, 40, "#7f1d1d"),
       wall(640, 580, 220, 40, "#7f1d1d"),
-
       trap(260, 220, 55, 55),
       trap(685, 220, 55, 55),
       trap(260, 425, 55, 55),
       trap(685, 425, 55, 55),
-
       moving(350, 195, 300, 55, 90, 0, 190, "#dc2626"),
       moving(350, 450, 300, 55, -90, 0, 190, "#b91c1c"),
-
       water(440, 305, 120, 90),
     ],
     theme: {
@@ -787,22 +842,25 @@ export const LEVELS: LevelDef[] = [
   {
     id: 27,
     name: "Crystal Cavern",
-    subtitle: "Dazzling and deadly",
+    subtitle: "Dazzling gem maze",
     time: 55,
     mouseSpeed: 224,
     mouseAI: "smart",
     mouseCount: 4,
-    hint: "Crystal walls channel mice into corners — use that.",
+    hint: "Crystal walls form a grid maze — corners are dead ends.",
     obstacles: [
-      wall(80, 80, 40, 260, "#7c3aed"),
-      wall(80, 380, 40, 240, "#7c3aed"),
-      wall(880, 80, 40, 260, "#7c3aed"),
-      wall(880, 380, 40, 240, "#7c3aed"),
-      wall(200, 200, 210, 40, "#8b5cf6"),
-      wall(590, 200, 210, 40, "#8b5cf6"),
-      wall(200, 460, 210, 40, "#8b5cf6"),
-      wall(590, 460, 210, 40, "#8b5cf6"),
-      wall(480, 240, 40, 220, "#a78bfa"),
+      // Crystal grid: 3×3 internal pillars with gaps between
+      soft(220, 140, 120, 120, "#7c3aed"),   // NW pillar
+      soft(440, 140, 120, 120, "#8b5cf6"),   // N pillar
+      soft(660, 140, 120, 120, "#7c3aed"),   // NE pillar
+      soft(220, 430, 120, 120, "#8b5cf6"),   // SW pillar
+      soft(440, 430, 120, 120, "#7c3aed"),   // Center pillar
+      soft(660, 430, 120, 120, "#8b5cf6"),   // SE pillar
+      // Connecting crystal walls (partial, leaving passages)
+      wall(80, 80, 40, 260, "#a78bfa"),
+      wall(880, 80, 40, 260, "#a78bfa"),
+      wall(80, 380, 40, 240, "#a78bfa"),
+      wall(880, 380, 40, 240, "#a78bfa"),
       trap(130, 490, 45, 45),
       trap(825, 165, 45, 45),
       moving(310, 315, 100, 40, 80, 0, 160, "#c084fc"),
@@ -823,20 +881,28 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 222,
     mouseAI: "darty",
     mouseCount: 3,
-    hint: "Dead ends everywhere — keep moving or get boxed in.",
+    hint: "A true dead-end maze — memorize the path or get trapped.",
     obstacles: [
-      wall(200, 80, 40, 240, "#94a3b8"),
-      wall(200, 380, 40, 240, "#94a3b8"),
-      wall(760, 80, 40, 240, "#94a3b8"),
-      wall(760, 380, 40, 240, "#94a3b8"),
-      wall(360, 200, 280, 40, "#cbd5e1"),
-      wall(360, 460, 280, 40, "#cbd5e1"),
-      wall(480, 240, 40, 220, "#e2e8f0"),
-      moving(200, 320, 110, 40, 65, 0, 210, "#64748b"),
-      moving(690, 340, 110, 40, -65, 0, 210, "#64748b"),
+      // Left spine — top anchored
+      wall(190, 80, 40, 300, "#94a3b8"),
+      // Second column — bottom anchored
+      wall(360, 320, 40, 300, "#94a3b8"),
+      // Third column — top anchored
+      wall(530, 80, 40, 300, "#94a3b8"),
+      // Fourth column — bottom anchored
+      wall(700, 320, 40, 300, "#94a3b8"),
+      // Right spine — top anchored
+      wall(870, 80, 40, 300, "#94a3b8"),
+      // Horizontal connectors (partial, making dead ends)
+      wall(190, 80, 170, 40, "#cbd5e1"),     // Top connector L1–L2
+      wall(530, 80, 170, 40, "#cbd5e1"),     // Top connector L3–L4
+      wall(360, 580, 170, 40, "#cbd5e1"),    // Bottom connector L2–L3
+      wall(700, 580, 170, 40, "#cbd5e1"),    // Bottom connector L4–R
+      // Moving mirrors
+      moving(230, 320, 110, 40, 65, 0, 120, "#64748b"),
+      moving(610, 340, 110, 40, -65, 0, 120, "#64748b"),
       trap(95, 340, 45, 45),
-      trap(860, 340, 45, 45),
-      trap(480, 110, 45, 45),
+      trap(860, 330, 45, 45),
     ],
     theme: {
       bg: "#0f172a",
@@ -885,35 +951,24 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 6,
     hint: "The arena has openings now — use them wisely.",
     obstacles: [
-      // LEFT WALL (gap)
       wall(80, 80, 60, 180, "#450a0a"),
       wall(80, 400, 60, 180, "#450a0a"),
-
-      // RIGHT WALL (gap)
       wall(860, 80, 60, 180, "#450a0a"),
       wall(860, 400, 60, 180, "#450a0a"),
-
-      // TOP WALL (gap)
       wall(140, 80, 220, 40, "#450a0a"),
       wall(640, 80, 220, 40, "#450a0a"),
-
-      // BOTTOM WALL (gap)
       wall(140, 580, 220, 40, "#450a0a"),
       wall(640, 580, 220, 40, "#450a0a"),
-
       trap(255, 210, 50, 50),
       trap(695, 210, 50, 50),
       trap(255, 440, 50, 50),
       trap(695, 440, 50, 50),
       trap(475, 325, 55, 55),
-
       moving(280, 295, 160, 50, 85, 0, 190, "#dc2626"),
       moving(560, 355, 160, 50, -85, 0, 190, "#b91c1c"),
       moving(455, 155, 90, 65, 0, 85, 200, "#ef4444"),
-
       water(200, 460, 180, 55),
       water(620, 185, 180, 55),
-
       soft(360, 295, 80, 80, "#7f1d1d"),
     ],
     theme: {
