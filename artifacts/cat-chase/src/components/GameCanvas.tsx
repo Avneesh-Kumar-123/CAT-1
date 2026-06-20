@@ -133,7 +133,7 @@ export const GameCanvas = ({
     const s = stateRef.current;
     // deep-copy obstacles so moving ones don't mutate the level def
     s.obstacles = level.obstacles.map((o) => ({ ...o, origin: o.origin ? { ...o.origin } : undefined }));
-    s.cat = { x: 80, y: 80 };
+    s.cat = level.catSpawn ?? { x: 500, y: 350 };
     s.catVel = { x: 0, y: 0 };
     s.catFacing = 0;
     s.catBounce = 0;
