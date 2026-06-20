@@ -126,6 +126,9 @@ export const GameCanvas = ({
     rageMode: false as boolean,
     rageActivatedAt: 0,
     rageBannerLife: 0,
+    lastSpaceAt: 0,
+    dropCheeseAtCat: false,
+    hintLife: 4.5,
   });
 
   // initialize level
@@ -194,6 +197,8 @@ export const GameCanvas = ({
     s.rageMode = false;
     s.rageActivatedAt = 0;
     s.rageBannerLife = 0;
+    s.dropCheeseAtCat = false;
+    s.hintLife = 4.5;
   }, [level]);
 
   // keyboard
@@ -204,6 +209,14 @@ export const GameCanvas = ({
         e.preventDefault();
       }
       stateRef.current.keys.add(k);
+      // Double-Space drops cheese at cat's current position
+      if (k === " ") {
+        const t = performance.now();
+        if (t - stateRef.current.lastSpaceAt < 380) {
+          stateRef.current.dropCheeseAtCat = true;
+        }
+        stateRef.current.lastSpaceAt = t;
+      }
     };
     const up = (e: KeyboardEvent) => {
       stateRef.current.keys.delete(e.key.toLowerCase());
@@ -383,6 +396,14 @@ export const GameCanvas = ({
           sfx.cheese();
         }
       }
+      // Double-Space: drop cheese at cat's current arena position
+      if (!isPaused && !s.catCaught && s.dropCheeseAtCat && !s.cheeseUsed) {
+        s.dropCheeseAtCat = false;
+        s.cheeseBait = { x: s.cat.x, y: s.cat.y, placedAt: now, duration: 4000 };
+        s.cheeseUsed = true;
+        sfx.cheese();
+      }
+
       // Expire cheese after its duration
       if (s.cheeseBait && now - s.cheeseBait.placedAt >= s.cheeseBait.duration) {
         s.cheeseBait = null;
@@ -765,6 +786,40 @@ export const GameCanvas = ({
       if (s.activePower?.kind === "freeze" && s.frozenUntil > now) {
         ctx.fillStyle = "rgba(186, 230, 253, 0.20)";
         ctx.fillRect(0, 0, W, H);
+      }
+
+      // Controls hint strip — fades in at level start, auto-dismisses after 4.5s
+      if (s.hintLife > 0 && !isPaused) {
+        s.hintLife -= dt;
+        const hl = Math.max(0, s.hintLife);
+        const hintAlpha = Math.min(1, hl * 3) * Math.min(1, (4.5 - hl) * 6);
+        if (hintAlpha > 0.02) {
+          const isMob = (canvasRef.current?.clientWidth ?? 1000) < 768;
+          const line1 = isMob ? "🕹️  Joystick to move  •  Double-tap for 🧀" : "⌨️  WASD / Arrows to move  •  Double-Space for 🧀";
+          const line2 = "🧀 = Cheese bait — lures mice to one spot!";
+          ctx.save();
+          ctx.globalAlpha = hintAlpha;
+          const bw = W - 80;
+          const bh = 62;
+          const bx = 40;
+          const by = H - 100;
+          ctx.fillStyle = "rgba(0,0,0,0.72)";
+          roundRect(ctx, bx, by, bw, bh, 14);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255,255,255,0.18)";
+          ctx.lineWidth = 1.5;
+          roundRect(ctx, bx, by, bw, bh, 14);
+          ctx.stroke();
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 15px Fredoka, sans-serif";
+          ctx.fillText(line1, W / 2, by + 20);
+          ctx.fillStyle = "rgba(251,191,36,0.92)";
+          ctx.font = "13px Fredoka, sans-serif";
+          ctx.fillText(line2, W / 2, by + 44);
+          ctx.restore();
+        }
       }
 
       // Rage banner: "🔥 LAST ONE!" fades in fast, lingers, then fades out

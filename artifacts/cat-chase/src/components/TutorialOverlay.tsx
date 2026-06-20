@@ -19,8 +19,8 @@ const STEPS = [
   {
     icon: "🧀",
     title: "Use cheese bait",
-    joystickBody: "Tap 🧀 or double-tap the screen,\nor drag 🧀 anywhere to lure the mouse.",
-    tapBody: "Tap 🧀, hold anywhere 0.5s,\nor drag 🧀 to lure the mouse.",
+    joystickBody: "Tap 🧀 in the corner, double-tap the screen,\nor press Space Space to drop it at the cat!",
+    tapBody: "Tap 🧀 in the corner, hold for 0.5s,\nor press Space Space to drop it at the cat!",
   },
 ];
 
