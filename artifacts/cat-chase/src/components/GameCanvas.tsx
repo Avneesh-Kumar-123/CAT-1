@@ -395,7 +395,7 @@ export const GameCanvas = ({
         const mobileDiffMul = isMobile ? 0.88 : 1;
         for (const m of s.mice) {
           const prevDashUntil = m.dashUntil;
-          const rageMul = s.rageMode ? 1.4 : 1;
+          const rageMul = 1; // no speed penalty — rage is visual/audio only
           const d = updateMouseAI(
             m, s.cat, level, s.obstacles, W, H, dt, now,
             difficultyMulRef.current * mobileDiffMul * rageMul, s.frozenUntil, s.cheeseBait,

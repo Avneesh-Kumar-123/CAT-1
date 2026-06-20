@@ -124,16 +124,16 @@ export const updateMouseAI = (
   }
 
   // ── Close-call Dash Burst ────────────────────────────────────────────────
-  // When cat gets within 68px, non-decoy mouse bursts away at 2.6× speed for 480ms.
-  // 1800ms cooldown between dashes so it can't spam.
+  // When cat gets within 48px, non-decoy mouse bursts away at 1.5× speed for 250ms.
+  // 3200ms cooldown between dashes so it can't spam.
   if (!m.isDecoy) {
     const catDist = Math.hypot(m.pos.x - cat.x, m.pos.y - cat.y);
-    if (catDist < 68 && catDist > 1 && (!m.dashUntil || now > m.dashUntil + 1800)) {
+    if (catDist < 48 && catDist > 1 && (!m.dashUntil || now > m.dashUntil + 3200)) {
       const ex = m.pos.x - cat.x;
       const ey = m.pos.y - cat.y;
       const el = Math.hypot(ex, ey);
       m.dashDir = { x: ex / el, y: ey / el };
-      m.dashUntil = now + 480;
+      m.dashUntil = now + 250;
       m.steerUntil = 0; // force direction re-evaluation after burst ends
     }
   }
@@ -218,7 +218,7 @@ export const updateMouseAI = (
 
   // ── Apply dash burst — overrides normal AI movement ──────────────────────
   if (m.dashUntil && now < m.dashUntil && m.dashDir) {
-    const dashSpeed = level.mouseSpeed * speedMul * 2.6 * (m.isDecoy ? 0.85 : 1);
+    const dashSpeed = level.mouseSpeed * speedMul * 1.5 * (m.isDecoy ? 0.85 : 1);
     m.vel.x += (m.dashDir.x * dashSpeed - m.vel.x) * 0.48;
     m.vel.y += (m.dashDir.y * dashSpeed - m.vel.y) * 0.48;
     if (Math.abs(m.vel.x) > 5 || Math.abs(m.vel.y) > 5) {
