@@ -123,6 +123,9 @@ export const GameCanvas = ({
     combo: 0,
     cheeseBait: null as CheeseBait | null,
     cheeseUsed: false,
+    rageMode: false as boolean,
+    rageActivatedAt: 0,
+    rageBannerLife: 0,
   });
 
   // initialize level
@@ -188,6 +191,9 @@ export const GameCanvas = ({
     s.combo = 0;
     s.cheeseBait = null;
     s.cheeseUsed = false;
+    s.rageMode = false;
+    s.rageActivatedAt = 0;
+    s.rageBannerLife = 0;
   }, [level]);
 
   // keyboard
@@ -388,10 +394,17 @@ export const GameCanvas = ({
         // On mobile, slow mouse by 12% — compensates for thumb lag vs mouse precision
         const mobileDiffMul = isMobile ? 0.88 : 1;
         for (const m of s.mice) {
+          const prevDashUntil = m.dashUntil;
+          const rageMul = s.rageMode ? 1.4 : 1;
           const d = updateMouseAI(
             m, s.cat, level, s.obstacles, W, H, dt, now,
-            difficultyMulRef.current * mobileDiffMul, s.frozenUntil, s.cheeseBait,
+            difficultyMulRef.current * mobileDiffMul * rageMul, s.frozenUntil, s.cheeseBait,
           );
+          // Detect newly triggered dash burst → play sfx + float text
+          if (m.dashUntil && m.dashUntil !== prevDashUntil && now < m.dashUntil) {
+            sfx.dash();
+            s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 30, text: "💨 WOOSH!", life: 0.65, color: "#f97316" });
+          }
           const moved = moveWithCollision(
             m.pos, MOUSE_RADIUS, d.x, d.y, s.obstacles, W, H,
             ["wall", "soft", "moving"],
@@ -425,6 +438,13 @@ export const GameCanvas = ({
           }
         }
         s.mice = survivors;
+        // Rage mode: last mouse gets 40% speed boost + red glow + banner
+        if (s.mice.length === 1 && !s.rageMode && s.miceTotal > 1) {
+          s.rageMode = true;
+          s.rageActivatedAt = now;
+          s.rageBannerLife = 2.2;
+          sfx.rage();
+        }
         if (s.mice.length === 0) {
           s.catCaught = true;
           setShake(0.6);
@@ -691,6 +711,19 @@ export const GameCanvas = ({
 
       // mice
       for (const m of s.mice) {
+        // Rage glow: pulsing red halo when last mouse is in rage mode
+        if (s.rageMode) {
+          const pulse = 0.55 + 0.45 * Math.sin(now / 110);
+          ctx.save();
+          const glowRad = ctx.createRadialGradient(m.pos.x, m.pos.y, 6, m.pos.x, m.pos.y, 38);
+          glowRad.addColorStop(0, `rgba(239,68,68,${(0.5 + pulse * 0.35).toFixed(2)})`);
+          glowRad.addColorStop(1, "rgba(239,68,68,0)");
+          ctx.fillStyle = glowRad;
+          ctx.beginPath();
+          ctx.arc(m.pos.x, m.pos.y, 38, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
         drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent);
       }
@@ -732,6 +765,30 @@ export const GameCanvas = ({
       if (s.activePower?.kind === "freeze" && s.frozenUntil > now) {
         ctx.fillStyle = "rgba(186, 230, 253, 0.20)";
         ctx.fillRect(0, 0, W, H);
+      }
+
+      // Rage banner: "🔥 LAST ONE!" fades in fast, lingers, then fades out
+      if (s.rageBannerLife > 0) {
+        s.rageBannerLife -= dt;
+        const bl = Math.max(0, s.rageBannerLife);
+        const bannerAlpha = Math.min(1, (2.2 - bl) * 6) * Math.min(1, bl * 5);
+        if (bannerAlpha > 0.01) {
+          ctx.save();
+          ctx.globalAlpha = bannerAlpha;
+          ctx.fillStyle = "rgba(185,28,28,0.92)";
+          roundRect(ctx, W / 2 - 178, H / 2 - 54, 356, 66, 20);
+          ctx.fill();
+          ctx.strokeStyle = "#fca5a5";
+          ctx.lineWidth = 3;
+          roundRect(ctx, W / 2 - 178, H / 2 - 54, 356, 66, 20);
+          ctx.stroke();
+          ctx.font = "bold 32px Fredoka, sans-serif";
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("🔥  LAST ONE!", W / 2, H / 2 - 21);
+          ctx.restore();
+        }
       }
 
       ctx.restore();

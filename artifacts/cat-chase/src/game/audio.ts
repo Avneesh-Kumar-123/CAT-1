@@ -356,4 +356,38 @@ export const sfx = {
   step: () => {
     tone(180 + Math.random() * 40, 0.04, "triangle", 0.06, 0);
   },
+
+  // Quick pitch-up whoosh — mouse close-call dash escape
+  dash: () => {
+    tone(300,  0.06, "sine",     0.13, 0,    950);
+    tone(700,  0.10, "triangle", 0.09, 0.04, 1500);
+    tone(1200, 0.08, "sine",     0.06, 0.11, 1900);
+  },
+
+  // Ominous two-hit sting + rising tone — last-mouse rage activation
+  rage: () => {
+    const c = getCtx();
+    if (!c || muted) return;
+    const t = c.currentTime;
+    for (let i = 0; i < 2; i++) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(100, t + i * 0.17);
+      o.frequency.exponentialRampToValueAtTime(40, t + i * 0.17 + 0.14);
+      g.gain.setValueAtTime(0.28, t + i * 0.17);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.17 + 0.16);
+      o.connect(g).connect(c.destination);
+      o.start(t + i * 0.17); o.stop(t + i * 0.17 + 0.20);
+    }
+    const os = c.createOscillator();
+    const gs = c.createGain();
+    os.type = "sine";
+    os.frequency.setValueAtTime(220, t + 0.36);
+    os.frequency.exponentialRampToValueAtTime(660, t + 0.72);
+    gs.gain.setValueAtTime(0.15, t + 0.36);
+    gs.gain.exponentialRampToValueAtTime(0.0001, t + 0.76);
+    os.connect(gs).connect(c.destination);
+    os.start(t + 0.36); os.stop(t + 0.80);
+  },
 };

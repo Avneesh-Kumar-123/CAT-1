@@ -12,6 +12,10 @@ export type MouseState = {
   /** how long to commit to currently chosen flee angle (avoids dithering) */
   steerUntil?: number;
   steerAngle?: number;
+  /** Close-call dash burst: active until this timestamp */
+  dashUntil?: number;
+  /** Direction of the current dash burst */
+  dashDir?: Vec2;
 };
 
 const MOUSE_RADIUS = 14;
@@ -119,6 +123,21 @@ export const updateMouseAI = (
     return { x: 0, y: 0 };
   }
 
+  // ── Close-call Dash Burst ────────────────────────────────────────────────
+  // When cat gets within 68px, non-decoy mouse bursts away at 2.6× speed for 480ms.
+  // 1800ms cooldown between dashes so it can't spam.
+  if (!m.isDecoy) {
+    const catDist = Math.hypot(m.pos.x - cat.x, m.pos.y - cat.y);
+    if (catDist < 68 && catDist > 1 && (!m.dashUntil || now > m.dashUntil + 1800)) {
+      const ex = m.pos.x - cat.x;
+      const ey = m.pos.y - cat.y;
+      const el = Math.hypot(ex, ey);
+      m.dashDir = { x: ex / el, y: ey / el };
+      m.dashUntil = now + 480;
+      m.steerUntil = 0; // force direction re-evaluation after burst ends
+    }
+  }
+
   const ai = m.isDecoy ? "darty" : level.mouseAI;
 
   let targetDx = 0;
@@ -194,6 +213,17 @@ export const updateMouseAI = (
   if (now < m.pauseUntil) {
     m.vel.x *= 0.6;
     m.vel.y *= 0.6;
+    return { x: m.vel.x * dt, y: m.vel.y * dt };
+  }
+
+  // ── Apply dash burst — overrides normal AI movement ──────────────────────
+  if (m.dashUntil && now < m.dashUntil && m.dashDir) {
+    const dashSpeed = level.mouseSpeed * speedMul * 2.6 * (m.isDecoy ? 0.85 : 1);
+    m.vel.x += (m.dashDir.x * dashSpeed - m.vel.x) * 0.48;
+    m.vel.y += (m.dashDir.y * dashSpeed - m.vel.y) * 0.48;
+    if (Math.abs(m.vel.x) > 5 || Math.abs(m.vel.y) > 5) {
+      m.facing = Math.atan2(m.vel.y, m.vel.x);
+    }
     return { x: m.vel.x * dt, y: m.vel.y * dt };
   }
 
