@@ -198,7 +198,7 @@ export const GameCanvas = ({
     s.rageActivatedAt = 0;
     s.rageBannerLife = 0;
     s.dropCheeseAtCat = false;
-    s.hintLife = 4.5;
+    s.hintLife = level.id <= 2 ? 4.5 : 0;
   }, [level]);
 
   // keyboard
