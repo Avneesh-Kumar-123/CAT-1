@@ -668,11 +668,11 @@ const WinPanel = ({
       </div>
 
       <div
-        className="px-6 pt-6 pb-5 text-center text-primary-foreground"
+        className="px-6 pt-6 pb-5 text-center text-white"
         style={{
           background: outcome.isMilestone
             ? "linear-gradient(135deg, #ca8a04, #fbbf24, #f59e0b)"
-            : "linear-gradient(135deg, var(--primary), var(--secondary))",
+            : "linear-gradient(135deg, #f97316, #a855f7)",
         }}
       >
         <motion.div
