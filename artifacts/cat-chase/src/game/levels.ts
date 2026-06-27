@@ -420,24 +420,30 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 176,
     mouseAI: "smart",
     mouseCount: 4,
-    // Surprise: 2 decoy mice in the battlements
     decoyMice: 2,
     hint: "Two of those mice are decoys — only the real ones count!",
     obstacles: [
       // Castle battlement — 4 towers connected by walls with gaps
-      wall(80, 80, 200, 50, "#94a3b8"),     // Top wall left
-      wall(720, 80, 200, 50, "#94a3b8"),    // Top wall right (gap 280–720)
-      wall(80, 570, 200, 50, "#94a3b8"),    // Bottom wall left
-      wall(720, 570, 200, 50, "#94a3b8"),   // Bottom wall right
-      wall(80, 80, 50, 200, "#94a3b8"),     // Left wall top
-      wall(80, 420, 50, 200, "#94a3b8"),    // Left wall bottom (gap 280–420)
-      wall(870, 80, 50, 200, "#94a3b8"),    // Right wall top
-      wall(870, 420, 50, 200, "#94a3b8"),   // Right wall bottom
+      wall(80, 80, 200, 50, "#94a3b8"),
+      wall(720, 80, 200, 50, "#94a3b8"),
+
+      wall(80, 570, 200, 50, "#94a3b8"),
+      wall(720, 570, 200, 50, "#94a3b8"),
+
+      wall(80, 80, 50, 200, "#94a3b8"),
+      wall(80, 420, 50, 200, "#94a3b8"),
+
+      wall(870, 80, 50, 200, "#94a3b8"),
+      wall(870, 420, 50, 200, "#94a3b8"),
+
       // Inner keep
-      wall(380, 220, 240, 50, "#64748b"),   // Keep top wall
-      wall(380, 430, 240, 50, "#64748b"),   // Keep bottom wall
-      wall(380, 220, 50, 260, "#64748b"),   // Keep left wall
-      wall(570, 220, 50, 260, "#64748b"),   // Keep right wall (inner space ~140px sq)
+      wall(380, 220, 240, 50, "#64748b"),   // Top wall
+      wall(380, 430, 240, 50, "#64748b"),   // Bottom wall
+      wall(380, 220, 50, 260, "#64748b"),   // Left wall
+
+      // Right wall split into 2 parts (doorway in middle)
+      wall(570, 220, 50, 50, "#64748b"),    // Right wall top
+      wall(570, 370, 50, 110, "#64748b"),   // Right wall bottom
     ],
     theme: {
       bg: "#e0f2fe",
@@ -652,22 +658,33 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 3,
     hint: "Rockets line the walls — stay in the central launch corridor.",
     obstacles: [
-      // Launch pad rails top and bottom
+      // Top & bottom rails
       wall(80, 80, 840, 40, "#1e1b4b"),
       wall(80, 580, 840, 40, "#1e1b4b"),
-      // Rocket bays on left and right
-      wall(80, 120, 80, 160, "#6366f1"),   // Rocket bay left top
-      wall(80, 420, 80, 160, "#6366f1"),   // Rocket bay left bottom
-      wall(840, 120, 80, 160, "#818cf8"),  // Rocket bay right top
-      wall(840, 420, 80, 160, "#818cf8"),  // Rocket bay right bottom
-      // Moving crates crossing the corridor
-      moving(200, 230, 110, 50, 90, 0, 280, "#6366f1"),
-      moving(690, 420, 110, 50, -90, 0, 280, "#818cf8"),
-      moving(440, 150, 50, 110, 0, 80, 200, "#a855f7"),
-      // Traps at bay entrances
-      trap(80, 280, 80, 140),              // Left bay gap trap
-      trap(840, 280, 80, 140),             // Right bay gap trap
+
+      // Rocket bays
+      wall(80, 120, 80, 160, "#6366f1"),
+      wall(80, 420, 80, 160, "#6366f1"),
+
+      wall(840, 120, 80, 160, "#818cf8"),
+      wall(840, 420, 80, 160, "#818cf8"),
+
+      // NEW central launch tower
+      wall(450, 180, 100, 340, "#a855f7"),
+
+      // Moving cargo
+      moving(250, 300, 120, 50, 80, 0, 180, "#6366f1"),
+      moving(630, 350, 120, 50, -80, 0, 180, "#818cf8"),
+
+      // Side docking platforms
+      wall(220, 250, 120, 40, "#6366f1"),
+      wall(660, 390, 120, 40, "#818cf8"),
+
+      // Traps
+      trap(250, 520, 50, 50),
+      trap(700, 150, 50, 50),
     ],
+
     theme: {
       bg: "#0f172a",
       bgGradient: ["#1e1b4b", "#0f172a"],
