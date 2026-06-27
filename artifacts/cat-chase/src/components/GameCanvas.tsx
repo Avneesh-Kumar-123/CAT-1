@@ -663,19 +663,38 @@ export const GameCanvas = ({
           ctx.arc(o.x + o.w / 2, o.y + o.h / 2, 4, 0, Math.PI * 2);
           ctx.fill();
         } else {
-          ctx.fillStyle = o.color ?? "#8b5e3c";
-          roundRect(ctx, o.x, o.y, o.w, o.h, o.kind === "soft" ? 18 : 8);
-          ctx.fill();
-          // top highlight
-          ctx.globalAlpha = 0.25;
-          ctx.fillStyle = "#fff";
-          roundRect(ctx, o.x + 4, o.y + 4, o.w - 8, Math.min(8, o.h / 4), 4);
+          const radius = o.kind === "soft" ? 18 : 8;
+          // ── Drop shadow beneath wall ─────────────────────────────────────────
+          ctx.globalAlpha = 0.28;
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          roundRect(ctx, o.x + 5, o.y + 6, o.w, o.h, radius);
           ctx.fill();
           ctx.globalAlpha = 1;
-          // shadow
-          ctx.globalAlpha = 0.18;
+          // ── Main wall fill with vertical gradient ─────────────────────────────
+          const wallGrad = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.h);
+          const base = o.color ?? "#8b5e3c";
+          wallGrad.addColorStop(0, lightenColor(base, 0.22));
+          wallGrad.addColorStop(0.45, base);
+          wallGrad.addColorStop(1, darkenColor(base, 0.30));
+          ctx.fillStyle = wallGrad;
+          roundRect(ctx, o.x, o.y, o.w, o.h, radius);
+          ctx.fill();
+          // ── Top-face bright edge (3D top face) ───────────────────────────────
+          ctx.globalAlpha = 0.55;
+          ctx.fillStyle = lightenColor(base, 0.45);
+          roundRect(ctx, o.x + 2, o.y + 2, o.w - 4, Math.min(6, o.h * 0.2), Math.min(radius, 5));
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          // ── Left-face bright strip ────────────────────────────────────────────
+          ctx.globalAlpha = 0.30;
+          ctx.fillStyle = "#fff";
+          roundRect(ctx, o.x + 2, o.y + 6, Math.min(5, o.w * 0.15), o.h - 10, 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          // ── Bottom/right dark edge ─────────────────────────────────────────────
+          ctx.globalAlpha = 0.35;
           ctx.fillStyle = "#000";
-          roundRect(ctx, o.x + 3, o.y + o.h - 4, o.w - 6, 4, 2);
+          roundRect(ctx, o.x + 3, o.y + o.h - 5, o.w - 6, 5, 2);
           ctx.fill();
           ctx.globalAlpha = 1;
         }
@@ -943,6 +962,19 @@ export const GameCanvas = ({
       }
       for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
 
+      // ── Cat spotlight: warm radial glow around the cat ───────────────────────
+      {
+        const spotR = 200;
+        const spot = ctx.createRadialGradient(s.cat.x, s.cat.y, 20, s.cat.x, s.cat.y, spotR);
+        spot.addColorStop(0, "rgba(255,240,180,0.13)");
+        spot.addColorStop(0.5, "rgba(255,220,120,0.06)");
+        spot.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = spot;
+        ctx.beginPath();
+        ctx.arc(s.cat.x, s.cat.y, spotR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       // cat
       drawCat(ctx, s.cat.x, s.cat.y, s.catFacing, s.catBounce, getSkin(catSkinRef.current));
 
@@ -974,6 +1006,17 @@ export const GameCanvas = ({
         ctx.fillText(ft.text, ft.x, ft.y);
       }
       ctx.globalAlpha = 1;
+
+      // ── Edge vignette: dark fade toward arena border ──────────────────────────
+      {
+        const vx = W / 2, vy = H / 2;
+        const vigR = Math.max(W, H) * 0.78;
+        const vig = ctx.createRadialGradient(vx, vy, vigR * 0.38, vx, vy, vigR);
+        vig.addColorStop(0, "rgba(0,0,0,0)");
+        vig.addColorStop(1, "rgba(0,0,0,0.48)");
+        ctx.fillStyle = vig;
+        ctx.fillRect(0, 0, W, H);
+      }
 
       // freeze overlay
       if (s.activePower?.kind === "freeze" && s.frozenUntil > now) {
@@ -1088,6 +1131,16 @@ export const GameCanvas = ({
     </div>
   );
 };
+
+// Parse "#rrggbb" → [r,g,b] and blend toward white (amt>0) or black (amt<0)
+const lightenColor = (hex: string, amt: number): string => {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = Math.min(255, Math.round(((n >> 16) & 0xff) + 255 * amt));
+  const g = Math.min(255, Math.round(((n >> 8) & 0xff) + 255 * amt));
+  const b = Math.min(255, Math.round((n & 0xff) + 255 * amt));
+  return `rgb(${r},${g},${b})`;
+};
+const darkenColor = (hex: string, amt: number): string => lightenColor(hex, -amt);
 
 const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
   const rr = Math.min(r, w / 2, h / 2);
