@@ -422,7 +422,7 @@ export const GameCanvas = ({
       if (!isPaused && !s.catCaught) {
         const survivors: MouseState[] = [];
         // On mobile, slow mouse by 12% — compensates for thumb lag vs mouse precision
-        const mobileDiffMul = isMobile ? 0.88 : 1;
+        const mobileDiffMul = isMobile ? 0.75 : 1;
         for (const m of s.mice) {
           // ── Teleport Mouse: snap to open position every 8 seconds ──────────
           if (m.mouseType === "teleport" && !m.isDecoy) {
