@@ -364,6 +364,35 @@ export const sfx = {
     tone(1200, 0.08, "sine",     0.06, 0.11, 1900);
   },
 
+  // Triumphant golden-mouse fanfare — ascending arpeggio + shimmer
+  goldenCatch: () => {
+    const c = getCtx();
+    if (!c || muted) return;
+    const t = c.currentTime;
+    const notes = [523, 659, 784, 1047, 1319, 1568];
+    notes.forEach((f, i) => {
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(f, t + i * 0.07);
+      g.gain.setValueAtTime(0, t + i * 0.07);
+      g.gain.linearRampToValueAtTime(0.22, t + i * 0.07 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.07 + 0.28);
+      osc.connect(g).connect(c.destination);
+      osc.start(t + i * 0.07);
+      osc.stop(t + i * 0.07 + 0.32);
+    });
+    // shimmer bell on top
+    tone(2093, 0.5, "sine", 0.10, notes.length * 0.07);
+  },
+
+  // Bright chime — time orb collected
+  timeOrb: () => {
+    tone(1047, 0.10, "triangle", 0.18, 0, 1568);
+    tone(1319, 0.16, "sine",     0.14, 0.08, 1760);
+    tone(1760, 0.20, "triangle", 0.10, 0.18, 2093);
+  },
+
   // Ominous two-hit sting + rising tone — last-mouse rage activation
   rage: () => {
     const c = getCtx();

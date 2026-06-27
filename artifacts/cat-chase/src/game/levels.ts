@@ -90,7 +90,8 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 122,
     mouseAI: "scared",
     mouseCount: 2,
-    hint: "Chase mice around the garden beds — corner them against the bushes!",
+    timeOrbs: [{ x: 280, y: 160 }, { x: 720, y: 540 }, { x: 500, y: 350 }],
+    hint: "Collect the golden clocks for +5s each — then corner the mice!",
     obstacles: [
       // Four corner bushes — big open center to chase freely
       wall(60, 60, 130, 80, "#16a34a"),
@@ -140,7 +141,8 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 138,
     mouseAI: "darty",
     mouseCount: 2,
-    hint: "Avoid the mousetraps in the corners — the center is safe to chase!",
+    hasGoldenMouse: true,
+    hint: "One mouse wears a crown 👑 — catch it for +8s! Avoid corner traps.",
     obstacles: [
       // Four corner traps — center arena is wide open and safe
       trap(90, 90, 55, 55),
@@ -169,7 +171,9 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 148,
     mouseAI: "smart",
     mouseCount: 3,
-    hint: "Conveyor belts shift — time your moves!",
+    hasGoldenMouse: true,
+    timeOrbs: [{ x: 200, y: 400 }, { x: 760, y: 290 }],
+    hint: "One mouse wears a crown 👑 (+8s!). Grab the clocks too — every second counts!",
     obstacles: [
       moving(160, 200, 160, 55, 90, 0, 300, "#fbbf24"),
       moving(680, 340, 160, 55, -90, 0, 300, "#fbbf24"),
@@ -227,7 +231,9 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 148,
     mouseAI: "scared",
     mouseCount: 3,
-    hint: "The cabin has two rooms — mice scatter between them.",
+    hasGoldenMouse: true,
+    timeOrbs: [{ x: 180, y: 200 }, { x: 820, y: 500 }],
+    hint: "Spot the crown 👑 for +8s! Clock pickups extend your time too.",
     obstacles: [
       // Central dividing wall with doorway
       wall(440, 80, 120, 210, "#cbd5e1"),  // Divider top

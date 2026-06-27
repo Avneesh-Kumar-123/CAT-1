@@ -129,6 +129,7 @@ export const GameCanvas = ({
     lastSpaceAt: 0,
     dropCheeseAtCat: false,
     hintLife: 4.5,
+    timeOrbs: [] as Array<{ x: number; y: number; collected: boolean }>,
   });
 
   // initialize level
@@ -200,6 +201,13 @@ export const GameCanvas = ({
     s.rageBannerLife = 0;
     s.dropCheeseAtCat = false;
     s.hintLife = level.id <= 2 ? 4.5 : 0;
+    // mark one random mouse as golden
+    if (level.hasGoldenMouse && s.mice.length > 0) {
+      const idx = Math.floor(Math.random() * s.mice.length);
+      s.mice[idx].isGolden = true;
+    }
+    // time orbs from level definition
+    s.timeOrbs = (level.timeOrbs ?? []).map((o) => ({ ...o, collected: false }));
   }, [level]);
 
   // keyboard
@@ -431,9 +439,10 @@ export const GameCanvas = ({
 
           const prevDashUntil = m.dashUntil;
           const rageMul = 1; // no speed penalty — rage is visual/audio only
+          const goldenMul = m.isGolden ? 1.15 : 1;
           const d = updateMouseAI(
             m, s.cat, level, s.obstacles, W, H, dt, now,
-            difficultyMulRef.current * mobileDiffMul * rageMul, s.frozenUntil, s.cheeseBait,
+            difficultyMulRef.current * mobileDiffMul * rageMul * goldenMul, s.frozenUntil, s.cheeseBait,
           );
           // Detect newly triggered dash burst → play sfx + float text
           if (m.dashUntil && m.dashUntil !== prevDashUntil && now < m.dashUntil) {
@@ -458,6 +467,13 @@ export const GameCanvas = ({
             const comboBonus = s.combo > 1 ? s.combo * 25 : 0;
             const catchScore = 100 + Math.round(s.timeLeft * 5) + comboBonus;
             s.score += catchScore;
+            // Golden Mouse: +8s bonus + fanfare
+            if (m.isGolden) {
+              s.timeLeft = Math.min(level.time + 8, s.timeLeft + 8);
+              sfx.goldenCatch();
+              s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 44, text: "👑 +8s!", life: 1.8, color: "#fbbf24" });
+              s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 24, text: `+${catchScore}`, life: 1.2, color: "#fbbf24" });
+            } else {
             // small time bonus per catch (not on the final mouse)
             const isFinal = survivors.length + (s.mice.length - s.mice.indexOf(m) - 1) === 0;
             if (!isFinal) {
@@ -465,6 +481,7 @@ export const GameCanvas = ({
               s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 24, text: `+${catchScore}  +3s`, life: 1.2, color: "#fbbf24" });
             } else {
               s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 24, text: `+${catchScore}`, life: 1.2, color: "#fbbf24" });
+            }
             }
             setShake(0.45);
             // mouse is removed (not pushed to survivors)
@@ -529,6 +546,21 @@ export const GameCanvas = ({
           if (now - p.spawnedAt > 8000) return false;
           return true;
         });
+      }
+
+      // time orb collection
+      if (!isPaused && !s.catCaught) {
+        for (const orb of s.timeOrbs) {
+          if (orb.collected) continue;
+          const dist = Math.hypot(s.cat.x - orb.x, s.cat.y - orb.y);
+          if (dist < CAT_RADIUS + 18) {
+            orb.collected = true;
+            s.timeLeft = Math.min(level.time + 10, s.timeLeft + 5);
+            sfx.timeOrb();
+            s.score += 30;
+            s.floatTexts.push({ x: orb.x, y: orb.y - 20, text: "⏱ +5s", life: 1.4, color: "#fbbf24" });
+          }
+        }
       }
 
       // particles
@@ -744,6 +776,45 @@ export const GameCanvas = ({
         }
       }
 
+      // ── Time Orbs ─────────────────────────────────────────────────────────────
+      for (const orb of s.timeOrbs) {
+        if (orb.collected) continue;
+        const pulse = 0.75 + 0.25 * Math.sin(now / 400);
+        const spin = (now / 1200) % (Math.PI * 2);
+        ctx.save();
+        ctx.translate(orb.x, orb.y);
+        // outer glow
+        const orbGlow = ctx.createRadialGradient(0, 0, 4, 0, 0, 24);
+        orbGlow.addColorStop(0, `rgba(251,191,36,${(0.55 * pulse).toFixed(2)})`);
+        orbGlow.addColorStop(1, "rgba(251,191,36,0)");
+        ctx.fillStyle = orbGlow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.fill();
+        // clock face
+        ctx.fillStyle = "#fef3c7";
+        ctx.strokeStyle = "#f59e0b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // clock hands
+        ctx.strokeStyle = "#92400e";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(spin - Math.PI / 2) * 8, Math.sin(spin - Math.PI / 2) * 8);
+        ctx.stroke();
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(spin * 12 - Math.PI / 2) * 6, Math.sin(spin * 12 - Math.PI / 2) * 6);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // mice
       for (const m of s.mice) {
         // Rage glow: pulsing red halo when last mouse is in rage mode
@@ -842,8 +913,33 @@ export const GameCanvas = ({
           ctx.restore();
         }
 
+        // ── Golden Mouse: pulsing gold halo ──────────────────────────────────
+        if (m.isGolden) {
+          const gPulse = 0.6 + 0.4 * Math.sin(now / 180);
+          ctx.save();
+          const goldGlow = ctx.createRadialGradient(m.pos.x, m.pos.y, 6, m.pos.x, m.pos.y, 34);
+          goldGlow.addColorStop(0, `rgba(251,191,36,${(0.65 * gPulse).toFixed(2)})`);
+          goldGlow.addColorStop(1, "rgba(251,191,36,0)");
+          ctx.fillStyle = goldGlow;
+          ctx.beginPath();
+          ctx.arc(m.pos.x, m.pos.y, 34, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
         drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent);
+
+        // ── Golden Mouse: crown above mouse ──────────────────────────────────
+        if (m.isGolden) {
+          ctx.save();
+          ctx.font = "16px serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          const crownBob = Math.sin(now / 300) * 2;
+          ctx.fillText("👑", m.pos.x, m.pos.y - MOUSE_RADIUS - 4 + crownBob);
+          ctx.restore();
+        }
       }
       for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
 

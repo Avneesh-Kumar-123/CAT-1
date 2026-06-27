@@ -56,6 +56,10 @@ export type LevelDef = {
   catSpawn?: Vec2;
   /** special mouse behaviour type applied to all mice on this level */
   mouseType?: MouseType;
+  /** one mouse on this level gets a gold crown — catching it grants +8s */
+  hasGoldenMouse?: boolean;
+  /** golden clock pickups on the floor — each grants +5s when the cat touches it */
+  timeOrbs?: Array<{ x: number; y: number }>;
   theme: LevelTheme;
   hint: string;
 };

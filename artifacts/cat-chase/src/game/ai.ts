@@ -9,6 +9,8 @@ export type MouseState = {
   dartUntil: number;
   dartDir: Vec2;
   isDecoy?: boolean;
+  /** This mouse has a gold crown — catching it grants a time bonus */
+  isGolden?: boolean;
   /** how long to commit to currently chosen flee angle (avoids dithering) */
   steerUntil?: number;
   steerAngle?: number;
