@@ -626,6 +626,126 @@ export const GameCanvas = ({
       }
       ctx.globalAlpha = 1;
 
+      // ── Animated floor atmosphere (world-theme aware, mobile-safe) ────────────
+      // All effects are pure math — no state, no game-logic impact.
+      // Mobile gets half the element count for performance.
+      const floorCount = isMobile ? 6 : 12;
+      const pt = level.theme.particles;
+
+      if (pt === "spark") {
+        // 🔥 Lava / fire levels: rising orange embers
+        ctx.save();
+        for (let i = 0; i < floorCount; i++) {
+          const seed = i * 137.5;
+          const speed = 38 + (i % 5) * 14;
+          const xPos = (Math.sin(seed) * 0.5 + 0.5) * W;
+          const drift = Math.sin(now / 900 + seed) * 22;
+          const yRaw = H - ((now / speed + seed * 4.3) % H);
+          const sz = 2 + (i % 3) * 1.2;
+          const alpha = 0.25 + Math.sin(now / 300 + seed) * 0.15;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = i % 3 === 0 ? "#fb923c" : i % 3 === 1 ? "#fbbf24" : "#f87171";
+          ctx.beginPath();
+          ctx.arc(xPos + drift, yRaw, sz, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else if (pt === "snow") {
+        // ❄️ Snow / ice levels: falling snowflakes
+        ctx.save();
+        for (let i = 0; i < floorCount; i++) {
+          const seed = i * 93.7;
+          const speed = 22 + (i % 4) * 9;
+          const xPos = (Math.sin(seed * 2.3) * 0.5 + 0.5) * W + Math.sin(now / 1100 + seed) * 18;
+          const yPos = (now / speed + seed * 6.1) % H;
+          const sz = 2 + (i % 4);
+          ctx.globalAlpha = 0.18 + (i % 3) * 0.07;
+          ctx.fillStyle = "#e0f2fe";
+          ctx.beginPath();
+          ctx.arc(xPos, yPos, sz, 0, Math.PI * 2);
+          ctx.fill();
+          // cross arms for larger flakes
+          if (sz > 3) {
+            ctx.globalAlpha = 0.12;
+            ctx.strokeStyle = "#bae6fd";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(xPos - sz, yPos); ctx.lineTo(xPos + sz, yPos);
+            ctx.moveTo(xPos, yPos - sz); ctx.lineTo(xPos, yPos + sz);
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      } else if (pt === "leaves") {
+        // 🍃 Garden / forest levels: drifting leaves
+        ctx.save();
+        for (let i = 0; i < floorCount; i++) {
+          const seed = i * 71.3;
+          const speed = 18 + (i % 5) * 7;
+          const xBase = (Math.sin(seed) * 0.5 + 0.5) * W;
+          const xDrift = Math.sin(now / 1400 + seed) * 40;
+          const yPos = (now / speed + seed * 5.7) % H;
+          const rot = now / 800 + seed;
+          const sz = 5 + (i % 3) * 2;
+          ctx.globalAlpha = 0.18 + (i % 3) * 0.06;
+          ctx.save();
+          ctx.translate(xBase + xDrift, yPos);
+          ctx.rotate(rot);
+          // simple leaf ellipse
+          const leafColor = i % 3 === 0 ? "#4ade80" : i % 3 === 1 ? "#86efac" : "#bbf7d0";
+          ctx.fillStyle = leafColor;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, sz * 0.55, sz, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+      } else if (pt === "neon") {
+        // 💜 Neon / cyber levels: scrolling scan lines + grid pulse
+        ctx.save();
+        const scanCount = isMobile ? 3 : 5;
+        for (let i = 0; i < scanCount; i++) {
+          const yLine = (now / 80 + (H / scanCount) * i) % H;
+          const alpha = 0.06 + Math.sin(now / 400 + i) * 0.03;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = level.theme.accent;
+          ctx.fillRect(0, yLine, W, 2);
+        }
+        // pulse dots at grid intersections
+        const gridStep = 80;
+        const pulseDots = isMobile ? 4 : 8;
+        let dotCount = 0;
+        outer: for (let gx = gridStep; gx < W; gx += gridStep) {
+          for (let gy = gridStep; gy < H; gy += gridStep) {
+            const p = Math.sin(now / 600 + gx * 0.03 + gy * 0.02);
+            if (p > 0.5) {
+              ctx.globalAlpha = (p - 0.5) * 0.25;
+              ctx.fillStyle = level.theme.accent;
+              ctx.beginPath();
+              ctx.arc(gx, gy, 3, 0, Math.PI * 2);
+              ctx.fill();
+              if (++dotCount >= pulseDots) break outer;
+            }
+          }
+        }
+        ctx.restore();
+      } else if (pt === "dust") {
+        // 🌫️ Cozy / warm levels: floating dust motes
+        ctx.save();
+        for (let i = 0; i < floorCount; i++) {
+          const seed = i * 53.1;
+          const xPos = (Math.sin(seed * 1.7) * 0.5 + 0.5) * W + Math.sin(now / 2000 + seed) * 30;
+          const yPos = (Math.sin(seed * 3.1) * 0.5 + 0.5) * H + Math.sin(now / 1600 + seed * 2) * 20;
+          const sz = 1.5 + (i % 3) * 0.8;
+          ctx.globalAlpha = 0.10 + Math.sin(now / 700 + seed) * 0.05;
+          ctx.fillStyle = "#fef9c3";
+          ctx.beginPath();
+          ctx.arc(xPos, yPos, sz, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
       // arena border — thinner on mobile to save visual space
       ctx.strokeStyle = level.theme.accent;
       ctx.lineWidth = isMobile ? 4 : 8;
