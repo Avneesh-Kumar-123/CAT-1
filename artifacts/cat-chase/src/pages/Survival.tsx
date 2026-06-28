@@ -67,7 +67,8 @@ export const Survival = ({ save, onSave }: Props) => {
 
   const best = save.survivalBest ?? 0;
   const catSkin = save.settings.catSkin ?? "orange";
-  const controlMode = save.settings.controlMode ?? "tap";
+  // Survival has no joystick UI — always use tap mode
+  const controlMode = "tap";
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
@@ -290,7 +291,7 @@ export const Survival = ({ save, onSave }: Props) => {
   return (
     <div
       className="flex flex-col w-full"
-      style={{ height: "100dvh", background: currentLevel.theme.bg }}
+      style={{ height: "100dvh", background: currentLevel.theme.bg, touchAction: "none", overscrollBehavior: "none" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

@@ -107,7 +107,8 @@ export const TimeAttack = ({ save, onSave }: Props) => {
   };
 
   const catSkin = save.settings.catSkin ?? "orange";
-  const controlMode = save.settings.controlMode ?? "tap";
+  // Time Attack has no joystick UI — always use tap mode
+  const controlMode = "tap";
   const isNewBest = phase === "done" && caught > best && best > 0;
   const isFirstBest = phase === "done" && caught > 0 && best === 0;
 
@@ -253,7 +254,7 @@ export const TimeAttack = ({ save, onSave }: Props) => {
   return (
     <div
       className={`flex flex-col w-full${placingBait ? " cursor-crosshair" : ""}`}
-      style={{ height: "100dvh", background: "#fef3c7" }}
+      style={{ height: "100dvh", background: "#fef3c7", touchAction: "none", overscrollBehavior: "none" }}
       onClick={handleGameClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
