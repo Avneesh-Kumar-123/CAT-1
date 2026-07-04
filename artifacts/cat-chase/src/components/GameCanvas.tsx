@@ -252,13 +252,20 @@ export const GameCanvas = ({
       // compute canvas layout — needed for both rendering and tap-to-move
       const cw = ctx.canvas.clientWidth;
       const ch = ctx.canvas.clientHeight;
-      const scaleX = cw / W;
-      const scaleY = ch / H;
-      const scale = Math.min(scaleX, scaleY);
-      const offX = (cw - W * scale) / 2;
-      const offY = (ch - H * scale) / 2;
       // mobile: narrower canvas, portrait orientation
       const isMobile = cw < 768;
+      const scaleX = cw / W;
+      const scaleY = ch / H;
+      // mobile: zoom camera in ~18% so gameplay elements read larger on small screens
+      const scale = Math.min(scaleX, scaleY) * (isMobile ? 1.18 : 1);
+      const offX = (cw - W * scale) / 2;
+      let offY = (ch - H * scale) / 2;
+      // mobile: shift the arena upward (up to ~75px) to shrink dead space below the HUD,
+      // never letting less than 10px of margin remain above the arena
+      if (isMobile) {
+        const upShift = Math.min(75, Math.max(0, offY - 10));
+        offY -= upShift;
+      }
 
       // update timer
       if (!isPaused && !s.catCaught) {

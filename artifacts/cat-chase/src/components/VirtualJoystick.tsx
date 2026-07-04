@@ -5,8 +5,10 @@ type Props = {
   floating?: boolean;
 };
 
-const RADIUS = 82;
-const KNOB = 66;
+// Mobile-only joystick — sized down ~20% from the original 82/66 so it takes
+// up less thumb space and reads as less intrusive over the gameplay area.
+const RADIUS = 66;
+const KNOB = 53;
 
 export const VirtualJoystick = ({ onChange, floating = false }: Props) => {
   const activeId = useRef<number | null>(null);
@@ -177,6 +179,7 @@ const JoystickBase = ({
             ? "0 2px 12px rgba(249,115,22,0.6), inset 0 1px 2px rgba(255,255,255,0.5)"
             : "0 3px 10px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.6)",
           transition: stick ? "none" : "all 180ms cubic-bezier(0.34,1.56,0.64,1)",
+          willChange: "left, top",
         }}
       />
     </div>

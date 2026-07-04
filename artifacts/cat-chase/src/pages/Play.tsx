@@ -520,13 +520,15 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         </div>
       )}
 
-      {/* Fixed joystick overlay — bottom-left corner, always visible, mobile only */}
+      {/* Fixed joystick overlay — bottom-left corner, always visible, mobile only.
+          Raised closer to the arena (reclaimed by the mobile camera/upward-shift tweaks)
+          while staying comfortably reachable by the thumb. */}
       {controlMode !== "tap" && (
         <div
           className="md:hidden absolute z-20 pointer-events-none"
           style={{
-            bottom: "max(20px, calc(env(safe-area-inset-bottom) + 14px))",
-            left: 14,
+            bottom: "max(36px, calc(env(safe-area-inset-bottom) + 28px))",
+            left: 12,
           }}
         >
           <div className="pointer-events-auto">
