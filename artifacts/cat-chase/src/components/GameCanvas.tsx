@@ -1183,8 +1183,12 @@ export const GameCanvas = ({
         const hl = Math.max(0, s.hintLife);
         const hintAlpha = Math.min(1, hl * 3) * Math.min(1, (4.5 - hl) * 6);
         if (hintAlpha > 0.02) {
-          const isMob = (canvasRef.current?.clientWidth ?? 1000) < 768;
-          const line1 = isMob ? "🕹️  Joystick to move  •  Double-tap for 🧀🧀" : "⌨️  WASD / Arrows to move ⬆️⬇️⬅️➡️ •  Double-Space for 🟥 ➡️ 🧀";
+          const cm = controlModeRef.current;
+          const line1 = isMobile
+            ? (cm === "joystick"
+                ? "🕹️  Drag joystick to move  •  Double-tap for 🧀🧀"
+                : "👉  Hold & drag anywhere to move  •  Hold still 0.5s for 🧀🧀")
+            : "⌨️  WASD / Arrows to move ⬆️⬇️⬅️➡️ •  Double-Space for 🟥 ➡️ 🧀";
           const line2 = "🧀 = Cheese bait — lures mice to one spot!";
           ctx.save();
           ctx.globalAlpha = hintAlpha;

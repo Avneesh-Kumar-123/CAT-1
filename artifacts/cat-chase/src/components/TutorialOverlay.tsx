@@ -7,8 +7,8 @@ const STEPS = [
   {
     icon: "🕹️",
     title: "Move your cat",
-    joystickBody: "Drag the joystick (bottom-left) to steer.\nDouble-tap anywhere to drop cheese!",
-    tapBody: "Tap and hold anywhere to move.\nHold still for 0.5s to drop cheese!",
+    joystickBody: "Drag the joystick (bottom-left) to steer.\nDouble-tap anywhere to drop cheese!\n\nPrefer dragging with your finger instead? Switch to Hold & Drag anytime in ⚙️ Settings.",
+    tapBody: "Hold and drag anywhere on the screen to move.\nHold still for 0.5s to drop cheese!\n\nPrefer a joystick? Switch to Joystick mode anytime in ⚙️ Settings.",
   },
   {
     icon: "🐭",
