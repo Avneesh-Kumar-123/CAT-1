@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/game/levels";
 import { sfx, setAudioMuted } from "@/game/audio";
 import { recordLevelComplete, updateSettings, saveSave } from "@/game/storage";
-import { checkAchievements, ACHIEVEMENTS } from "@/game/achievements";
+import { checkAchievements } from "@/game/achievements";
 import type { PowerUpKind, SaveData } from "@/game/types";
 
 type Props = {
