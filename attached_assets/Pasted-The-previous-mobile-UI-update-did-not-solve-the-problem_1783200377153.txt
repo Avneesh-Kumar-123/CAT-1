@@ -1,0 +1,143 @@
+The previous mobile UI update did not solve the problem.
+
+Please redesign the mobile gameplay layout properly.
+
+IMPORTANT:
+Do NOT fix this using CSS margins or moving HTML elements.
+Fix the actual camera and viewport inside GameCanvas.tsx.
+
+Current Problems
+
+1. Large empty spaces above and below the arena still exist.
+
+2. The entire arena is still being rendered on screen.
+Instead, the mobile camera should zoom in and follow gameplay.
+
+3. The blue arena border (play area) is incorrect.
+The cat cannot move beyond the visible vertical border even though the arena should continue.
+Movement boundaries and rendering boundaries are no longer matching.
+
+4. The camera zoom is causing clipping.
+Objects disappear near the edges.
+
+5. The joystick is still too large and too far from gameplay.
+
+6. HUD still occupies too much vertical space.
+
+7. The power-up banner wastes gameplay space.
+
+Implement the following:
+
+========================
+MOBILE CAMERA
+========================
+
+• Create a real mobile camera.
+
+• Camera should follow the cat smoothly.
+
+• Show only about 70-75% of the arena.
+
+• Zoom to about 1.4x–1.5x on mobile.
+
+• Clamp the camera so it never shows outside the arena.
+
+• Desktop must remain completely unchanged.
+
+========================
+ARENA
+========================
+
+The arena should always fill most of the screen.
+
+Remove large empty spaces.
+
+The cat should never be blocked by an invisible wall.
+
+The playable area and rendered area must match.
+
+The blue arena border should represent the true playable world.
+
+========================
+JOYSTICK
+========================
+
+Reduce joystick diameter by about 20%.
+
+Move it closer to the arena.
+
+Keep enough spacing from the bottom safe area.
+
+Make joystick movement smoother.
+
+Do not change joystick controls.
+
+========================
+HUD
+========================
+
+Reduce HUD size.
+
+Timer stays large.
+
+Level badge smaller.
+
+Score box smaller.
+
+Buttons closer together.
+
+Give more space to gameplay.
+
+========================
+POWERUP
+========================
+
+Move active power-up banner directly below the timer.
+
+Do not place it in the middle of gameplay.
+
+========================
+GAME OBJECTS
+========================
+
+Increase mobile-only size of:
+
+• Cat
+
+• Mouse
+
+• Cheese
+
+• Coins
+
+• Power-ups
+
+by around 10-15%.
+
+Desktop remains unchanged.
+
+========================
+COLLISION
+========================
+
+Verify collision boundaries after zoom.
+
+The cat should be able to reach every edge of the arena.
+
+No invisible walls.
+
+No clipping.
+
+No objects disappearing.
+
+========================
+TEST
+========================
+
+Test on a portrait mobile screen.
+
+The arena should occupy most of the display.
+
+Gameplay should feel similar to Brawl Stars or Survivor.io where the player sees only part of the map and the camera follows smoothly.
+
+Do not modify desktop rendering or gameplay logic.

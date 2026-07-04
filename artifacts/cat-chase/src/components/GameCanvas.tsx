@@ -130,6 +130,7 @@ export const GameCanvas = ({
     dropCheeseAtCat: false,
     hintLife: 4.5,
     timeOrbs: [] as Array<{ x: number; y: number; collected: boolean }>,
+    camera: null as { x: number; y: number } | null,
   });
 
   // initialize level
@@ -254,17 +255,41 @@ export const GameCanvas = ({
       const ch = ctx.canvas.clientHeight;
       // mobile: narrower canvas, portrait orientation
       const isMobile = cw < 768;
-      const scaleX = cw / W;
-      const scaleY = ch / H;
-      // mobile: zoom camera in ~18% so gameplay elements read larger on small screens
-      const scale = Math.min(scaleX, scaleY) * (isMobile ? 1.18 : 1);
-      const offX = (cw - W * scale) / 2;
-      let offY = (ch - H * scale) / 2;
-      // mobile: shift the arena upward (up to ~75px) to shrink dead space below the HUD,
-      // never letting less than 10px of margin remain above the arena
+      // mobile: draw gameplay objects ~12% larger so they read clearly when zoomed
+      const objMul = isMobile ? 1.12 : 1;
+
+      let scale: number;
+      let offX: number;
+      let offY: number;
+
       if (isMobile) {
-        const upShift = Math.min(75, Math.max(0, offY - 10));
-        offY -= upShift;
+        // ── Real mobile camera ───────────────────────────────────────────────
+        // Zoom in and follow the cat (like Brawl Stars / Survivor.io), clamped
+        // so the viewport never shows outside the arena. Collision + all game
+        // logic stay in world coordinates (W×H) — only the camera transform
+        // (offX/offY/scale) changes, so there are no invisible walls.
+        const MOBILE_ZOOM = 1.45;
+        const containScale = Math.min(cw / W, ch / H);
+        scale = containScale * MOBILE_ZOOM;
+        const viewW = cw / scale;
+        const viewH = ch / scale;
+        const camTargetX = viewW >= W ? W / 2 : Math.max(viewW / 2, Math.min(W - viewW / 2, s.cat.x));
+        const camTargetY = viewH >= H ? H / 2 : Math.max(viewH / 2, Math.min(H - viewH / 2, s.cat.y));
+        if (!s.camera) s.camera = { x: camTargetX, y: camTargetY };
+        // frame-rate independent smoothing — camera glides toward the cat instead of snapping
+        const followT = 1 - Math.pow(0.0025, dt);
+        s.camera.x += (camTargetX - s.camera.x) * followT;
+        s.camera.y += (camTargetY - s.camera.y) * followT;
+        offX = cw / 2 - s.camera.x * scale;
+        offY = ch / 2 - s.camera.y * scale;
+      } else {
+        // Desktop: unchanged — full arena, letterboxed & centered, no camera follow
+        const scaleX = cw / W;
+        const scaleY = ch / H;
+        scale = Math.min(scaleX, scaleY);
+        offX = (cw - W * scale) / 2;
+        offY = (ch - H * scale) / 2;
+        s.camera = null;
       }
 
       // update timer
@@ -833,7 +858,7 @@ export const GameCanvas = ({
         const pulse = 1 + Math.sin(now / 200) * 0.08;
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.scale(pulse, pulse);
+        ctx.scale(pulse * objMul, pulse * objMul);
         const colors: Record<PowerUpKind, [string, string]> = {
           speed: ["#fde047", "#ca8a04"],
           freeze: ["#bae6fd", "#0369a1"],
@@ -869,7 +894,7 @@ export const GameCanvas = ({
 
         ctx.save();
         ctx.translate(cb.x, cb.y);
-        ctx.scale(pulse, pulse);
+        ctx.scale(pulse * objMul, pulse * objMul);
         ctx.globalAlpha = Math.min(1, fadeAlpha);
 
         // outer glow ring
@@ -929,6 +954,7 @@ export const GameCanvas = ({
         const spin = (now / 1200) % (Math.PI * 2);
         ctx.save();
         ctx.translate(orb.x, orb.y);
+        ctx.scale(objMul, objMul);
         // outer glow
         const orbGlow = ctx.createRadialGradient(0, 0, 4, 0, 0, 24);
         orbGlow.addColorStop(0, `rgba(251,191,36,${(0.55 * pulse).toFixed(2)})`);
@@ -1074,7 +1100,7 @@ export const GameCanvas = ({
         }
 
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
-        drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent);
+        drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent, objMul);
 
         // ── Golden Mouse: crown above mouse ──────────────────────────────────
         if (m.isGolden) {
@@ -1087,7 +1113,7 @@ export const GameCanvas = ({
           ctx.restore();
         }
       }
-      for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent);
+      for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent, objMul);
 
       // ── Cat spotlight: warm radial glow around the cat ───────────────────────
       {
@@ -1103,7 +1129,7 @@ export const GameCanvas = ({
       }
 
       // cat
-      drawCat(ctx, s.cat.x, s.cat.y, s.catFacing, s.catBounce, getSkin(catSkinRef.current));
+      drawCat(ctx, s.cat.x, s.cat.y, s.catFacing, s.catBounce, getSkin(catSkinRef.current), objMul);
 
       // particles
       for (const p of s.particles) {
@@ -1284,11 +1310,11 @@ const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 };
 
-const drawCat = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, bounce: number, skin: CatSkin) => {
+const drawCat = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, bounce: number, skin: CatSkin, sizeMul = 1) => {
   ctx.save();
   ctx.translate(x, y);
   const flip = Math.cos(facing) < 0 ? -1 : 1;
-  ctx.scale(flip, 1);
+  ctx.scale(flip * sizeMul, sizeMul);
   const by = -Math.abs(Math.sin(bounce)) * 3;
   ctx.translate(0, by);
   // shadow
@@ -1373,11 +1399,11 @@ const drawCat = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: nu
   ctx.restore();
 };
 
-const drawMouse = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, now: number, variant: "normal" | "decoy" | "boss", _accent?: string) => {
+const drawMouse = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, now: number, variant: "normal" | "decoy" | "boss", _accent?: string, sizeMul = 1) => {
   ctx.save();
   ctx.translate(x, y);
   const flip = Math.cos(facing) < 0 ? -1 : 1;
-  ctx.scale(flip, 1);
+  ctx.scale(flip * sizeMul, sizeMul);
   const sz = variant === "boss" ? 1.6 : 1;
   ctx.scale(sz, sz);
   const bob = Math.sin(now / 90) * 1.5;
