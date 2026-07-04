@@ -1,3 +1,35 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+  <rect width="180" height="180" rx="36" fill="#f97316"/>
+
+  <!-- Mouse (background, being chased) -->
+  <g transform="translate(28,96)">
+    <path d="M-10 20 Q -22 12 -14 0" stroke="#7c2d12" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="16" cy="24" rx="18" ry="13" fill="#fde68a" stroke="#7c2d12" stroke-width="3"/>
+    <circle cx="34" cy="10" r="11" fill="#fde68a" stroke="#7c2d12" stroke-width="3"/>
+    <circle cx="27" cy="0" r="6" fill="#fde68a" stroke="#7c2d12" stroke-width="2"/>
+    <circle cx="27" cy="0" r="3" fill="#fb7185"/>
+    <circle cx="41" cy="0" r="6" fill="#fde68a" stroke="#7c2d12" stroke-width="2"/>
+    <circle cx="41" cy="0" r="3" fill="#fb7185"/>
+    <circle cx="32" cy="9" r="2" fill="#7c2d12"/>
+    <circle cx="39" cy="9" r="2" fill="#7c2d12"/>
+    <circle cx="44" cy="12" r="2" fill="#fb7185"/>
+  </g>
+
+  <!-- Cat (foreground, chasing) -->
+  <g transform="translate(58,44)">
+    <path d="M10 66 Q -8 54 4 36 Q 10 28 18 34" fill="#f97316" stroke="#7c2d12" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="46" cy="72" rx="30" ry="22" fill="#f97316" stroke="#7c2d12" stroke-width="4"/>
+    <ellipse cx="46" cy="78" rx="18" ry="13" fill="#fff7ed"/>
+    <circle cx="60" cy="42" r="24" fill="#f97316" stroke="#7c2d12" stroke-width="4"/>
+    <path d="M42 24 L38 4 L54 20 Z" fill="#f97316" stroke="#7c2d12" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M78 24 L82 4 L66 20 Z" fill="#f97316" stroke="#7c2d12" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M42 20 L42 10 L50 16 Z" fill="#fda4af"/>
+    <path d="M78 20 L78 10 L70 16 Z" fill="#fda4af"/>
+    <circle cx="52" cy="40" r="5.5" fill="#fff"/>
+    <circle cx="72" cy="40" r="5.5" fill="#fff"/>
+    <circle cx="54" cy="41.5" r="3" fill="#0f172a"/>
+    <circle cx="74" cy="41.5" r="3" fill="#0f172a"/>
+    <path d="M60 47 L63 51 L57 51 Z" fill="#fb7185"/>
+    <path d="M60 51 Q56 55 51 53 M60 51 Q64 55 69 53" stroke="#7c2d12" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
 </svg>
