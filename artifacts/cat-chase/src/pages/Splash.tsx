@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star } from "lucide-react";
+import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star, Coins, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MenuShell } from "@/components/MenuShell";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -10,6 +10,7 @@ import { CatSprite, MouseSprite } from "@/game/sprites";
 import { sfx, startBgMusic, stopBgMusic } from "@/game/audio";
 import { LEVELS } from "@/game/levels";
 import { ACHIEVEMENTS } from "@/game/achievements";
+import { claimDailyReward } from "@/game/storage";
 import type { SaveData } from "@/game/types";
 
 type Props = {
@@ -38,6 +39,7 @@ const DECO_EMOJIS = [
 
 export const Splash = ({ save, onSave }: Props) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [dailyReward, setDailyReward] = useState<{ reward: number; streak: number } | null>(null);
 
   // Start world-aware bg music on mount; stop cleanly when navigating away
   useEffect(() => {
@@ -47,6 +49,18 @@ export const Splash = ({ save, onSave }: Props) => {
     startBgMusic(world as 1 | 2 | 3);
     return () => stopBgMusic();
   }, []);
+
+  // Claim daily login reward once per calendar day
+  useEffect(() => {
+    const result = claimDailyReward(save);
+    if (result) {
+      onSave(result.data);
+      setDailyReward({ reward: result.reward, streak: result.streak });
+      sfx.achievement();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [modesOpen, setModesOpen] = useState(false);
 
   const currentLevel = Math.min(save.highestUnlocked, LEVELS.length);
@@ -363,6 +377,15 @@ export const Splash = ({ save, onSave }: Props) => {
               <Heart className="inline h-4 w-4 text-destructive mr-1" />
               <span className="font-display font-bold text-sm">{save.totalCaught} caught</span>
             </div>
+            <Link href="/shop" onClick={() => sfx.click()}>
+              <div
+                className="bg-card/80 backdrop-blur border-2 border-yellow-400 rounded-2xl px-4 py-2 text-center shadow-md cursor-pointer hover:bg-yellow-50 transition-colors"
+                data-testid="chip-coins"
+              >
+                <Coins className="inline h-4 w-4 text-yellow-500 fill-yellow-400 mr-1" />
+                <span className="font-display font-bold text-sm">{save.coins ?? 0}</span>
+              </div>
+            </Link>
           </motion.div>
 
           {/* Buttons */}
@@ -439,6 +462,21 @@ export const Splash = ({ save, onSave }: Props) => {
                 </motion.div>
               </Link>
             </div>
+
+            <Link href="/shop" onClick={() => sfx.click()}>
+              <motion.div
+                whileTap={{ scale: 0.96 }}
+                data-testid="button-shop"
+                className="h-16 flex items-center justify-center gap-2 bg-yellow-100 border-2 border-yellow-300 rounded-2xl shadow-sm cursor-pointer hover:bg-yellow-200 transition-colors select-none"
+              >
+                <ShoppingBag className="h-5 w-5 text-yellow-700" />
+                <span className="font-display font-bold text-sm text-yellow-800">Shop</span>
+                <span className="inline-flex items-center gap-1 bg-white/70 rounded-full px-2 py-0.5 text-xs font-bold text-yellow-700">
+                  <Coins className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                  {save.coins ?? 0}
+                </span>
+              </motion.div>
+            </Link>
 
             <Link href="/credits">
               <Button
@@ -676,6 +714,56 @@ export const Splash = ({ save, onSave }: Props) => {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Daily login reward popup ── */}
+      <AnimatePresence>
+        {dailyReward && (
+          <motion.div
+            key="daily-reward-backdrop"
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setDailyReward(null)}
+          >
+            <motion.div
+              key="daily-reward-panel"
+              initial={{ scale: 0.8, y: 30, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.8, y: 30, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              className="bg-card border-4 border-yellow-400 rounded-3xl shadow-2xl px-6 py-8 max-w-xs w-full text-center"
+              onClick={(e) => e.stopPropagation()}
+              data-testid="modal-daily-reward"
+            >
+              <motion.div
+                className="text-6xl mb-2"
+                animate={{ rotate: [0, -8, 8, -8, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 0.8 }}
+              >
+                🎁
+              </motion.div>
+              <h2 className="font-display font-bold text-2xl mb-1">Daily Reward!</h2>
+              <p className="text-sm text-muted-foreground font-semibold mb-4">
+                Day {dailyReward.streak} login streak
+              </p>
+              <div className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 rounded-full px-5 py-2 mb-5">
+                <Coins className="h-6 w-6 text-yellow-500 fill-yellow-400" />
+                <span className="font-display font-bold text-2xl text-yellow-700">
+                  +{dailyReward.reward}
+                </span>
+              </div>
+              <Button
+                className="w-full font-display font-bold h-12 text-base game-button"
+                onClick={() => { sfx.click(); setDailyReward(null); }}
+                data-testid="button-claim-reward"
+              >
+                Nice!
+              </Button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </MenuShell>

@@ -3,6 +3,7 @@ import type React from "react";
 import type { CheeseBait, LevelDef, Obstacle, PowerUp, PowerUpKind, Vec2 } from "@/game/types";
 import { ARENA } from "@/game/levels";
 import { getSkin, type CatSkin } from "@/game/skins";
+import { getShopItem } from "@/game/shop";
 import {
   circleHits,
   findOpenPosition,
@@ -35,6 +36,9 @@ type GameCanvasProps = {
   paused: boolean;
   joystick: { x: number; y: number };
   catSkin?: string;
+  equippedHat?: string;
+  equippedTrail?: string;
+  equippedPaw?: string;
   controlMode?: "tap" | "joystick";
   tapTargetRef?: React.RefObject<{ x: number; y: number } | null>;
   cheesePlaceRef?: React.RefObject<{ x: number; y: number } | null>;
@@ -65,6 +69,9 @@ export const GameCanvas = ({
   paused,
   joystick,
   catSkin = "orange",
+  equippedHat = "none-hat",
+  equippedTrail = "none-trail",
+  equippedPaw = "none-paw",
   controlMode = "joystick",
   tapTargetRef,
   cheesePlaceRef,
@@ -83,6 +90,9 @@ export const GameCanvas = ({
   const joystickRef = useRef(joystick);
   const difficultyMulRef = useRef(difficultyMul);
   const catSkinRef = useRef(catSkin);
+  const equippedHatRef = useRef(equippedHat);
+  const equippedTrailRef = useRef(equippedTrail);
+  const equippedPawRef = useRef(equippedPaw);
   const onCatchRef = useRef(onCatch);
   const onTimeUpRef = useRef(onTimeUp);
   const onTrapRef = useRef(onTrap);
@@ -91,6 +101,9 @@ export const GameCanvas = ({
   useLayoutEffect(() => { joystickRef.current = joystick; }, [joystick]);
   useLayoutEffect(() => { difficultyMulRef.current = difficultyMul; }, [difficultyMul]);
   useLayoutEffect(() => { catSkinRef.current = catSkin; }, [catSkin]);
+  useLayoutEffect(() => { equippedHatRef.current = equippedHat; }, [equippedHat]);
+  useLayoutEffect(() => { equippedTrailRef.current = equippedTrail; }, [equippedTrail]);
+  useLayoutEffect(() => { equippedPawRef.current = equippedPaw; }, [equippedPaw]);
   useLayoutEffect(() => { onCatchRef.current = onCatch; }, [onCatch]);
   useLayoutEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
   useLayoutEffect(() => { onTrapRef.current = onTrap; }, [onTrap]);
@@ -115,6 +128,9 @@ export const GameCanvas = ({
     activePower: null as ActivePower | null,
     frozenUntil: 0,
     particles: [] as Particle[],
+    pawPrints: [] as Array<{ x: number; y: number; angle: number; life: number; maxLife: number }>,
+    lastTrailAt: 0,
+    lastPawAt: 0,
     floatTexts: [] as Array<{ x: number; y: number; text: string; life: number; color: string }>,
     keys: new Set<string>(),
     started: 0,
@@ -400,6 +416,39 @@ export const GameCanvas = ({
         if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
           s.catFacing = Math.atan2(dy, dx);
           s.catBounce += dt * 12;
+
+          // ── Cosmetic trail particles ─────────────────────────────────────
+          const trailItem = getShopItem(equippedTrailRef.current);
+          if (trailItem && trailItem.id !== "none-trail" && now - s.lastTrailAt > 45) {
+            s.lastTrailAt = now;
+            const trailColor =
+              trailItem.color === "rainbow"
+                ? `hsl(${(now / 4) % 360}, 85%, 60%)`
+                : trailItem.color ?? "#f97316";
+            s.particles.push({
+              x: s.cat.x,
+              y: s.cat.y,
+              vx: (Math.random() - 0.5) * 12,
+              vy: (Math.random() - 0.5) * 12,
+              life: 0.5,
+              maxLife: 0.5,
+              color: trailColor,
+              size: 3 + Math.random() * 2,
+            });
+          }
+
+          // ── Cosmetic paw prints ──────────────────────────────────────────
+          const pawItem = getShopItem(equippedPawRef.current);
+          if (pawItem && pawItem.id !== "none-paw" && now - s.lastPawAt > 260) {
+            s.lastPawAt = now;
+            s.pawPrints.push({
+              x: s.cat.x,
+              y: s.cat.y,
+              angle: s.catFacing,
+              life: 1.1,
+              maxLife: 1.1,
+            });
+          }
         }
 
         // mouse magnet pulls all live mice toward cat
@@ -603,6 +652,10 @@ export const GameCanvas = ({
         p.life -= dt;
       }
       s.particles = s.particles.filter((p) => p.life > 0);
+
+      // cosmetic paw prints
+      for (const pw of s.pawPrints) pw.life -= dt;
+      s.pawPrints = s.pawPrints.filter((pw) => pw.life > 0);
 
       // ===== render =====
       const dpr = window.devicePixelRatio || 1;
@@ -1128,8 +1181,50 @@ export const GameCanvas = ({
         ctx.fill();
       }
 
+      // cosmetic paw prints (drawn under the cat, above the floor)
+      {
+        const pawItem = getShopItem(equippedPawRef.current);
+        if (pawItem && pawItem.id !== "none-paw") {
+          for (const pw of s.pawPrints) {
+            const t = Math.max(0, pw.life / pw.maxLife);
+            ctx.save();
+            ctx.globalAlpha = t * 0.75;
+            ctx.translate(pw.x, pw.y);
+            ctx.rotate(pw.angle);
+            if (pawItem.color) {
+              ctx.fillStyle = pawItem.color;
+              ctx.beginPath();
+              ctx.arc(0, 0, 10, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha = t;
+            }
+            ctx.font = "14px serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.rotate(-pw.angle);
+            ctx.fillText(pawItem.emoji, 0, 0);
+            ctx.restore();
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+
       // cat
       drawCat(ctx, s.cat.x, s.cat.y, s.catFacing, s.catBounce, getSkin(catSkinRef.current), objMul);
+
+      // cosmetic hat, worn above the cat's head
+      {
+        const hatItem = getShopItem(equippedHatRef.current);
+        if (hatItem && hatItem.id !== "none-hat") {
+          ctx.save();
+          ctx.font = `${Math.round(26 * objMul)}px serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          const bob = -Math.abs(Math.sin(s.catBounce)) * 3;
+          ctx.fillText(hatItem.emoji, s.cat.x, s.cat.y - 30 * objMul + bob);
+          ctx.restore();
+        }
+      }
 
       // particles
       for (const p of s.particles) {

@@ -73,6 +73,9 @@ export type GameSettings = {
   difficulty: Difficulty;
   catSkin: string;
   controlMode: ControlMode;
+  equippedHat: string;
+  equippedTrail: string;
+  equippedPaw: string;
 };
 
 export type LevelProgress = {
@@ -90,4 +93,8 @@ export type SaveData = {
   earnedAchievements: string[];
   timeAttackBest: number;
   survivalBest: number;
+  coins: number;
+  ownedCosmetics: string[];
+  lastLoginDate: string | null;
+  loginStreak: number;
 };

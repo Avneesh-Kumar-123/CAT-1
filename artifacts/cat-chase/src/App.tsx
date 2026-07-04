@@ -15,6 +15,7 @@ import { ContactUs } from "@/pages/ContactUs";
 import { Achievements } from "@/pages/Achievements";
 import { TimeAttack } from "@/pages/TimeAttack";
 import { Survival } from "@/pages/Survival";
+import { Shop } from "@/pages/Shop";
 import { LEVELS } from "@/game/levels";
 import { loadSave } from "@/game/storage";
 import { setAudioMuted } from "@/game/audio";
@@ -73,6 +74,9 @@ function App() {
           </Route>
           <Route path="/survival">
             <Survival save={save} onSave={setSave} />
+          </Route>
+          <Route path="/shop">
+            <Shop save={save} onSave={setSave} />
           </Route>
           <Route>
             <NotFound />

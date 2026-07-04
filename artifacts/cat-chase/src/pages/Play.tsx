@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy } from "lucide-react";
+import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy, Coins } from "lucide-react";
 import { GameCanvas } from "@/components/GameCanvas";
 import { HUD } from "@/components/HUD";
 import { TutorialOverlay } from "@/components/TutorialOverlay";
@@ -27,7 +27,7 @@ type Props = {
 
 type Outcome =
   | null
-  | { kind: "win"; stars: number; timeRemaining: number; score: number; isMilestone: boolean }
+  | { kind: "win"; stars: number; timeRemaining: number; score: number; isMilestone: boolean; coinsEarned: number }
   | { kind: "lose"; reason: "time" | "trap"; score: number };
 
 const difficultyMul = (d: SaveData["settings"]["difficulty"]) =>
@@ -142,14 +142,16 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         onSave(updated);
       }
 
+      const coinsEarned = updated.coins - (prev.coins ?? 0);
+
       if (isMilestone) {
         setShowMilestone(true);
         milestoneTimer.current = setTimeout(() => {
           setShowMilestone(false);
-          setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: true });
+          setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: true, coinsEarned });
         }, 2200);
       } else {
-        setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: false });
+        setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: false, coinsEarned });
       }
     },
     [level, save, onSave],
@@ -360,6 +362,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             paused={effectivelyPaused}
             joystick={joy}
             catSkin={catSkin}
+            equippedHat={save.settings.equippedHat}
+            equippedTrail={save.settings.equippedTrail}
+            equippedPaw={save.settings.equippedPaw}
             controlMode={controlMode}
             tapTargetRef={tapTargetRef}
             cheesePlaceRef={cheesePlaceRef}
@@ -641,7 +646,7 @@ const WinPanel = ({
   onNext,
   canPlayNext,
 }: {
-  outcome: { stars: number; timeRemaining: number; score: number; isMilestone: boolean };
+  outcome: { stars: number; timeRemaining: number; score: number; isMilestone: boolean; coinsEarned: number };
   levelId: number;
   onRestart: () => void;
   onNext: () => void;
@@ -716,6 +721,18 @@ const WinPanel = ({
             <div className="font-display font-bold text-2xl">{outcome.score.toLocaleString()}</div>
           </div>
         </div>
+        {outcome.coinsEarned > 0 && (
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 250 }}
+            className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 rounded-full px-4 py-1.5"
+            data-testid="text-coins-earned"
+          >
+            <Coins className="h-5 w-5 text-yellow-500 fill-yellow-400" />
+            <span className="font-display font-bold text-lg text-yellow-700">+{outcome.coinsEarned} coins</span>
+          </motion.div>
+        )}
         <div className="grid gap-2 pt-1">
           <motion.div whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}>
             <Button
