@@ -8,6 +8,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { AdBanner } from "@/components/AdBanner";
 import { CatSprite, MouseSprite } from "@/game/sprites";
 import { sfx, startBgMusic, stopBgMusic } from "@/game/audio";
+import { analytics } from "@/analytics";
 import { LEVELS } from "@/game/levels";
 import { ACHIEVEMENTS } from "@/game/achievements";
 import { claimDailyReward } from "@/game/storage";
@@ -405,7 +406,7 @@ export const Splash = ({ save, onSave }: Props) => {
                   size="lg"
                   className="w-full h-20 text-3xl font-display font-bold shadow-2xl game-button"
                   style={{ boxShadow: "0 8px 32px rgba(249,115,22,0.40)" }}
-                  onClick={() => sfx.click()}
+                  onClick={() => { sfx.click(); analytics.playButtonClicked(); }}
                   data-testid="button-play"
                 >
                   <Play className="mr-3 h-8 w-8 fill-current" /> PLAY

@@ -4,6 +4,7 @@ import { Coins, Check, Lock } from "lucide-react";
 import { MenuShell } from "@/components/MenuShell";
 import { sfx } from "@/game/audio";
 import { purchaseItem, equipCosmetic } from "@/game/storage";
+import { analytics } from "@/analytics";
 import { SHOP_ITEMS, itemsByCategory, isOwned, type CosmeticCategory } from "@/game/shop";
 import type { SaveData } from "@/game/types";
 
@@ -45,6 +46,8 @@ export const Shop = ({ save, onSave }: Props) => {
     }
     sfx.win?.();
     onSave(equipCosmetic(data, tab, itemId));
+    analytics.shopPurchase(item.name, price);
+    analytics.coinsSpent(price, item.name);
   };
 
   return (

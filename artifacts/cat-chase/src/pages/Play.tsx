@@ -3,6 +3,8 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy, Coins, Maximize2 } from "lucide-react";
 import { useFullscreen, isFullscreenSupported } from "@/hooks/useFullscreen";
+import { analytics } from "@/analytics";
+import { ACHIEVEMENTS } from "@/game/achievements";
 import { GameCanvas } from "@/components/GameCanvas";
 import { HUD } from "@/components/HUD";
 import { TutorialOverlay } from "@/components/TutorialOverlay";
@@ -116,9 +118,10 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     saveRef.current = save;
   }, [save]);
 
-  // Ensure today's daily challenge exists as soon as a level is played
+  // Ensure today's daily challenge exists and fire level_start when gameplay begins
   useEffect(() => {
     onSave(getOrCreateDailyChallenge(saveRef.current));
+    analytics.levelStart(level.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -155,6 +158,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     const withCoins = addCoins(saveRef.current, amount);
     const withProgress = progressDailyChallenge(withCoins, "catch_mice", 1);
     onSave(withProgress);
+    analytics.coinsEarned(amount, "mouse_catch");
     const id = coinPopIdRef.current++;
     setCoinPops((p) => [...p, { id, amount }]);
     setCoinPulseKey((k) => k + 1);
@@ -224,12 +228,18 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         saveSave(withAchs);
         onSave(withAchs);
         setToastAchievements(newAchIds);
+        newAchIds.forEach((id) => {
+          const ach = ACHIEVEMENTS.find((a) => a.id === id);
+          analytics.achievementUnlocked(ach?.title ?? id);
+        });
         updated = withAchs;
       } else {
         onSave(updated);
       }
 
       const coinsEarned = updated.coins - (prev.coins ?? 0);
+      analytics.levelComplete(level.id, stars, score, coinsEarned);
+      if (coinsEarned > 0) analytics.coinsEarned(coinsEarned, "level_complete");
 
       if (isMilestone) {
         setShowMilestone(true);
@@ -245,12 +255,14 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   );
 
   const handleTimeUp = useCallback((score: number) => {
+    analytics.levelFailed(level.id);
     setOutcome({ kind: "lose", reason: "time", score });
-  }, []);
+  }, [level.id]);
 
   const handleTrap = useCallback(() => {
+    analytics.levelFailed(level.id);
     setOutcome({ kind: "lose", reason: "trap", score: 0 });
-  }, []);
+  }, [level.id]);
 
   const restart = () => {
     sfx.click();
