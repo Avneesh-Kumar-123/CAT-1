@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pause, Volume2, VolumeX, Coins } from "lucide-react";
+import { Pause, Volume2, VolumeX, Coins, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PowerUpIcon, powerUpLabel } from "./PowerUpIcon";
 import type { PowerUpKind } from "@/game/types";
@@ -22,8 +22,11 @@ type HUDProps = {
   coins?: number;
   coinPops?: { id: number; amount: number }[];
   coinPulseKey?: number;
+  isFullscreen?: boolean;
+  fullscreenSupported?: boolean;
   onPause: () => void;
   onToggleSound: () => void;
+  onToggleFullscreen?: () => void;
   onDropBait: () => void;
   onCheeseDragStart?: (x: number, y: number, touchId: number) => void;
 };
@@ -45,8 +48,11 @@ const HUDInner = ({
   coins,
   coinPops,
   coinPulseKey,
+  isFullscreen = false,
+  fullscreenSupported = false,
   onPause,
   onToggleSound,
+  onToggleFullscreen,
   onDropBait,
   onCheeseDragStart,
 }: HUDProps) => {
@@ -200,6 +206,22 @@ const HUDInner = ({
             >
               🧀
             </button>
+            {/* Fullscreen button */}
+            {fullscreenSupported && onToggleFullscreen && (
+              <Button
+                size="icon"
+                variant="secondary"
+                className="rounded-full shadow-md h-11 w-11 sm:h-10 sm:w-10 transition-transform active:scale-90"
+                onClick={onToggleFullscreen}
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                data-testid="button-fullscreen"
+              >
+                {isFullscreen
+                  ? <Minimize2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  : <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                }
+              </Button>
+            )}
           </div>
         </div>
       </div>
