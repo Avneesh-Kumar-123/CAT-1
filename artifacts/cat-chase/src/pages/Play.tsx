@@ -15,8 +15,17 @@ import { AchievementToastQueue } from "@/components/AchievementToastQueue";
 import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/game/levels";
 import { sfx, setAudioMuted } from "@/game/audio";
-import { recordLevelComplete, updateSettings, saveSave } from "@/game/storage";
+import {
+  recordLevelComplete,
+  updateSettings,
+  saveSave,
+  addCoins,
+  addAchievementCoins,
+  progressDailyChallenge,
+  getOrCreateDailyChallenge,
+} from "@/game/storage";
 import { checkAchievements } from "@/game/achievements";
+import type { LevelRewardBreakdown } from "@/game/economy";
 import type { PowerUpKind, SaveData } from "@/game/types";
 
 type Props = {
@@ -27,7 +36,15 @@ type Props = {
 
 type Outcome =
   | null
-  | { kind: "win"; stars: number; timeRemaining: number; score: number; isMilestone: boolean; coinsEarned: number }
+  | {
+      kind: "win";
+      stars: number;
+      timeRemaining: number;
+      score: number;
+      isMilestone: boolean;
+      coinsEarned: number;
+      breakdown: LevelRewardBreakdown;
+    }
   | { kind: "lose"; reason: "time" | "trap"; score: number };
 
 const difficultyMul = (d: SaveData["settings"]["difficulty"]) =>
@@ -86,6 +103,34 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const controlMode = save.settings.controlMode ?? "tap";
 
+  // Always-fresh ref to the current save, for callbacks fired from inside GameCanvas's game loop
+  const saveRef = useRef(save);
+  useEffect(() => {
+    saveRef.current = save;
+  }, [save]);
+
+  // Ensure today's daily challenge exists as soon as a level is played
+  useEffect(() => {
+    onSave(getOrCreateDailyChallenge(saveRef.current));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Live coin pop animations flying toward the HUD coin counter
+  const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([]);
+  const [coinPulseKey, setCoinPulseKey] = useState(0);
+  const coinPopIdRef = useRef(0);
+  const cheeseUsedTrackedRef = useRef(false);
+
+  const handleMouseCoins = useCallback((amount: number) => {
+    const withCoins = addCoins(saveRef.current, amount);
+    const withProgress = progressDailyChallenge(withCoins, "catch_mice", 1);
+    onSave(withProgress);
+    const id = coinPopIdRef.current++;
+    setCoinPops((p) => [...p, { id, amount }]);
+    setCoinPulseKey((k) => k + 1);
+    setTimeout(() => setCoinPops((p) => p.filter((c) => c.id !== id)), 900);
+  }, []);
+
   const [hud, setHud] = useState<{
     score: number;
     timeLeft: number;
@@ -111,7 +156,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   }, [save.settings.sound]);
 
   const handleCatch = useCallback(
-    (timeRemaining: number, score: number) => {
+    (timeRemaining: number, score: number, tookDamage: boolean) => {
       const stars = computeStars(timeRemaining, level.time);
       const prevBestStars = save.levels[level.id]?.bestStars ?? 0;
       const isMilestone = stars === 3 && prevBestStars < 3;
@@ -121,8 +166,19 @@ export const Play = ({ levelId, save, onSave }: Props) => {
       setCatchFlash(true);
       catchFlashTimer.current = setTimeout(() => setCatchFlash(false), 350);
 
-      const prev = save;
-      const updated = recordLevelComplete(prev, level.id, stars, timeRemaining, score);
+      const prev = saveRef.current;
+      const { data: recorded, breakdown } = recordLevelComplete(
+        prev,
+        level.id,
+        stars,
+        timeRemaining,
+        score,
+        hud.miceTotal,
+        tookDamage,
+      );
+      let updated = progressDailyChallenge(recorded, "finish_levels", 1);
+      if (!tookDamage) updated = progressDailyChallenge(updated, "no_damage_clear", 1);
+
       sessionWinsRef.current += 1;
       const newAchIds = checkAchievements(prev, updated, {
         timeRemaining,
@@ -131,13 +187,14 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         usedPowerUp: usedPowerUpRef.current,
       });
       if (newAchIds.length > 0) {
-        const withAchs: SaveData = {
-          ...updated,
-          earnedAchievements: [...(updated.earnedAchievements ?? []), ...newAchIds],
-        };
+        const withAchs = addAchievementCoins(
+          { ...updated, earnedAchievements: [...(updated.earnedAchievements ?? []), ...newAchIds] },
+          newAchIds,
+        );
         saveSave(withAchs);
         onSave(withAchs);
         setToastAchievements(newAchIds);
+        updated = withAchs;
       } else {
         onSave(updated);
       }
@@ -148,10 +205,10 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         setShowMilestone(true);
         milestoneTimer.current = setTimeout(() => {
           setShowMilestone(false);
-          setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: true, coinsEarned });
+          setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: true, coinsEarned, breakdown });
         }, 2200);
       } else {
-        setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: false, coinsEarned });
+        setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: false, coinsEarned, breakdown });
       }
     },
     [level, save, onSave],
@@ -178,6 +235,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     setIsCountingDown(true);
     setCountdownKey((k) => k + 1);
     setKey((k) => k + 1);
+    cheeseUsedTrackedRef.current = false;
   };
 
   const nextLevel = useMemo(() => LEVELS.find((l) => l.id === level.id + 1), [level.id]);
@@ -371,7 +429,13 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             onCatch={handleCatch}
             onTimeUp={handleTimeUp}
             onTrap={handleTrap}
+            onMouseCoins={handleMouseCoins}
             onState={(s) => {
+              if (cheeseAvailableRef.current && !s.cheeseAvailable && !cheeseUsedTrackedRef.current) {
+                cheeseUsedTrackedRef.current = true;
+                const withCheese: SaveData = { ...saveRef.current, cheeseUsedTotal: (saveRef.current.cheeseUsedTotal ?? 0) + 1 };
+                onSave(progressDailyChallenge(withCheese, "collect_cheese", 1));
+              }
               cheeseAvailableRef.current = s.cheeseAvailable;
               if (s.activePower) usedPowerUpRef.current = true;
               setHud(s);
@@ -474,6 +538,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             sound={save.settings.sound}
             cheeseAvailable={hud.cheeseAvailable}
             placingBait={placingBait}
+            coins={save.coins ?? 0}
+            coinPops={coinPops}
+            coinPulseKey={coinPulseKey}
             onPause={() => {
               sfx.click();
               setPaused(true);
@@ -646,7 +713,14 @@ const WinPanel = ({
   onNext,
   canPlayNext,
 }: {
-  outcome: { stars: number; timeRemaining: number; score: number; isMilestone: boolean; coinsEarned: number };
+  outcome: {
+    stars: number;
+    timeRemaining: number;
+    score: number;
+    isMilestone: boolean;
+    coinsEarned: number;
+    breakdown: LevelRewardBreakdown;
+  };
   levelId: number;
   onRestart: () => void;
   onNext: () => void;
@@ -721,16 +795,45 @@ const WinPanel = ({
             <div className="font-display font-bold text-2xl">{outcome.score.toLocaleString()}</div>
           </div>
         </div>
-        {outcome.coinsEarned > 0 && (
+        {outcome.breakdown.total > 0 && (
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 250 }}
-            className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 rounded-full px-4 py-1.5"
+            className="bg-yellow-50 border-2 border-yellow-400 rounded-2xl px-4 py-3 text-left"
             data-testid="text-coins-earned"
           >
-            <Coins className="h-5 w-5 text-yellow-500 fill-yellow-400" />
-            <span className="font-display font-bold text-lg text-yellow-700">+{outcome.coinsEarned} coins</span>
+            <div className="flex items-center gap-2 mb-2 justify-center">
+              <Coins className="h-5 w-5 text-yellow-500 fill-yellow-400" />
+              <span className="font-display font-bold text-sm uppercase tracking-wide text-yellow-700">
+                {outcome.breakdown.isReplay ? "Replay Reward" : "Rewards"}
+              </span>
+            </div>
+            <div className="space-y-1">
+              {outcome.breakdown.lines.map((line, i) => (
+                <motion.div
+                  key={line.label}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.12 }}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="text-yellow-900/80">{line.label}</span>
+                  <span className="font-display font-bold text-yellow-700">+{line.amount}</span>
+                </motion.div>
+              ))}
+            </div>
+            <div className="border-t border-yellow-300 mt-2 pt-2 flex items-center justify-between">
+              <span className="font-display font-bold text-yellow-900">Total</span>
+              <motion.span
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3 + outcome.breakdown.lines.length * 0.12 + 0.1, type: "spring", stiffness: 300 }}
+                className="font-display font-bold text-lg text-yellow-700"
+              >
+                +{outcome.coinsEarned}
+              </motion.span>
+            </div>
           </motion.div>
         )}
         <div className="grid gap-2 pt-1">

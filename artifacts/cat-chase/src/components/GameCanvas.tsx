@@ -8,11 +8,13 @@ import {
   circleHits,
   findOpenPosition,
   moveWithCollision,
+  rectsOverlap,
   spawnPowerUp,
   updateMovingObstacles,
 } from "@/game/engine";
 import { updateMouseAI, type MouseState } from "@/game/ai";
 import { sfx } from "@/game/audio";
+import { coinsForMouseCatch } from "@/game/economy";
 
 // Module-level flag for edge-triggered water-entry sound (one GameCanvas at a time)
 let _wasInWater = false;
@@ -42,9 +44,10 @@ type GameCanvasProps = {
   controlMode?: "tap" | "joystick";
   tapTargetRef?: React.RefObject<{ x: number; y: number } | null>;
   cheesePlaceRef?: React.RefObject<{ x: number; y: number } | null>;
-  onCatch: (timeRemaining: number, score: number) => void;
+  onCatch: (timeRemaining: number, score: number, tookDamage: boolean) => void;
   onTimeUp: (score: number) => void;
   onTrap: () => void;
+  onMouseCoins?: (amount: number) => void;
   onState: (s: {
     score: number;
     timeLeft: number;
@@ -78,11 +81,13 @@ export const GameCanvas = ({
   onCatch,
   onTimeUp,
   onTrap,
+  onMouseCoins,
   onState,
 }: GameCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const lastEmitRef = useRef(0);
+  const tookDamageRef = useRef(false);
   const [shake, setShake] = useState(0);
 
   // Stabilize props via refs so the game loop effect doesn't restart each frame
@@ -96,6 +101,7 @@ export const GameCanvas = ({
   const onCatchRef = useRef(onCatch);
   const onTimeUpRef = useRef(onTimeUp);
   const onTrapRef = useRef(onTrap);
+  const onMouseCoinsRef = useRef(onMouseCoins);
   const onStateRef = useRef(onState);
   useLayoutEffect(() => { pausedRef.current = paused; }, [paused]);
   useLayoutEffect(() => { joystickRef.current = joystick; }, [joystick]);
@@ -107,6 +113,7 @@ export const GameCanvas = ({
   useLayoutEffect(() => { onCatchRef.current = onCatch; }, [onCatch]);
   useLayoutEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
   useLayoutEffect(() => { onTrapRef.current = onTrap; }, [onTrap]);
+  useLayoutEffect(() => { onMouseCoinsRef.current = onMouseCoins; }, [onMouseCoins]);
   useLayoutEffect(() => { onStateRef.current = onState; }, [onState]);
   const controlModeRef = useRef(controlMode);
   useLayoutEffect(() => { controlModeRef.current = controlMode; }, [controlMode]);
@@ -413,6 +420,19 @@ export const GameCanvas = ({
           setShake(0.5);
           onTrapRef.current();
         }
+        // Track whether the cat has bumped into a hazard (soft/moving obstacle) this run,
+        // used to award the "No Damage" bonus at level completion.
+        if (!tookDamageRef.current) {
+          for (const o of s.obstacles) {
+            if (
+              (o.kind === "soft" || o.kind === "moving") &&
+              rectsOverlap(s.cat.x - CAT_RADIUS, s.cat.y - CAT_RADIUS, CAT_RADIUS * 2, CAT_RADIUS * 2, o.x, o.y, o.w, o.h)
+            ) {
+              tookDamageRef.current = true;
+              break;
+            }
+          }
+        }
         if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
           s.catFacing = Math.atan2(dy, dx);
           s.catBounce += dt * 12;
@@ -548,6 +568,12 @@ export const GameCanvas = ({
             const comboBonus = s.combo > 1 ? s.combo * 25 : 0;
             const catchScore = 100 + Math.round(s.timeLeft * 5) + comboBonus;
             s.score += catchScore;
+            // ── Coin reward for this catch (per-mouse-type value, boss/king/ninja tiers) ──
+            const mouseCoins = coinsForMouseCatch(level, !!m.isGolden);
+            if (mouseCoins > 0) {
+              onMouseCoinsRef.current?.(mouseCoins);
+              s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 60, text: `🪙+${mouseCoins}`, life: 1.1, color: "#fde047" });
+            }
             // Golden Mouse: +8s bonus + fanfare
             if (m.isGolden) {
               s.timeLeft = Math.min(level.time + 8, s.timeLeft + 8);
@@ -581,7 +607,7 @@ export const GameCanvas = ({
         if (s.mice.length === 0) {
           s.catCaught = true;
           setShake(0.6);
-          onCatchRef.current(s.timeLeft, s.score + Math.round(s.timeLeft * 10));
+          onCatchRef.current(s.timeLeft, s.score + Math.round(s.timeLeft * 10), tookDamageRef.current);
         }
       }
 

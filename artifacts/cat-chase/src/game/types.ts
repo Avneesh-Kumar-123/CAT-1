@@ -85,6 +85,15 @@ export type LevelProgress = {
   bestScore: number;
 };
 
+export type DailyChallengeState = {
+  date: string;
+  type: string;
+  target: number;
+  progress: number;
+  reward: number;
+  claimed: boolean;
+};
+
 export type SaveData = {
   highestUnlocked: number;
   totalCaught: number;
@@ -97,4 +106,8 @@ export type SaveData = {
   ownedCosmetics: string[];
   lastLoginDate: string | null;
   loginStreak: number;
+  claimedStarMilestones: number[];
+  claimedWorldBonuses: number[];
+  dailyChallenge: DailyChallengeState | null;
+  cheeseUsedTotal: number;
 };

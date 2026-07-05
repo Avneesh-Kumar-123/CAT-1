@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { Pause, Volume2, VolumeX } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Pause, Volume2, VolumeX, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PowerUpIcon, powerUpLabel } from "./PowerUpIcon";
 import type { PowerUpKind } from "@/game/types";
@@ -18,6 +19,9 @@ type HUDProps = {
   sound: boolean;
   cheeseAvailable: boolean;
   placingBait: boolean;
+  coins?: number;
+  coinPops?: { id: number; amount: number }[];
+  coinPulseKey?: number;
   onPause: () => void;
   onToggleSound: () => void;
   onDropBait: () => void;
@@ -38,6 +42,9 @@ const HUDInner = ({
   sound,
   cheeseAvailable,
   placingBait,
+  coins,
+  coinPops,
+  coinPulseKey,
   onPause,
   onToggleSound,
   onDropBait,
@@ -66,6 +73,38 @@ const HUDInner = ({
             <div className="text-[10px] sm:text-xs uppercase font-bold text-muted-foreground tracking-wider">Stage</div>
             <div className="font-display text-sm sm:text-lg font-bold leading-none truncate">{levelName}</div>
           </div>
+          {coins !== undefined && (
+            <div className="relative">
+              <motion.div
+                key={coinPulseKey}
+                initial={{ scale: 1 }}
+                animate={{ scale: [1, 1.22, 1] }}
+                transition={{ duration: 0.35 }}
+                className="flex items-center gap-1 bg-yellow-100 border-2 border-yellow-400 rounded-lg sm:rounded-2xl px-1.5 sm:px-4 py-1 sm:py-2 shadow-md"
+                data-testid="text-hud-coins"
+              >
+                <Coins className="h-3.5 w-3.5 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-400" />
+                <span className="font-display text-sm sm:text-2xl font-bold leading-none tabular-nums text-yellow-700">
+                  {coins.toLocaleString()}
+                </span>
+              </motion.div>
+              <AnimatePresence>
+                {(coinPops ?? []).map((p) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 1, y: 0, x: "-50%" }}
+                    animate={{ opacity: 0, y: -32 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.85, ease: "easeOut" }}
+                    className="absolute left-1/2 -top-1 font-display font-bold text-xs sm:text-sm text-yellow-500 pointer-events-none whitespace-nowrap"
+                    style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}
+                  >
+                    +{p.amount}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* Center timer ring — kept as the largest HUD element on mobile */}

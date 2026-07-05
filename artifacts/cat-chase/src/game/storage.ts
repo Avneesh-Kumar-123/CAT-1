@@ -1,6 +1,19 @@
-import type { SaveData, GameSettings, LevelProgress } from "./types";
+import type { SaveData, GameSettings, LevelProgress, DailyChallengeState } from "./types";
 import { LEVELS } from "./levels";
-import { coinsForLevelClear, dailyRewardForStreak } from "./shop";
+import {
+  calculateLevelCompleteReward,
+  dailyRewardForStreak,
+  isDay7Streak,
+  DAY7_EXCLUSIVE_COSMETIC_ID,
+  coinsForAchievements,
+  STAR_MILESTONES,
+  totalStars,
+  worldForLevel,
+  isWorldComplete,
+  pickDailyChallenge,
+  currentDateKey,
+  type LevelRewardBreakdown,
+} from "./economy";
 
 const KEY = "cat-chase-save-v1";
 
@@ -34,6 +47,10 @@ const defaultSave = (): SaveData => {
     ownedCosmetics: [],
     lastLoginDate: null,
     loginStreak: 0,
+    claimedStarMilestones: [],
+    claimedWorldBonuses: [],
+    dailyChallenge: null,
+    cheeseUsedTotal: 0,
   };
 };
 
@@ -55,6 +72,10 @@ export const loadSave = (): SaveData => {
       ownedCosmetics: parsed.ownedCosmetics ?? base.ownedCosmetics,
       lastLoginDate: parsed.lastLoginDate ?? base.lastLoginDate,
       loginStreak: parsed.loginStreak ?? base.loginStreak,
+      claimedStarMilestones: parsed.claimedStarMilestones ?? [],
+      claimedWorldBonuses: parsed.claimedWorldBonuses ?? [],
+      dailyChallenge: parsed.dailyChallenge ?? null,
+      cheeseUsedTotal: parsed.cheeseUsedTotal ?? 0,
     };
   } catch {
     return defaultSave();
@@ -77,6 +98,12 @@ export const resetSave = () => {
   }
 };
 
+/**
+ * Records a level clear, computing the itemized coin reward via the economy
+ * engine (new-best star delta + speed/no-damage bonuses, or a flat replay
+ * reward if the player didn't beat their previous best). Per-mouse catch
+ * coins are awarded separately in real time via `addCoins` as mice are caught.
+ */
 export const recordLevelComplete = (
   data: SaveData,
   levelId: number,
@@ -84,8 +111,11 @@ export const recordLevelComplete = (
   timeRemaining: number,
   score = 0,
   miceCount = 1,
-): SaveData => {
+  tookDamage = false,
+): { data: SaveData; breakdown: LevelRewardBreakdown } => {
+  const level = LEVELS.find((l) => l.id === levelId);
   const cur = data.levels[levelId] ?? { unlocked: true, bestStars: 0, bestTimeRemaining: 0, bestScore: 0 };
+  const prevBestStars = cur.bestStars;
   const next: LevelProgress = {
     unlocked: true,
     bestStars: Math.max(cur.bestStars, stars),
@@ -101,16 +131,53 @@ export const recordLevelComplete = (
     Math.max(data.highestUnlocked, levelId + 1),
     LEVELS.length,
   );
-  const coinsEarned = coinsForLevelClear(stars);
-  const updated: SaveData = {
+
+  const breakdown = calculateLevelCompleteReward({
+    stars,
+    prevBestStars,
+    timeRemaining,
+    totalTime: level?.time ?? (timeRemaining || 1),
+    tookDamage,
+  });
+
+  let updated: SaveData = {
     ...data,
     levels: updatedLevels,
     highestUnlocked,
     totalCaught: data.totalCaught + Math.max(1, miceCount),
-    coins: (data.coins ?? 0) + coinsEarned,
+    coins: (data.coins ?? 0) + breakdown.total,
   };
+
+  // Claim-once star milestones (based on total stars across all levels)
+  const stars_ = totalStars(updated);
+  const claimedMilestones = new Set(updated.claimedStarMilestones ?? []);
+  let milestoneCoins = 0;
+  for (const m of STAR_MILESTONES) {
+    if (stars_ >= m.threshold && !claimedMilestones.has(m.threshold)) {
+      claimedMilestones.add(m.threshold);
+      milestoneCoins += m.reward;
+    }
+  }
+  if (milestoneCoins > 0) {
+    updated = {
+      ...updated,
+      coins: updated.coins + milestoneCoins,
+      claimedStarMilestones: Array.from(claimedMilestones),
+    };
+  }
+
+  // Claim-once world completion bonus
+  const world = worldForLevel(levelId);
+  if (world && !(updated.claimedWorldBonuses ?? []).includes(world.id) && isWorldComplete(updated, world)) {
+    updated = {
+      ...updated,
+      coins: updated.coins + world.reward,
+      claimedWorldBonuses: [...(updated.claimedWorldBonuses ?? []), world.id],
+    };
+  }
+
   saveSave(updated);
-  return updated;
+  return { data: updated, breakdown };
 };
 
 export const updateSettings = (data: SaveData, patch: Partial<GameSettings>): SaveData => {
@@ -123,6 +190,13 @@ export const addCoins = (data: SaveData, amount: number): SaveData => {
   const updated: SaveData = { ...data, coins: Math.max(0, (data.coins ?? 0) + amount) };
   saveSave(updated);
   return updated;
+};
+
+/** Adds coins earned from newly-unlocked achievements (id -> reward lookup lives in economy.ts). */
+export const addAchievementCoins = (data: SaveData, newAchievementIds: string[]): SaveData => {
+  const amount = coinsForAchievements(newAchievementIds);
+  if (amount <= 0) return data;
+  return addCoins(data, amount);
 };
 
 export const purchaseItem = (
@@ -166,9 +240,12 @@ const todayKey = (): string => {
 /**
  * Claims the daily login reward if it hasn't been claimed today.
  * Streak continues if the last claim was "yesterday", resets to 1 otherwise.
+ * Every 7th day awards a bonus + an exclusive cosmetic, then the cycle repeats.
  * Returns null if already claimed today.
  */
-export const claimDailyReward = (data: SaveData): { data: SaveData; reward: number; streak: number } | null => {
+export const claimDailyReward = (
+  data: SaveData,
+): { data: SaveData; reward: number; streak: number; gotExclusiveCosmetic: boolean } | null => {
   const today = todayKey();
   if (data.lastLoginDate === today) return null;
 
@@ -180,12 +257,54 @@ export const claimDailyReward = (data: SaveData): { data: SaveData; reward: numb
   }
 
   const reward = dailyRewardForStreak(streak);
+  const gotExclusiveCosmetic = isDay7Streak(streak);
+  const owned = data.ownedCosmetics ?? [];
   const updated: SaveData = {
     ...data,
     coins: (data.coins ?? 0) + reward,
     lastLoginDate: today,
     loginStreak: streak,
+    ownedCosmetics: gotExclusiveCosmetic && !owned.includes(DAY7_EXCLUSIVE_COSMETIC_ID)
+      ? [...owned, DAY7_EXCLUSIVE_COSMETIC_ID]
+      : owned,
   };
   saveSave(updated);
-  return { data: updated, reward, streak };
+  return { data: updated, reward, streak, gotExclusiveCosmetic };
+};
+
+/** Gets today's daily challenge, generating and storing a fresh one if needed. */
+export const getOrCreateDailyChallenge = (data: SaveData): SaveData => {
+  const today = currentDateKey();
+  if (data.dailyChallenge && data.dailyChallenge.date === today) return data;
+  const def = pickDailyChallenge(today);
+  const challenge: DailyChallengeState = {
+    date: today,
+    type: def.type,
+    target: def.target,
+    progress: 0,
+    reward: def.reward,
+    claimed: false,
+  };
+  const updated: SaveData = { ...data, dailyChallenge: challenge };
+  saveSave(updated);
+  return updated;
+};
+
+/** Increments progress on today's daily challenge if its type matches, auto-claiming coins on completion. */
+export const progressDailyChallenge = (
+  data: SaveData,
+  type: string,
+  amount: number,
+): SaveData => {
+  const dc = data.dailyChallenge;
+  if (!dc || dc.date !== currentDateKey() || dc.claimed || dc.type !== type) return data;
+  const progress = Math.min(dc.target, dc.progress + amount);
+  const justCompleted = progress >= dc.target && !dc.claimed;
+  const updated: SaveData = {
+    ...data,
+    dailyChallenge: { ...dc, progress, claimed: justCompleted ? true : dc.claimed },
+    coins: justCompleted ? (data.coins ?? 0) + dc.reward : data.coins ?? 0,
+  };
+  saveSave(updated);
+  return updated;
 };
