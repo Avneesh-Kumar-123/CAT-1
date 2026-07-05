@@ -1,4 +1,5 @@
 let ctx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
 let muted = false;
 
 const getCtx = (): AudioContext | null => {
@@ -9,6 +10,9 @@ const getCtx = (): AudioContext | null => {
       const Ctor = W.AudioContext ?? W.webkitAudioContext;
       if (!Ctor) return null;
       ctx = new Ctor();
+      masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(muted ? 0 : 1, ctx.currentTime);
+      masterGain.connect(ctx.destination);
     } catch {
       return null;
     }
@@ -17,8 +21,15 @@ const getCtx = (): AudioContext | null => {
   return ctx;
 };
 
+// All oscillators should connect to this instead of ctx.destination directly
+export const getMasterGain = (): GainNode | null => masterGain;
+
 export const setAudioMuted = (m: boolean) => {
   muted = m;
+  // Instantly silence or restore all audio via the master gain node
+  if (masterGain && ctx) {
+    masterGain.gain.setValueAtTime(m ? 0 : 1, ctx.currentTime);
+  }
   // When unmuting, reset all voice clocks so notes don't burst all at once
   if (!m) {
     const c = getCtx();
@@ -44,6 +55,8 @@ let _voices: MusicVoice[] = [];
 
 // ── Instrument synthesizers ──────────────────────────────────────────────────
 
+const dest = (c: AudioContext): GainNode | AudioDestinationNode => masterGain ?? c.destination;
+
 // Marimba: triangle oscillator, fast percussive decay
 function _marimba(c: AudioContext, freq: number, start: number, beats: number, vol: number) {
   const dur = beats * _bgBeat;
@@ -54,7 +67,7 @@ function _marimba(c: AudioContext, freq: number, start: number, beats: number, v
   g.gain.setValueAtTime(0, start);
   g.gain.linearRampToValueAtTime(vol, start + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, start + Math.max(0.05, dur * 0.60));
-  osc.connect(g).connect(c.destination);
+  osc.connect(g).connect(dest(c));
   osc.start(start); osc.stop(start + dur + 0.02);
 }
 
@@ -77,7 +90,7 @@ function _flute(c: AudioContext, freq: number, start: number, beats: number, vol
   g.gain.linearRampToValueAtTime(vol, start + 0.032);
   g.gain.setValueAtTime(vol, start + Math.max(0.05, dur - 0.10));
   g.gain.exponentialRampToValueAtTime(0.0001, start + dur + 0.01);
-  osc.connect(g).connect(c.destination);
+  osc.connect(g).connect(dest(c));
   osc.start(start); vib.start(start);
   osc.stop(start + dur + 0.06); vib.stop(start + dur + 0.06);
 }
@@ -95,7 +108,7 @@ function _bell(c: AudioContext, freq: number, start: number, _beats: number, vol
     g.gain.setValueAtTime(0, start);
     g.gain.linearRampToValueAtTime(vol * rel, start + 0.004);
     g.gain.exponentialRampToValueAtTime(0.0001, start + 1.8 * rel + 0.25);
-    osc.connect(g).connect(c.destination);
+    osc.connect(g).connect(dest(c));
     osc.start(start); osc.stop(start + 2.3);
   }
 }
@@ -111,7 +124,7 @@ function _pad(c: AudioContext, freq: number, start: number, beats: number, vol: 
   g.gain.linearRampToValueAtTime(vol, start + 0.08);
   g.gain.setValueAtTime(vol, start + Math.max(0.10, dur - 0.12));
   g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  osc.connect(g).connect(c.destination);
+  osc.connect(g).connect(dest(c));
   osc.start(start); osc.stop(start + dur + 0.05);
 }
 
@@ -255,7 +268,7 @@ const tone = (
   g.gain.setValueAtTime(0, t);
   g.gain.linearRampToValueAtTime(vol, t + 0.01);
   g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-  osc.connect(g).connect(c.destination);
+  osc.connect(g).connect(dest(c));
   osc.start(t);
   osc.stop(t + duration + 0.05);
 };
@@ -378,7 +391,7 @@ export const sfx = {
       g.gain.setValueAtTime(0, t + i * 0.07);
       g.gain.linearRampToValueAtTime(0.22, t + i * 0.07 + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.07 + 0.28);
-      osc.connect(g).connect(c.destination);
+      osc.connect(g).connect(dest(c));
       osc.start(t + i * 0.07);
       osc.stop(t + i * 0.07 + 0.32);
     });
@@ -406,7 +419,7 @@ export const sfx = {
       o.frequency.exponentialRampToValueAtTime(40, t + i * 0.17 + 0.14);
       g.gain.setValueAtTime(0.28, t + i * 0.17);
       g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.17 + 0.16);
-      o.connect(g).connect(c.destination);
+      o.connect(g).connect(dest(c));
       o.start(t + i * 0.17); o.stop(t + i * 0.17 + 0.20);
     }
     const os = c.createOscillator();
@@ -416,7 +429,7 @@ export const sfx = {
     os.frequency.exponentialRampToValueAtTime(660, t + 0.72);
     gs.gain.setValueAtTime(0.15, t + 0.36);
     gs.gain.exponentialRampToValueAtTime(0.0001, t + 0.76);
-    os.connect(gs).connect(c.destination);
+    os.connect(gs).connect(dest(c));
     os.start(t + 0.36); os.stop(t + 0.80);
   },
 };

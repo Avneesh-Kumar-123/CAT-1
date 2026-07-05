@@ -259,8 +259,10 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const [key, setKey] = useState(0);
 
   const toggleSound = () => {
-    sfx.click();
-    onSave(updateSettings(save, { sound: !save.settings.sound }));
+    const newSound = !save.settings.sound;
+    setAudioMuted(!newSound);
+    if (newSound) sfx.click();
+    onSave(updateSettings(save, { sound: newSound }));
   };
 
   const catSkin = save.settings.catSkin ?? "orange";
