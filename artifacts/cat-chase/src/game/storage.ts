@@ -130,16 +130,17 @@ export const purchaseItem = (
   itemId: string,
   price: number,
 ): { data: SaveData; success: boolean } => {
-  if (data.ownedCosmetics.includes(itemId) || price === 0) {
-    return { data, success: true };
+  const owned = data.ownedCosmetics ?? [];
+  if (owned.includes(itemId) || price === 0) {
+    return { data: { ...data, ownedCosmetics: owned }, success: true };
   }
   if ((data.coins ?? 0) < price) {
-    return { data, success: false };
+    return { data: { ...data, ownedCosmetics: owned }, success: false };
   }
   const updated: SaveData = {
     ...data,
-    coins: data.coins - price,
-    ownedCosmetics: [...data.ownedCosmetics, itemId],
+    coins: (data.coins ?? 0) - price,
+    ownedCosmetics: [...owned, itemId],
   };
   saveSave(updated);
   return { data: updated, success: true };
