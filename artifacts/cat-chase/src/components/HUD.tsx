@@ -162,7 +162,7 @@ const HUDInner = ({
               </span>
             </div>
           </div>
-          <div className="flex flex-col gap-1 sm:gap-2">
+          <div className={`grid gap-1 sm:gap-2 ${fullscreenSupported && onToggleFullscreen ? "grid-cols-2" : "grid-cols-1"}`}>
             <Button
               size="icon"
               variant="default"
@@ -206,7 +206,7 @@ const HUDInner = ({
             >
               🧀
             </button>
-            {/* Fullscreen button */}
+            {/* Fullscreen button — only shown when supported */}
             {fullscreenSupported && onToggleFullscreen && (
               <Button
                 size="icon"
