@@ -29,11 +29,11 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm --filter @workspace/cat-chase run dev"
-waitForPort = 3000
+args = "PORT=5000 pnpm --filter @workspace/cat-chase run dev"
+waitForPort = 5000
 
 [agent]
-stack = "PNPM_WORKSPACE"
+stack = "BEST_EFFORT_FALLBACK"
 expertMode = true
 
 [postMerge]
@@ -43,6 +43,10 @@ timeoutMs = 20000
 [[ports]]
 localPort = 3000
 externalPort = 3002
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [[ports]]
 localPort = 5173
@@ -67,3 +71,6 @@ externalPort = 3003
 [[ports]]
 localPort = 19085
 externalPort = 3000
+
+[nix]
+channel = "stable-25_05"
