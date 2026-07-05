@@ -774,7 +774,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   );
 };
 
-const COUNTDOWN_TOTAL = 5;
+const COUNTDOWN_TOTAL = 3;
 const COUNTDOWN_DELAY = 1200;
 
 const WinPanel = ({
@@ -1002,59 +1002,104 @@ const LosePanel = ({
   reason: "time" | "trap";
   score: number;
   onRestart: () => void;
-}) => (
-  <div>
-    <div className="bg-gradient-to-br from-destructive to-rose-700 px-6 pt-6 pb-5 text-center text-destructive-foreground">
-      <motion.div
-        initial={{ scale: 0.4, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 16 }}
-        className="text-4xl mb-2"
-      >
-        {reason === "trap" ? "🪤" : "⏰"}
-      </motion.div>
-      <motion.div
-        initial={{ rotate: 0 }}
-        animate={{ rotate: [0, -8, 8, -6, 0] }}
-        transition={{ duration: 0.5 }}
-      >
-        <h2 className="font-display text-4xl font-bold drop-shadow-md">GAME OVER</h2>
-      </motion.div>
-      <p className="font-bold mt-1 opacity-90 text-sm">
-        {reason === "trap" ? "You stepped in a trap! 🪤" : "Time's up — the mouse got away! 🐭"}
-      </p>
-    </div>
-    <div className="p-5 grid gap-2">
-      {score > 0 && (
-        <div className="bg-muted rounded-2xl p-3 text-center mb-1">
-          <div className="text-xs uppercase font-bold text-muted-foreground">Final Score</div>
-          <div className="font-display font-bold text-2xl">{score.toLocaleString()}</div>
-        </div>
-      )}
-      <motion.div whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}>
-        <Button
-          size="lg"
-          className="w-full font-display font-bold text-lg"
-          onClick={onRestart}
-          data-testid="button-retry"
+}) => {
+  const [secsLeft, setSecsLeft] = useState(COUNTDOWN_TOTAL);
+  const [countdownActive, setCountdownActive] = useState(false);
+
+  // Grace delay before countdown starts
+  useEffect(() => {
+    const t = setTimeout(() => setCountdownActive(true), COUNTDOWN_DELAY);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Tick down then restart
+  useEffect(() => {
+    if (!countdownActive) return;
+    if (secsLeft <= 0) { onRestart(); return; }
+    const t = setInterval(() => setSecsLeft(s => Math.max(0, +(s - 0.1).toFixed(1))), 100);
+    return () => clearInterval(t);
+  }, [countdownActive, secsLeft, onRestart]);
+
+  // Any key → restart immediately
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (["Tab", "Escape"].includes(e.key)) return;
+      onRestart();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onRestart]);
+
+  const pct = countdownActive ? secsLeft / COUNTDOWN_TOTAL : 1;
+
+  return (
+    <div>
+      <div className="bg-gradient-to-br from-destructive to-rose-700 px-6 pt-6 pb-5 text-center text-destructive-foreground">
+        <motion.div
+          initial={{ scale: 0.4, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 16 }}
+          className="text-4xl mb-2"
         >
-          <RotateCcw className="mr-2 h-5 w-5" /> Restart Level
-        </Button>
-      </motion.div>
-      <ShareButton score={score} />
-      <Link href="/levels">
-        <Button variant="secondary" className="w-full font-display font-bold">
-          Choose Level
-        </Button>
-      </Link>
-      <Link href="/">
-        <Button variant="ghost" className="w-full font-display font-bold">
-          <Home className="mr-2 h-4 w-4" /> Quit to Menu
-        </Button>
-      </Link>
+          {reason === "trap" ? "🪤" : "⏰"}
+        </motion.div>
+        <motion.div
+          initial={{ rotate: 0 }}
+          animate={{ rotate: [0, -8, 8, -6, 0] }}
+          transition={{ duration: 0.5 }}
+        >
+          <h2 className="font-display text-4xl font-bold drop-shadow-md">GAME OVER</h2>
+        </motion.div>
+        <p className="font-bold mt-1 opacity-90 text-sm">
+          {reason === "trap" ? "You stepped in a trap! 🪤" : "Time's up — the mouse got away! 🐭"}
+        </p>
+      </div>
+      <div className="p-5 grid gap-2">
+        {score > 0 && (
+          <div className="bg-muted rounded-2xl p-3 text-center mb-1">
+            <div className="text-xs uppercase font-bold text-muted-foreground">Final Score</div>
+            <div className="font-display font-bold text-2xl">{score.toLocaleString()}</div>
+          </div>
+        )}
+        <motion.div whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}>
+          <Button
+            size="lg"
+            className="relative w-full font-display font-bold text-lg overflow-hidden"
+            onClick={onRestart}
+            data-testid="button-retry"
+          >
+            <span
+              className="absolute inset-0 bg-white/20"
+              style={{ transform: `scaleX(${pct})`, transformOrigin: "left" }}
+            />
+            <span className="relative flex items-center justify-center gap-1">
+              <RotateCcw className="h-5 w-5" /> Restart Level
+              {countdownActive && (
+                <span className="ml-1 opacity-75 text-sm font-normal tabular-nums">
+                  {Math.ceil(secsLeft)}s
+                </span>
+              )}
+            </span>
+          </Button>
+        </motion.div>
+        <p className="text-center text-xs text-muted-foreground -mt-1">
+          Press any key or tap to restart now
+        </p>
+        <ShareButton score={score} />
+        <Link href="/levels">
+          <Button variant="secondary" className="w-full font-display font-bold">
+            Choose Level
+          </Button>
+        </Link>
+        <Link href="/">
+          <Button variant="ghost" className="w-full font-display font-bold">
+            <Home className="mr-2 h-4 w-4" /> Quit to Menu
+          </Button>
+        </Link>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const HintBanner = ({ hint, levelId }: { hint: string; levelId: number }) => {
   const [show, setShow] = useState(true);
