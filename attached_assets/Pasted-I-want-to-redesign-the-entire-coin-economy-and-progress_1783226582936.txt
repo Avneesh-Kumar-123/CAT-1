@@ -1,0 +1,304 @@
+I want to redesign the entire coin economy and progression system for my game "Cat Chase: Mouse Hunt."
+
+IMPORTANT:
+Do NOT break any existing gameplay, UI, save data, controls, or desktop/mobile layouts. Only improve the progression system.
+
+=========================
+1. LEVEL COIN REWARDS
+=========================
+
+Award coins only when the player reaches a NEW highest star rating for that level.
+
+Example:
+
+1 Star = 20 coins
+2 Stars = 35 coins
+3 Stars = 50 coins
+
+If the player already earned 2 stars and later earns 3 stars, only award the difference (15 coins).
+
+Never award the full reward twice.
+
+Store each level's highest stars permanently.
+
+=========================
+2. REPLAY PROTECTION
+=========================
+
+Prevent coin farming.
+
+If a player replays a level with the same star rating:
+
+Award only 3-5 replay coins.
+
+Never give the full reward again.
+
+Example:
+
+First completion:
+⭐⭐⭐
++50 Coins
+
+Replay:
+⭐⭐⭐
++5 Coins
+
+=========================
+3. DIFFERENT MOUSE REWARDS
+=========================
+
+Each mouse type should reward different coins.
+
+Normal Mouse = 5
+
+Sleepy Mouse = 7
+
+Fast Mouse = 8
+
+Teleport Mouse = 10
+
+Ninja Mouse = 12
+
+King Mouse = 30
+
+Boss Mouse = 50
+
+Coins should fly toward the HUD coin counter when collected.
+
+Show floating text:
+
++5
++10
++30
+
+=========================
+4. END LEVEL BREAKDOWN
+=========================
+
+Replace the simple reward popup with a complete reward summary.
+
+Example:
+
+⭐⭐⭐
+
+Base Reward ............ +30
+
+3-Star Bonus ........... +20
+
+Speed Bonus ............ +10
+
+No Damage Bonus ........ +10
+
+Replay Bonus ........... +5 (only if replay)
+
+--------------------------------
+
+TOTAL
+
++70 Coins
+
+Animate the total increasing.
+
+=========================
+5. DAILY LOGIN BONUS
+=========================
+
+Add daily login rewards.
+
+Day 1 = 50
+
+Day 2 = 75
+
+Day 3 = 100
+
+Day 4 = 125
+
+Day 5 = 150
+
+Day 6 = 200
+
+Day 7 = 300 + Exclusive Cosmetic
+
+After Day 7 restart the cycle.
+
+Save progress permanently.
+
+=========================
+6. ACHIEVEMENT REWARDS
+=========================
+
+Achievements should also reward coins.
+
+Examples:
+
+Catch 100 mice = +100
+
+Complete World 1 = +150
+
+Reach Level 10 = +100
+
+Reach Level 20 = +200
+
+Reach Level 30 = +500
+
+Collect 90 Stars = +1000
+
+=========================
+7. STAR MILESTONES
+=========================
+
+Reward players for collecting stars.
+
+10 Stars = +100
+
+20 Stars = +150
+
+40 Stars = +250
+
+60 Stars = +350
+
+90 Stars = +1000
+
+Claim only once.
+
+=========================
+8. WORLD COMPLETION BONUS
+=========================
+
+Completing an entire world gives bonus coins.
+
+Sunny Fields = +200
+
+Mystic Forest = +300
+
+Sky Kingdom = +500
+
+Only once.
+
+=========================
+9. DAILY CHALLENGES
+=========================
+
+Generate one daily challenge.
+
+Examples:
+
+Catch 20 mice
+
+Finish 5 levels
+
+Collect 10 cheese
+
+Complete without taking damage
+
+Reward:
+
+100-200 coins
+
+Refresh every day.
+
+=========================
+10. SHOP ECONOMY
+=========================
+
+Rebalance all shop prices.
+
+Cheap items:
+
+100-200 coins
+
+Medium:
+
+300-500 coins
+
+Rare:
+
+600-900 coins
+
+Legendary:
+
+1000-1500 coins
+
+The player should unlock the first cosmetic within the first 5-8 completed levels.
+
+=========================
+11. GAME HUD
+=========================
+
+Always show the player's current coins during gameplay.
+
+Top-right:
+
+🪙 245
+
+Whenever coins are earned:
+
+Animate
+
++10
+
+floating upward.
+
+The coin counter should briefly scale and glow.
+
+=========================
+12. SAVE SYSTEM
+=========================
+
+Persist all of these:
+
+Current coins
+
+Highest stars per level
+
+Claimed level rewards
+
+Claimed star rewards
+
+Claimed achievement rewards
+
+Purchased shop items
+
+Equipped items
+
+Daily login progress
+
+Daily challenge progress
+
+Everything must survive page refreshes.
+
+=========================
+13. FUTURE READY
+=========================
+
+Design the system so I can easily add:
+
+New worlds
+
+New levels
+
+New cosmetics
+
+New achievements
+
+New mouse types
+
+Without rewriting the coin system.
+
+=========================
+14. IMPORTANT
+=========================
+
+Do not break any existing gameplay.
+
+Do not change collisions.
+
+Do not change movement.
+
+Do not change controls.
+
+Do not break mobile.
+
+Do not remove existing save data.
+
+Keep the code clean, modular, reusable and well commented.
