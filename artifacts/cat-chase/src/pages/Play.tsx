@@ -774,6 +774,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   );
 };
 
+const COUNTDOWN_TOTAL = 5;
+const COUNTDOWN_DELAY = 1200;
+
 const WinPanel = ({
   outcome,
   levelId,
@@ -795,7 +798,38 @@ const WinPanel = ({
   canPlayNext: boolean;
 }) => {
   const isLast = levelId >= LEVELS.length;
+  const shouldAutoAdvance = canPlayNext && !isLast;
+  const [secsLeft, setSecsLeft] = useState(COUNTDOWN_TOTAL);
+  const [countdownActive, setCountdownActive] = useState(false);
   const confettiCount = outcome.isMilestone ? 48 : 28;
+
+  // Grace delay before countdown starts
+  useEffect(() => {
+    if (!shouldAutoAdvance) return;
+    const t = setTimeout(() => setCountdownActive(true), COUNTDOWN_DELAY);
+    return () => clearTimeout(t);
+  }, [shouldAutoAdvance]);
+
+  // Tick the countdown down
+  useEffect(() => {
+    if (!countdownActive || !shouldAutoAdvance) return;
+    if (secsLeft <= 0) { onNext(); return; }
+    const t = setInterval(() => setSecsLeft(s => Math.max(0, +(s - 0.1).toFixed(1))), 100);
+    return () => clearInterval(t);
+  }, [countdownActive, shouldAutoAdvance, secsLeft, onNext]);
+
+  // Any key → advance immediately
+  useEffect(() => {
+    if (!shouldAutoAdvance) return;
+    const handler = (e: KeyboardEvent) => {
+      if (["Tab", "Escape"].includes(e.key)) return;
+      onNext();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [shouldAutoAdvance, onNext]);
+
+  const pct = countdownActive ? secsLeft / COUNTDOWN_TOTAL : 1;
 
   return (
     <div className="relative overflow-hidden">
@@ -908,17 +942,36 @@ const WinPanel = ({
           <motion.div whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}>
             <Button
               size="lg"
-              className="w-full font-display font-bold text-lg h-13"
+              className="relative w-full font-display font-bold text-lg h-13 overflow-hidden"
               onClick={onNext}
               data-testid="button-next"
             >
-              {isLast ? (
-                <><Trophy className="mr-2 h-5 w-5" /> Back to Levels</>
-              ) : (
-                <>Next Level <ChevronRight className="ml-2 h-5 w-5" /></>
+              {/* Countdown drain bar — fills button from left, drains right */}
+              {shouldAutoAdvance && (
+                <span
+                  className="absolute inset-0 bg-white/20 origin-left transition-none"
+                  style={{ transform: `scaleX(${pct})`, transformOrigin: "left" }}
+                />
               )}
+              <span className="relative flex items-center justify-center gap-1">
+                {isLast ? (
+                  <><Trophy className="h-5 w-5" /> Back to Levels</>
+                ) : (
+                  <>Next Level <ChevronRight className="h-5 w-5" /></>
+                )}
+                {shouldAutoAdvance && countdownActive && (
+                  <span className="ml-1 opacity-75 text-sm font-normal tabular-nums">
+                    {Math.ceil(secsLeft)}s
+                  </span>
+                )}
+              </span>
             </Button>
           </motion.div>
+          {shouldAutoAdvance && (
+            <p className="text-center text-xs text-muted-foreground -mt-1">
+              Press any key or tap to advance now
+            </p>
+          )}
           <motion.div whileTap={{ scale: 0.96 }}>
             <Button
               variant="secondary"
