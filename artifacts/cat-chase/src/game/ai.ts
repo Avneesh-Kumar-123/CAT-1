@@ -19,9 +19,11 @@ export type MouseState = {
   /** Direction of the current dash burst */
   dashDir?: Vec2;
   // ── Special mouse type ──────────────────────────────────────
-  mouseType?: "normal" | "dash" | "teleport" | "sleepy";
+  mouseType?: "normal" | "dash" | "teleport" | "sleepy" | "zigzag" | "stubborn";
   /** Dash Mouse: timestamp for next auto-burst */
   autoDashNextAt?: number;
+  /** Zigzag Mouse: timestamp for next forced direction flip */
+  zigzagNextAt?: number;
   /** Teleport Mouse: timestamp for next teleport */
   teleportNextAt?: number;
   /** Teleport Mouse: timestamp the last poof started (for render) */
@@ -159,6 +161,15 @@ export const updateMouseAI = (
     }
   }
 
+  // ── Zigzag Mouse: force rapid direction changes ──────────────────────────
+  if (m.mouseType === "zigzag" && !m.isDecoy) {
+    if (m.zigzagNextAt === undefined) m.zigzagNextAt = now + 80 + Math.random() * 60;
+    if (now >= m.zigzagNextAt) {
+      m.steerUntil = 0; // force pickFleeAngle to re-evaluate immediately
+      m.zigzagNextAt = now + 90 + Math.random() * 110;
+    }
+  }
+
   // ── Close-call Dash Burst ────────────────────────────────────────────────
   // When cat gets within 48px, non-decoy mouse bursts away at 1.5× speed for 250ms.
   // 3200ms cooldown between dashes so it can't spam.
@@ -244,6 +255,21 @@ export const updateMouseAI = (
         m.steerUntil = 0;
       }
     }
+  }
+
+  // ── Stubborn Mouse: wanders lazily until cat gets very close ─────────────
+  if (m.mouseType === "stubborn" && !m.isDecoy) {
+    const stubbornDist = Math.hypot(m.pos.x - cat.x, m.pos.y - cat.y);
+    if (stubbornDist > 120) {
+      if (now > m.dartUntil) {
+        const a = Math.random() * Math.PI * 2;
+        m.dartDir = { x: Math.cos(a), y: Math.sin(a) };
+        m.dartUntil = now + 1600 + Math.random() * 2000;
+      }
+      targetDx = m.dartDir.x * 0.55;
+      targetDy = m.dartDir.y * 0.55;
+    }
+    // else: normal flee AI already computed above
   }
 
   if (now < m.pauseUntil) {

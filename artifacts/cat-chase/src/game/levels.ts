@@ -117,7 +117,8 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 130,
     mouseAI: "scared",
     mouseCount: 2,
-    hint: "Two bookshelves divide the room — chase mice through the wide gaps!",
+    mouseType: "stubborn",
+    hint: "Stubborn mice ignore you — until you're right on top of them. Then they panic!",
     obstacles: [
       // Two bookshelves, wide gaps on both ends — easy to navigate
       wall(320, 80, 40, 280, "#7c2d12"),   // Left shelf — gap below (360–700)
@@ -173,7 +174,8 @@ export const LEVELS: LevelDef[] = [
     mouseCount: 3,
     hasGoldenMouse: true,
     timeOrbs: [{ x: 200, y: 400 }, { x: 760, y: 290 }],
-    hint: "One mouse wears a crown 👑 (+8s!). Grab the clocks too — every second counts!",
+    mouseType: "zigzag",
+    hint: "Zigzag mice change direction constantly — corner them! Plus crown 👑 and clocks ⏰.",
     obstacles: [
       moving(160, 200, 160, 55, 90, 0, 300, "#fbbf24"),
       moving(680, 340, 160, 55, -90, 0, 300, "#fbbf24"),

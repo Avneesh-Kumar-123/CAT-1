@@ -154,6 +154,8 @@ export const GameCanvas = ({
     hintLife: 4.5,
     timeOrbs: [] as Array<{ x: number; y: number; collected: boolean }>,
     camera: null as { x: number; y: number } | null,
+  slowMoUntil: 0,
+  lastSlowMoAt: 0,
   });
 
   // initialize level
@@ -223,6 +225,8 @@ export const GameCanvas = ({
     s.rageMode = false;
     s.rageActivatedAt = 0;
     s.rageBannerLife = 0;
+    s.slowMoUntil = 0;
+    s.lastSlowMoAt = 0;
     s.dropCheeseAtCat = false;
     s.hintLife = level.id <= 2 ? 4.5 : 0;
     // mark one random mouse as golden
@@ -565,6 +569,9 @@ export const GameCanvas = ({
             if (now - s.lastCatchAt < 2500) s.combo += 1;
             else s.combo = 1;
             s.lastCatchAt = now;
+            if (s.combo >= 2) {
+              s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 80, text: `🔥 ${s.combo}x COMBO!`, life: 0.9, color: "#fb923c" });
+            }
             const comboBonus = s.combo > 1 ? s.combo * 25 : 0;
             const catchScore = 100 + Math.round(s.timeLeft * 5) + comboBonus;
             s.score += catchScore;
@@ -603,6 +610,16 @@ export const GameCanvas = ({
           s.rageActivatedAt = now;
           s.rageBannerLife = 2.2;
           sfx.rage();
+        }
+        // ── Slow-Mo Final Catch ───────────────────────────────────────────────
+        if (s.mice.length === 1 && now > s.lastSlowMoAt + 4500) {
+          const lastM = s.mice[0]!;
+          const finalDist = Math.hypot(s.cat.x - lastM.pos.x, s.cat.y - lastM.pos.y);
+          if (finalDist < 70 && finalDist > CAT_RADIUS + MOUSE_RADIUS) {
+            s.slowMoUntil = now + 380;
+            s.lastSlowMoAt = now;
+            s.floatTexts.push({ x: lastM.pos.x, y: lastM.pos.y - 50, text: "⏱ SLOW MO!", life: 0.65, color: "#e0f2fe" });
+          }
         }
         if (s.mice.length === 0) {
           s.catCaught = true;
@@ -1164,6 +1181,47 @@ export const GameCanvas = ({
           ctx.restore();
         }
 
+        // ── Zigzag Mouse: teal motion-echo rings ─────────────────────────────
+        if (m.mouseType === "zigzag") {
+          const spd = Math.hypot(m.vel.x, m.vel.y);
+          if (spd > 20) {
+            ctx.save();
+            const nx = m.vel.x / spd;
+            const ny = m.vel.y / spd;
+            for (let i = 1; i <= 3; i++) {
+              ctx.globalAlpha = 0.46 - i * 0.12;
+              ctx.strokeStyle = "#2dd4bf";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(m.pos.x - nx * i * 8, m.pos.y - ny * i * 8, MOUSE_RADIUS - i * 2, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+        }
+
+        // ── Stubborn Mouse: calm grey aura / panic red glow ──────────────────
+        if (m.mouseType === "stubborn") {
+          const sDist = Math.hypot(m.pos.x - s.cat.x, m.pos.y - s.cat.y);
+          ctx.save();
+          if (sDist < 130) {
+            const pulse = 0.5 + 0.5 * Math.sin(now / 75);
+            const gr = ctx.createRadialGradient(m.pos.x, m.pos.y, 4, m.pos.x, m.pos.y, 34);
+            gr.addColorStop(0, `rgba(239,68,68,${(0.55 * pulse).toFixed(2)})`);
+            gr.addColorStop(1, "rgba(239,68,68,0)");
+            ctx.fillStyle = gr;
+            ctx.beginPath();
+            ctx.arc(m.pos.x, m.pos.y, 34, 0, Math.PI * 2);
+          } else {
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = "#94a3b8";
+            ctx.beginPath();
+            ctx.arc(m.pos.x, m.pos.y, MOUSE_RADIUS + 7, 0, Math.PI * 2);
+          }
+          ctx.fill();
+          ctx.restore();
+        }
+
         // ── Golden Mouse: pulsing gold halo ──────────────────────────────────
         if (m.isGolden) {
           const gPulse = 0.6 + 0.4 * Math.sin(now / 180);
@@ -1180,6 +1238,22 @@ export const GameCanvas = ({
 
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
         drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent, objMul);
+
+        // ── Personality badge above mouse ─────────────────────────────────────
+        const typeBadge = m.mouseType === "dash" ? "⚡"
+          : m.mouseType === "teleport" ? "🔮"
+          : m.mouseType === "zigzag" ? "〜"
+          : m.mouseType === "stubborn" ? "😤"
+          : null;
+        if (typeBadge) {
+          ctx.save();
+          ctx.font = "13px serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.globalAlpha = 0.88;
+          ctx.fillText(typeBadge, m.pos.x, m.pos.y - MOUSE_RADIUS - 5);
+          ctx.restore();
+        }
 
         // ── Golden Mouse: crown above mouse ──────────────────────────────────
         if (m.isGolden) {
@@ -1379,12 +1453,14 @@ export const GameCanvas = ({
     };
 
     const loop = (now: number) => {
-      const dt = Math.min(0.05, (now - prev) / 1000);
+      const rawDt = Math.min(0.05, (now - prev) / 1000);
       prev = now;
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext("2d");
-        if (ctx) draw(ctx, dt, now);
+        const _ls = stateRef.current;
+        const dtMul = _ls.slowMoUntil > 0 && now < _ls.slowMoUntil ? 0.22 : 1;
+        if (ctx) draw(ctx, rawDt * dtMul, now);
       }
       raf = requestAnimationFrame(loop);
     };

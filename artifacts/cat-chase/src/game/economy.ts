@@ -78,8 +78,10 @@ export const calculateLevelCompleteReward = (opts: {
 export const MOUSE_COIN_VALUES: Record<MouseType, number> = {
   normal: 5,
   sleepy: 7,
-  dash: 8, // "Fast Mouse"
+  dash: 8,
   teleport: 10,
+  zigzag: 9,
+  stubborn: 11,
 };
 
 export const NINJA_MOUSE_COINS = 12; // smart/darty AI mice

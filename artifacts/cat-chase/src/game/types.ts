@@ -38,7 +38,7 @@ export type LevelTheme = {
   particles?: "dust" | "leaves" | "snow" | "neon" | "spark";
 };
 
-export type MouseType = "normal" | "dash" | "teleport" | "sleepy";
+export type MouseType = "normal" | "dash" | "teleport" | "sleepy" | "zigzag" | "stubborn";
 
 export type LevelDef = {
   id: number;
