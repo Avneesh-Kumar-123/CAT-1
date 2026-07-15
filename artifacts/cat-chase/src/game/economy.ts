@@ -82,6 +82,8 @@ export const MOUSE_COIN_VALUES: Record<MouseType, number> = {
   teleport: 10,
   zigzag: 9,
   stubborn: 11,
+  greedy: 9,
+  trickster: 13,
 };
 
 export const NINJA_MOUSE_COINS = 12; // smart/darty AI mice

@@ -156,6 +156,8 @@ export const GameCanvas = ({
     camera: null as { x: number; y: number } | null,
   slowMoUntil: 0,
   lastSlowMoAt: 0,
+  // Trickster Mouse: guards against multiple sets of fake clones existing at once
+  trickCloneActiveUntil: 0,
   });
 
   // initialize level
@@ -542,6 +544,37 @@ export const GameCanvas = ({
             }
           }
 
+          // ── Trickster Mouse: every 6-8s, if the cat is nearby, spawn 2 fake clones ──
+          // Reuses the existing decoy system (s.decoys) so rendering/movement is shared.
+          // The `trickCloneActiveUntil` guard keeps at most one set of fakes alive at
+          // once, even if a level ever had more than one Trickster Mouse.
+          if (m.mouseType === "trickster" && !m.isDecoy) {
+            if (m.trickNextAt === undefined) m.trickNextAt = now + 6000 + Math.random() * 2000;
+            if (now >= m.trickNextAt) {
+              const catDist = Math.hypot(m.pos.x - s.cat.x, m.pos.y - s.cat.y);
+              if (catDist < 260 && now > s.trickCloneActiveUntil) {
+                const expireAt = now + 2000;
+                s.trickCloneActiveUntil = expireAt;
+                for (let i = 0; i < 2; i++) {
+                  const a = Math.random() * Math.PI * 2;
+                  s.decoys.push({
+                    pos: { x: m.pos.x, y: m.pos.y },
+                    vel: { x: 0, y: 0 },
+                    facing: m.facing,
+                    pauseUntil: 0,
+                    dartUntil: 0,
+                    dartDir: { x: Math.cos(a), y: Math.sin(a) },
+                    isDecoy: true,
+                    expiresAt: expireAt,
+                  });
+                }
+                spawnTricksterSmoke(s, m.pos.x, m.pos.y);
+                sfx.pounce();
+              }
+              m.trickNextAt = now + 6000 + Math.random() * 2000;
+            }
+          }
+
           const prevDashUntil = m.dashUntil;
           const rageMul = 1; // no speed penalty — rage is visual/audio only
           const goldenMul = m.isGolden ? 1.15 : 1;
@@ -630,6 +663,7 @@ export const GameCanvas = ({
 
       // decoys
       if (!isPaused && !s.catCaught) {
+        const decoySurvivors: MouseState[] = [];
         for (const d of s.decoys) {
           const dd = updateMouseAI(
             d, s.cat, level, s.obstacles, W, H, dt, now,
@@ -640,7 +674,21 @@ export const GameCanvas = ({
             ["wall", "soft", "moving"],
           );
           d.pos = moved.pos;
+
+          // ── Trickster Mouse fake clones only: vanish on touch or after their lifespan ──
+          // Permanent boss decoys (no `expiresAt`) are untouched — same behavior as before.
+          if (d.expiresAt !== undefined) {
+            const touched = circleHits(s.cat, CAT_RADIUS, d.pos, MOUSE_RADIUS);
+            const expired = now >= d.expiresAt;
+            if (touched || expired) {
+              spawnTricksterSparkle(s, d.pos.x, d.pos.y);
+              if (touched) sfx.squeak();
+              continue; // vanish — never pushed to survivors
+            }
+          }
+          decoySurvivors.push(d);
         }
+        s.decoys = decoySurvivors;
       }
 
       // power-ups
@@ -1236,16 +1284,43 @@ export const GameCanvas = ({
           ctx.restore();
         }
 
+        // ── Greedy Mouse: happy bounce + eating animation while at the cheese ──
+        const isEating = m.mouseType === "greedy" && now < (m.eatingCheeseUntil ?? 0);
+        const eatingBounce = isEating ? Math.abs(Math.sin(now / 90)) * 3 : 0;
+
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
-        drawMouse(ctx, m.pos.x, m.pos.y, m.facing, now, variant, level.theme.accent, objMul);
+        drawMouse(ctx, m.pos.x, m.pos.y - eatingBounce, m.facing, now, variant, level.theme.accent, objMul);
+
+        if (isEating) {
+          ctx.save();
+          ctx.font = "13px serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.globalAlpha = 0.9;
+          ctx.fillText("😋", m.pos.x, m.pos.y - MOUSE_RADIUS - 6 - eatingBounce);
+          ctx.restore();
+        }
+
+        // ── Greedy Mouse: cheese icon while actively sniffing out the bait ─────
+        if (m.mouseType === "greedy" && !isEating && s.cheeseBait) {
+          ctx.save();
+          ctx.font = "14px serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          const bob = Math.sin(now / 220) * 2;
+          ctx.globalAlpha = 0.92;
+          ctx.fillText("🧀", m.pos.x, m.pos.y - MOUSE_RADIUS - 5 + bob);
+          ctx.restore();
+        }
 
         // ── Personality badge above mouse ─────────────────────────────────────
         const typeBadge = m.mouseType === "dash" ? "⚡"
           : m.mouseType === "teleport" ? "🔮"
           : m.mouseType === "zigzag" ? "〜"
           : m.mouseType === "stubborn" ? "😤"
+          : m.mouseType === "trickster" ? "🎭"
           : null;
-        if (typeBadge) {
+        if (typeBadge && !isEating && !(m.mouseType === "greedy" && s.cheeseBait)) {
           ctx.save();
           ctx.font = "13px serif";
           ctx.textAlign = "center";
@@ -1266,7 +1341,14 @@ export const GameCanvas = ({
           ctx.restore();
         }
       }
-      for (const d of s.decoys) drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, "decoy", level.theme.accent, objMul);
+      for (const d of s.decoys) {
+        // Trickster fake clones (expiresAt set) look identical to a real mouse;
+        // permanent boss decoys keep their original, slightly duller "decoy" look.
+        const decoyVariant = d.expiresAt !== undefined
+          ? (level.mouseAI === "boss" ? "boss" : "normal")
+          : "decoy";
+        drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, decoyVariant, level.theme.accent, objMul);
+      }
 
       // ── Cat spotlight: warm radial glow around the cat ───────────────────────
       {
@@ -1703,6 +1785,39 @@ const spawnPickupParticles = (s: { particles: Particle[] }, x: number, y: number
       maxLife: 0.5,
       color: "#fde047",
       size: 3,
+    });
+  }
+};
+
+/** Trickster Mouse: purple smoke puff when the fake clones appear. */
+const spawnTricksterSmoke = (s: { particles: Particle[] }, x: number, y: number) => {
+  for (let i = 0; i < 16; i++) {
+    const a = (Math.PI * 2 * i) / 16 + Math.random() * 0.3;
+    const sp = 40 + Math.random() * 90;
+    s.particles.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 20,
+      life: 0.5 + Math.random() * 0.3,
+      maxLife: 0.8,
+      color: ["#a78bfa", "#7c3aed", "#c4b5fd"][i % 3]!,
+      size: 4 + Math.random() * 3,
+    });
+  }
+};
+
+/** Trickster Mouse: small sparkle burst when a fake clone disappears. */
+const spawnTricksterSparkle = (s: { particles: Particle[] }, x: number, y: number) => {
+  for (let i = 0; i < 8; i++) {
+    const a = (Math.PI * 2 * i) / 8;
+    s.particles.push({
+      x, y,
+      vx: Math.cos(a) * 70,
+      vy: Math.sin(a) * 70,
+      life: 0.35,
+      maxLife: 0.35,
+      color: "#e9d5ff",
+      size: 2.5,
     });
   }
 };

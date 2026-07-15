@@ -90,8 +90,9 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 122,
     mouseAI: "scared",
     mouseCount: 2,
+    mouseType: "greedy",
     timeOrbs: [{ x: 280, y: 160 }, { x: 720, y: 540 }, { x: 500, y: 350 }],
-    hint: "Collect the golden clocks for +5s each — then corner the mice!",
+    hint: "These mice love cheese — drop bait and watch them come running!",
     obstacles: [
       // Four corner bushes — big open center to chase freely
       wall(60, 60, 130, 80, "#16a34a"),
@@ -528,8 +529,9 @@ export const LEVELS: LevelDef[] = [
     time: 55,
     mouseSpeed: 185,
     mouseAI: "darty",
-    mouseCount: 4,
-    hint: "The manor has three rooms — mice dart between them through doorways.",
+    mouseCount: 1,
+    mouseType: "trickster",
+    hint: "This mouse conjures fake copies of itself — only one is real!",
     obstacles: [
       // Three-room mansion: left room | hallway | right room
       wall(310, 80, 50, 220, "#1e1b4b"),   // Left room right wall top

@@ -9,6 +9,8 @@ export type MouseState = {
   dartUntil: number;
   dartDir: Vec2;
   isDecoy?: boolean;
+  /** Trickster Mouse fake clone: timestamp this decoy vanishes (permanent boss decoys leave this undefined) */
+  expiresAt?: number;
   /** This mouse has a gold crown — catching it grants a time bonus */
   isGolden?: boolean;
   /** how long to commit to currently chosen flee angle (avoids dithering) */
@@ -19,7 +21,7 @@ export type MouseState = {
   /** Direction of the current dash burst */
   dashDir?: Vec2;
   // ── Special mouse type ──────────────────────────────────────
-  mouseType?: "normal" | "dash" | "teleport" | "sleepy" | "zigzag" | "stubborn";
+  mouseType?: "normal" | "dash" | "teleport" | "sleepy" | "zigzag" | "stubborn" | "greedy" | "trickster";
   /** Dash Mouse: timestamp for next auto-burst */
   autoDashNextAt?: number;
   /** Zigzag Mouse: timestamp for next forced direction flip */
@@ -32,6 +34,10 @@ export type MouseState = {
   teleportPoofPos?: Vec2;
   /** Sleepy Mouse: timestamp for next sleep onset */
   sleepNextAt?: number;
+  /** Greedy Mouse: paused eating the cheese until this timestamp (drives the happy-eating animation) */
+  eatingCheeseUntil?: number;
+  /** Trickster Mouse: timestamp for next clone-spawn attempt */
+  trickNextAt?: number;
 };
 
 const MOUSE_RADIUS = 14;
@@ -237,22 +243,30 @@ export const updateMouseAI = (
   }
 
   // ── Cheese bait attraction ────────────────────────────────────────────────
-  // After 300ms sniff delay, non-decoy mice are strongly attracted to cheese.
+  // After a short sniff delay, non-decoy mice are strongly attracted to cheese.
   // Boss mice are partially resistant (60% attract vs 88% for others).
+  // Greedy Mouse (below) notices instantly and commits almost completely.
+  const isGreedy = m.mouseType === "greedy" && !m.isDecoy;
   if (cheeseBait && !m.isDecoy) {
     const cheeseAge = now - cheeseBait.placedAt;
-    if (cheeseAge > 300 && cheeseAge < cheeseBait.duration) {
+    const sniffDelay = isGreedy ? 0 : 300;
+    if (cheeseAge > sniffDelay && cheeseAge < cheeseBait.duration) {
       const cdx = cheeseBait.x - m.pos.x;
       const cdy = cheeseBait.y - m.pos.y;
       const cdist = Math.hypot(cdx, cdy);
       if (cdist > 1) {
         const attractNx = cdx / cdist;
         const attractNy = cdy / cdist;
-        const strength = ai === "boss" ? 0.60 : 0.88;
+        const strength = ai === "boss" ? 0.60 : isGreedy ? 0.97 : 0.88;
         targetDx = attractNx * strength + targetDx * (1 - strength);
         targetDy = attractNy * strength + targetDy * (1 - strength);
         // Force a steering re-evaluation so cheese attraction isn't masked
         m.steerUntil = 0;
+      }
+      // ── Greedy Mouse: reaches the cheese → pause 1s to "eat" before fleeing again ──
+      if (isGreedy && cdist <= MOUSE_RADIUS + 16 && now > (m.eatingCheeseUntil ?? 0)) {
+        m.eatingCheeseUntil = now + 1000;
+        m.pauseUntil = now + 1000;
       }
     }
   }
