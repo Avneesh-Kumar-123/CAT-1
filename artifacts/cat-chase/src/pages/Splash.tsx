@@ -1,18 +1,22 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
-import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star, Coins, ShoppingBag } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star, Coins, ShoppingBag, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MenuShell } from "@/components/MenuShell";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AdBanner } from "@/components/AdBanner";
+import { Modal } from "@/components/Modal";
 import { CatSprite, MouseSprite } from "@/game/sprites";
 import { sfx, startBgMusic, stopBgMusic } from "@/game/audio";
 import { analytics } from "@/analytics";
 import { LEVELS } from "@/game/levels";
 import { ACHIEVEMENTS } from "@/game/achievements";
 import { claimDailyReward } from "@/game/storage";
+import { useFullscreen, isFullscreenSupported } from "@/hooks/useFullscreen";
 import type { SaveData } from "@/game/types";
+
+const FS_PROMPT_KEY = "cat-chase-fs-prompted";
 
 type Props = {
   save: SaveData;
@@ -39,8 +43,12 @@ const DECO_EMOJIS = [
 ];
 
 export const Splash = ({ save, onSave }: Props) => {
+  const [, setLoc] = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [dailyReward, setDailyReward] = useState<{ reward: number; streak: number } | null>(null);
+  const [showFsPrompt, setShowFsPrompt] = useState(false);
+  const fsSupported = isFullscreenSupported();
+  const { isFullscreen, toggle: toggleFullscreen, enter: enterFullscreen } = useFullscreen();
 
   // Start world-aware bg music on mount; stop cleanly when navigating away
   useEffect(() => {
@@ -81,8 +89,48 @@ export const Splash = ({ save, onSave }: Props) => {
     return done;
   }
 
+  const goToPlay = () => setLoc(`/play/${currentLevel}`);
+
+  const handlePlayClick = () => {
+    sfx.click();
+    analytics.playButtonClicked();
+    if (fsSupported && !localStorage.getItem(FS_PROMPT_KEY)) {
+      setShowFsPrompt(true);
+      return;
+    }
+    goToPlay();
+  };
+
+  const handleFsPromptEnter = () => {
+    localStorage.setItem(FS_PROMPT_KEY, "yes");
+    setShowFsPrompt(false);
+    sfx.click();
+    enterFullscreen();
+    goToPlay();
+  };
+
+  const handleFsPromptNotNow = () => {
+    localStorage.setItem(FS_PROMPT_KEY, "later");
+    setShowFsPrompt(false);
+    sfx.click();
+    goToPlay();
+  };
+
+  const handleFsPromptDontAsk = () => {
+    localStorage.setItem(FS_PROMPT_KEY, "never");
+    setShowFsPrompt(false);
+    sfx.click();
+    goToPlay();
+  };
+
   return (
-    <MenuShell onSettings={() => setSettingsOpen(true)} showBack={false}>
+    <MenuShell
+      onSettings={() => setSettingsOpen(true)}
+      showBack={false}
+      fullscreenSupported={fsSupported}
+      isFullscreen={isFullscreen}
+      onToggleFullscreen={() => { sfx.click(); toggleFullscreen(); }}
+    >
 
       {/* Extra themed decorations (desktop sides) — pointer-events-none, z-0 */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none hidden lg:block">
@@ -397,22 +445,20 @@ export const Splash = ({ save, onSave }: Props) => {
             className="w-full max-w-xs flex flex-col gap-4"
           >
             {/* PLAY — hero button */}
-            <Link href={`/play/${currentLevel}`}>
-              <motion.div
-                animate={{ scale: [1, 1.07, 1] }}
-                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            <motion.div
+              animate={{ scale: [1, 1.07, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Button
+                size="lg"
+                className="w-full h-20 text-3xl font-display font-bold shadow-2xl game-button"
+                style={{ boxShadow: "0 8px 32px rgba(249,115,22,0.40)" }}
+                onClick={handlePlayClick}
+                data-testid="button-play"
               >
-                <Button
-                  size="lg"
-                  className="w-full h-20 text-3xl font-display font-bold shadow-2xl game-button"
-                  style={{ boxShadow: "0 8px 32px rgba(249,115,22,0.40)" }}
-                  onClick={() => { sfx.click(); analytics.playButtonClicked(); }}
-                  data-testid="button-play"
-                >
-                  <Play className="mr-3 h-8 w-8 fill-current" /> PLAY
-                </Button>
-              </motion.div>
-            </Link>
+                <Play className="mr-3 h-8 w-8 fill-current" /> PLAY
+              </Button>
+            </motion.div>
 
             {/* Secondary grid — purple card style matching canvas mockup */}
             <div className="grid grid-cols-2 gap-2.5">
@@ -767,6 +813,43 @@ export const Splash = ({ save, onSave }: Props) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── One-time fullscreen prompt, shown on first Play click ── */}
+      <Modal open={showFsPrompt}>
+        <div className="flex flex-col items-center gap-4 p-6">
+          <div className="select-none">
+            <Maximize2 className="h-10 w-10 text-primary" />
+          </div>
+          <p className="text-base font-semibold text-center leading-snug">
+            Play in Full Screen for the best experience.
+          </p>
+          <div className="flex flex-col gap-2 mt-1 w-full">
+            <Button
+              className="w-full font-display font-bold"
+              onClick={handleFsPromptEnter}
+              data-testid="button-fs-enter"
+            >
+              Enter Full Screen
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full font-display font-bold"
+              onClick={handleFsPromptNotNow}
+              data-testid="button-fs-not-now"
+            >
+              Not Now
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full font-display opacity-70 hover:opacity-100"
+              onClick={handleFsPromptDontAsk}
+              data-testid="button-fs-dont-ask"
+            >
+              Don't ask again
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </MenuShell>
   );
 };

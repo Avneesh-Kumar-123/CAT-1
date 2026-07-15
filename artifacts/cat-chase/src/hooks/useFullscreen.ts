@@ -25,7 +25,7 @@ export function isFullscreenSupported(): boolean {
   );
 }
 
-export function useFullscreen(ref: { readonly current: HTMLElement | null }) {
+export function useFullscreen(ref?: { readonly current: HTMLElement | null }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export function useFullscreen(ref: { readonly current: HTMLElement | null }) {
   }, []);
 
   const enter = useCallback(() => {
-    const el = ref.current as AnyEl | null;
+    const el = (ref?.current ?? document.documentElement) as AnyEl | null;
     if (!el) return;
     const req =
       el.requestFullscreen ??

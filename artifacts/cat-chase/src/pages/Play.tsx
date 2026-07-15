@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy, Coins, Maximize2 } from "lucide-react";
+import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy, Coins } from "lucide-react";
 import { useFullscreen, isFullscreenSupported } from "@/hooks/useFullscreen";
 import { analytics } from "@/analytics";
 import { ACHIEVEMENTS } from "@/game/achievements";
@@ -97,7 +97,6 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const gameRootRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(gameRootRef);
   const fsSupported = isFullscreenSupported();
-  const [showFsPrompt, setShowFsPrompt] = useState(false);
 
   // Double-tap to place cheese (joystick mode)
   const lastTapRef = useRef<number>(0);
@@ -124,29 +123,6 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     analytics.levelStart(level.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Show fullscreen prompt once (only if supported + not already answered)
-  useEffect(() => {
-    if (!fsSupported || isFullscreen) return;
-    const answered = localStorage.getItem("cat-chase-fs-prompted");
-    if (answered) return;
-    const t = setTimeout(() => setShowFsPrompt(true), 900);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleFsPromptEnter = () => {
-    localStorage.setItem("cat-chase-fs-prompted", "yes");
-    setShowFsPrompt(false);
-    toggleFullscreen();
-    sfx.click();
-  };
-
-  const handleFsPromptLater = () => {
-    localStorage.setItem("cat-chase-fs-prompted", "later");
-    setShowFsPrompt(false);
-    sfx.click();
-  };
 
   // Live coin pop animations flying toward the HUD coin counter
   const [coinPops, setCoinPops] = useState<{ id: number; amount: number }[]>([]);
@@ -751,37 +727,6 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         />
       )}
 
-      {/* One-time fullscreen prompt */}
-      <Modal open={showFsPrompt}>
-        <div className="flex flex-col items-center gap-4 p-2">
-          <div className="text-4xl select-none">
-            <Maximize2 className="h-10 w-10 text-primary" />
-          </div>
-          <h2 className="font-display text-xl font-bold text-center">
-            Play in Fullscreen?
-          </h2>
-          <p className="text-sm text-muted-foreground text-center leading-snug max-w-xs">
-            Get the full Cat Chase experience — no browser chrome, just the hunt!
-          </p>
-          <div className="flex gap-3 mt-1 w-full">
-            <Button
-              className="flex-1 font-display font-bold"
-              onClick={handleFsPromptEnter}
-              data-testid="button-fs-go"
-            >
-              Go Fullscreen
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex-1 font-display"
-              onClick={handleFsPromptLater}
-              data-testid="button-fs-later"
-            >
-              Not Now
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 };

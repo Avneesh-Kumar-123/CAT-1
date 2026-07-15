@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Settings as SettingsIcon, ArrowLeft } from "lucide-react";
+import { Settings as SettingsIcon, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -9,9 +9,20 @@ type Props = {
   onSettings?: () => void;
   showBack?: boolean;
   themeBg?: [string, string];
+  fullscreenSupported?: boolean;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 };
 
-export const MenuShell = ({ children, onSettings, showBack = true, themeBg }: Props) => {
+export const MenuShell = ({
+  children,
+  onSettings,
+  showBack = true,
+  themeBg,
+  fullscreenSupported,
+  isFullscreen,
+  onToggleFullscreen,
+}: Props) => {
   const [, setLoc] = useLocation();
   const bg = themeBg ?? (["#fef3c7", "#fbcfe8"] as [string, string]);
   return (
@@ -62,17 +73,31 @@ export const MenuShell = ({ children, onSettings, showBack = true, themeBg }: Pr
             <ArrowLeft className="h-5 w-5" />
           </Button>
         ) : <div />}
-        {onSettings && (
-          <Button
-            size="icon"
-            variant="secondary"
-            className="rounded-full shadow-md h-11 w-11"
-            onClick={onSettings}
-            data-testid="button-settings"
-          >
-            <SettingsIcon className="h-5 w-5" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {fullscreenSupported && onToggleFullscreen && (
+            <Button
+              size="icon"
+              variant="secondary"
+              className="rounded-full shadow-md h-11 w-11"
+              onClick={onToggleFullscreen}
+              title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              data-testid="button-fullscreen"
+            >
+              {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+            </Button>
+          )}
+          {onSettings && (
+            <Button
+              size="icon"
+              variant="secondary"
+              className="rounded-full shadow-md h-11 w-11"
+              onClick={onSettings}
+              data-testid="button-settings"
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {children}
