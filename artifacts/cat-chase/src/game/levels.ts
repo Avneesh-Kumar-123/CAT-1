@@ -299,7 +299,8 @@ export const LEVELS: LevelDef[] = [
     mouseSpeed: 160,
     mouseAI: "smart",
     mouseCount: 3,
-    hint: "Weave through the candy cane maze — dead ends everywhere.",
+    mouseType: "greedy",
+    hint: "Sweet-toothed mice — cheese bait works even better here.",
     obstacles: [
       // Candy cane maze — interlocking rows
       soft(160, 80, 40, 280, "#f472b6"),   // Candy pillar 1 (top-anchored)
@@ -899,8 +900,9 @@ export const LEVELS: LevelDef[] = [
     time: 50,
     mouseSpeed: 200,
     mouseAI: "darty",
-    mouseCount: 3,
-    hint: "A true dead-end maze — memorize the path or get trapped.",
+    mouseCount: 1,
+    mouseType: "trickster",
+    hint: "The mirrors play tricks too — fake copies can appear anywhere.",
     obstacles: [
       // Left spine — top anchored
       wall(190, 80, 40, 300, "#94a3b8"),
