@@ -1,0 +1,335 @@
+This is exactly what I would focus on. **Mouse personalities** give you the biggest improvement for the least amount of development work because they make every level feel different.
+
+Here are **30 mouse personality ideas**, ranked from easiest to hardest.
+
+---
+
+# ⭐⭐⭐⭐⭐ Tier 1 (Build these first)
+
+## 😴 1. Sleepy Mouse
+
+* Sleeps for 3–5 seconds.
+* Wakes up if the cat gets close.
+* Then runs away.
+
+---
+
+## 🥷 2. Ninja Mouse
+
+* Every 4 seconds dashes quickly.
+* Leaves a smoke effect.
+
+---
+
+## 🧀 3. Greedy Mouse
+
+* Always runs toward nearby cheese.
+* Easier to lure into traps.
+
+---
+
+## 😨 4. Scared Mouse
+
+* Panics when the cat is close.
+* Changes direction randomly.
+
+---
+
+## 🤪 5. Confused Mouse
+
+* Every few seconds chooses the wrong direction.
+* Runs into walls sometimes.
+
+---
+
+## ⭐⭐⭐⭐ Tier 2
+
+## ⚡ 6. Speed Burst Mouse
+
+* Normally slow.
+* Gets a speed boost when the cat is nearby.
+
+---
+
+## 🐢 7. Lazy Mouse
+
+* Walks instead of runs.
+* Occasionally stops to rest.
+
+---
+
+## 🌀 8. Dizzy Mouse
+
+* Walks in circles.
+* Hard to predict.
+
+---
+
+## 🕳 9. Tunnel Mouse
+
+* Uses tunnels to teleport.
+
+---
+
+## 👻 10. Ghost Mouse
+
+* Can pass through special walls.
+
+---
+
+# ⭐⭐⭐⭐ Tier 3
+
+## 🧲 11. Magnet Mouse
+
+* Pulls nearby coins toward itself.
+* If it escapes, you lose those coins.
+
+---
+
+## 💣 12. Bomber Mouse
+
+* Drops tiny traps behind it.
+
+---
+
+## 🔥 13. Fire Mouse
+
+* Leaves a short fire trail.
+
+---
+
+## ❄ 14. Ice Mouse
+
+* Leaves slippery patches.
+
+---
+
+## 🌪 15. Wind Mouse
+
+* Creates small gusts.
+
+---
+
+# ⭐⭐⭐ Tier 4
+
+## 🤖 16. Smart Mouse
+
+* Learns your movement.
+* Avoids your path.
+
+---
+
+## 🕵 17. Sneaky Mouse
+
+* Hides behind walls.
+* Moves only when unseen.
+
+---
+
+## 🧱 18. Builder Mouse
+
+* Places temporary walls.
+
+---
+
+## 🚪 19. Key Mouse
+
+* Carries a key.
+* Catch it to unlock a shortcut.
+
+---
+
+## 🪤 20. Trap Mouse
+
+* Activates nearby traps.
+
+---
+
+# ⭐⭐⭐ Tier 5
+
+## 👑 21. King Mouse
+
+* Boss.
+* Needs 3 catches.
+
+---
+
+## ❤️ 22. Baby Mouse
+
+* Follows its parent.
+
+---
+
+## 🛡 23. Guard Mouse
+
+* Protects the King Mouse.
+
+---
+
+## 👥 24. Twin Mice
+
+* Two mice mirror each other's movement.
+
+---
+
+## 🧀 25. Cheese Thief
+
+* Steals cheese before escaping.
+
+---
+
+# ⭐⭐⭐ Tier 6
+
+## 🎭 26. Invisible Mouse
+
+* Invisible for 2 seconds.
+* Only footprints are visible.
+
+---
+
+## 🌈 27. Rainbow Mouse
+
+* Changes color constantly.
+
+---
+
+## 💰 28. Golden Mouse
+
+* Rare.
+* Gives 200+ coins.
+
+---
+
+## ⏳ 29. Time Mouse
+
+* Adds or removes time when caught.
+
+---
+
+## 😈 30. Trickster Mouse
+
+* Creates fake mouse clones.
+* Only one is real.
+
+---
+
+# My Top 10
+
+These are the ones I'd definitely build:
+
+🥇 Ninja Mouse
+
+🥈 Tunnel Mouse
+
+🥉 Golden Mouse
+
+4️⃣ Ghost Mouse
+
+5️⃣ Greedy Mouse
+
+6️⃣ Sleepy Mouse
+
+7️⃣ Smart Mouse
+
+8️⃣ Bomber Mouse
+
+9️⃣ King Mouse
+
+🔟 Trickster Mouse
+
+---
+
+# Even cooler ideas
+
+### 🧀 Pizza Mouse 🍕
+
+Stops occasionally to eat.
+
+If you catch it while eating:
+
+```
+Perfect Catch
+
++50 Coins
+```
+
+---
+
+### 💤 Yawning Mouse
+
+Yawns before running.
+
+Gives the player a brief reaction window.
+
+---
+
+### 🎩 Rich Mouse
+
+Carries a money bag.
+
+Drops extra coins if caught.
+
+---
+
+### 🎵 Dancing Mouse
+
+Stops to dance every few seconds.
+
+Players love quirky animations.
+
+---
+
+### 📱 Selfie Mouse
+
+Randomly pauses to "take a selfie."
+
+Funny and memorable.
+
+---
+
+# My favorite (if I could only build one)
+
+## 🎭 Trickster Mouse
+
+When you get close:
+
+```
+🐭
+↓
+
+🐭 🐭 🐭
+
+Three identical mice appear.
+
+Only one is real.
+
+The fake mice disappear after a few seconds.
+```
+
+Players remember moments like this and tell friends about them. It's memorable without requiring a whole new game mode.
+
+## Suggested release order
+
+**Update 1**
+
+* Sleepy Mouse
+* Ninja Mouse
+* Greedy Mouse
+
+**Update 2**
+
+* Ghost Mouse
+* Tunnel Mouse
+* Golden Mouse
+
+**Update 3**
+
+* Smart Mouse
+* Bomber Mouse
+* Trickster Mouse
+
+**Update 4**
+
+* King Mouse Boss
+
+This way, every update introduces fresh gameplay while keeping your core cat-and-mouse chase familiar and fun.
