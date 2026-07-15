@@ -25,3 +25,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Running this project
+
+The "Start application" workflow runs the **Cat Chase** game artifact (`artifacts/cat-chase`, React + Vite) on port 5000 — it's self-contained and doesn't call the API server. To run other packages locally:
+- `pnpm --filter @workspace/api-server run dev` — Express API server (needs a Postgres DB configured via the `db` package)
+- `pnpm --filter @workspace/mockup-sandbox run dev` — component preview sandbox
