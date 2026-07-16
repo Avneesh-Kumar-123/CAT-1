@@ -5,6 +5,7 @@ import {
   dailyRewardForStreak,
   isDay7Streak,
   DAY7_EXCLUSIVE_COSMETIC_ID,
+  STREAK_MILESTONES,
   coinsForAchievements,
   coinsForMouseDiscoveries,
   STAR_MILESTONES,
@@ -12,7 +13,9 @@ import {
   worldForLevel,
   isWorldComplete,
   pickDailyChallenge,
+  pickWeeklyChallenge,
   currentDateKey,
+  currentWeekKey,
   type LevelRewardBreakdown,
 } from "./economy";
 
@@ -51,6 +54,7 @@ const defaultSave = (): SaveData => {
     claimedStarMilestones: [],
     claimedWorldBonuses: [],
     dailyChallenge: null,
+    weeklyChallenge: null,
     cheeseUsedTotal: 0,
     caughtMouseKinds: [],
   };
@@ -77,6 +81,7 @@ export const loadSave = (): SaveData => {
       claimedStarMilestones: parsed.claimedStarMilestones ?? [],
       claimedWorldBonuses: parsed.claimedWorldBonuses ?? [],
       dailyChallenge: parsed.dailyChallenge ?? null,
+      weeklyChallenge: parsed.weeklyChallenge ?? null,
       cheeseUsedTotal: parsed.cheeseUsedTotal ?? 0,
       caughtMouseKinds: parsed.caughtMouseKinds ?? [],
     };
@@ -270,7 +275,14 @@ const todayKey = (): string => {
  */
 export const claimDailyReward = (
   data: SaveData,
-): { data: SaveData; reward: number; streak: number; gotExclusiveCosmetic: boolean } | null => {
+): {
+  data: SaveData;
+  reward: number;
+  streak: number;
+  gotExclusiveCosmetic: boolean;
+  exclusiveCosmeticName?: string;
+  exclusiveCosmeticEmoji?: string;
+} | null => {
   const today = todayKey();
   if (data.lastLoginDate === today) return null;
 
@@ -282,19 +294,43 @@ export const claimDailyReward = (
   }
 
   const reward = dailyRewardForStreak(streak);
-  const gotExclusiveCosmetic = isDay7Streak(streak);
-  const owned = data.ownedCosmetics ?? [];
+  let owned = [...(data.ownedCosmetics ?? [])];
+
+  // Day-7-cycle halo
+  const gotDay7 = isDay7Streak(streak);
+  if (gotDay7 && !owned.includes(DAY7_EXCLUSIVE_COSMETIC_ID)) {
+    owned = [...owned, DAY7_EXCLUSIVE_COSMETIC_ID];
+  }
+
+  // Streak milestone cosmetics (3, 14, 30 days)
+  let milestoneName: string | undefined;
+  let milestoneEmoji: string | undefined;
+  for (const m of STREAK_MILESTONES) {
+    if (streak >= m.streak && !owned.includes(m.cosmeticId)) {
+      owned = [...owned, m.cosmeticId];
+      milestoneName = m.label;
+      milestoneEmoji = m.emoji;
+      break; // award at most one milestone per login
+    }
+  }
+
+  const gotExclusiveCosmetic = gotDay7 || !!milestoneName;
   const updated: SaveData = {
     ...data,
     coins: (data.coins ?? 0) + reward,
     lastLoginDate: today,
     loginStreak: streak,
-    ownedCosmetics: gotExclusiveCosmetic && !owned.includes(DAY7_EXCLUSIVE_COSMETIC_ID)
-      ? [...owned, DAY7_EXCLUSIVE_COSMETIC_ID]
-      : owned,
+    ownedCosmetics: owned,
   };
   saveSave(updated);
-  return { data: updated, reward, streak, gotExclusiveCosmetic };
+  return {
+    data: updated,
+    reward,
+    streak,
+    gotExclusiveCosmetic,
+    exclusiveCosmeticName: milestoneName ?? (gotDay7 ? "Day 7 Halo" : undefined),
+    exclusiveCosmeticEmoji: milestoneEmoji ?? (gotDay7 ? "🌟" : undefined),
+  };
 };
 
 /** Gets today's daily challenge, generating and storing a fresh one if needed. */
@@ -329,6 +365,45 @@ export const progressDailyChallenge = (
     ...data,
     dailyChallenge: { ...dc, progress, claimed: justCompleted ? true : dc.claimed },
     coins: justCompleted ? (data.coins ?? 0) + dc.reward : data.coins ?? 0,
+  };
+  saveSave(updated);
+  return updated;
+};
+
+/** Gets this week's weekly challenge, generating a fresh one if the week has rolled over. */
+export const getOrCreateWeeklyChallenge = (data: SaveData): SaveData => {
+  const week = currentWeekKey();
+  if (data.weeklyChallenge && data.weeklyChallenge.date === week) return data;
+  const def = pickWeeklyChallenge(week);
+  const updated: SaveData = {
+    ...data,
+    weeklyChallenge: {
+      date: week,
+      type: def.type,
+      target: def.target,
+      progress: 0,
+      reward: def.reward,
+      claimed: false,
+    },
+  };
+  saveSave(updated);
+  return updated;
+};
+
+/** Increments progress on this week's challenge if its type matches, auto-claiming coins on completion. */
+export const progressWeeklyChallenge = (
+  data: SaveData,
+  type: string,
+  amount: number,
+): SaveData => {
+  const wc = data.weeklyChallenge;
+  if (!wc || wc.date !== currentWeekKey() || wc.claimed || wc.type !== type) return data;
+  const progress = Math.min(wc.target, wc.progress + amount);
+  const justCompleted = progress >= wc.target && !wc.claimed;
+  const updated: SaveData = {
+    ...data,
+    weeklyChallenge: { ...wc, progress, claimed: justCompleted ? true : wc.claimed },
+    coins: justCompleted ? (data.coins ?? 0) + wc.reward : data.coins ?? 0,
   };
   saveSave(updated);
   return updated;

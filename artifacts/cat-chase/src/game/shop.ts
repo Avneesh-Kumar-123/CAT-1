@@ -27,7 +27,10 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: "top",        category: "hat", name: "Top Hat",      emoji: "🎩", price: 450 },
   { id: "crown",      category: "hat", name: "Crown",        emoji: "👑", price: 700 },
   { id: "halo",       category: "hat", name: "Golden Halo",  emoji: "😇", price: 1200 },
-  { id: "day7-halo",  category: "hat", name: "Day 7 Halo",   emoji: "🌟", price: 0, exclusive: true },
+  { id: "day7-halo",        category: "hat",   name: "Day 7 Halo",       emoji: "🌟", price: 0, exclusive: true },
+  { id: "streak3-clover",   category: "hat",   name: "Lucky Clover",     emoji: "🍀", price: 0, exclusive: true },
+  { id: "streak14-lightning", category: "trail", name: "Lightning Trail", emoji: "⚡", price: 0, exclusive: true, color: "#fbbf24" },
+  { id: "streak30-champion",  category: "hat",   name: "Champion Crown",  emoji: "🏆", price: 0, exclusive: true },
 
   // Trails
   { id: "none-trail", category: "trail", name: "No Trail",   emoji: "🚫", price: 0 },

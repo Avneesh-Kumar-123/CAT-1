@@ -112,6 +112,7 @@ export type SaveData = {
   claimedStarMilestones: number[];
   claimedWorldBonuses: number[];
   dailyChallenge: DailyChallengeState | null;
+  weeklyChallenge: DailyChallengeState | null;
   cheeseUsedTotal: number;
   /** Mouse Almanac — every distinct mouse kind the player has ever caught. */
   caughtMouseKinds: MouseKind[];

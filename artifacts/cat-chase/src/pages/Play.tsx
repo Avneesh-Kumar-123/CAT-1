@@ -26,7 +26,9 @@ import {
   addCoins,
   addAchievementCoins,
   progressDailyChallenge,
+  progressWeeklyChallenge,
   getOrCreateDailyChallenge,
+  getOrCreateWeeklyChallenge,
   recordMouseKindsCaught,
 } from "@/game/storage";
 import { checkAchievements } from "@/game/achievements";
@@ -45,6 +47,7 @@ type Outcome =
       kind: "win";
       stars: number;
       timeRemaining: number;
+      prevBestTimeRemaining: number;
       score: number;
       isMilestone: boolean;
       coinsEarned: number;
@@ -122,9 +125,11 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     saveRef.current = save;
   }, [save]);
 
-  // Ensure today's daily challenge exists and fire level_start when gameplay begins
+  // Ensure today's daily + this week's challenge exist, and fire level_start
   useEffect(() => {
-    onSave(getOrCreateDailyChallenge(saveRef.current));
+    const withDaily = getOrCreateDailyChallenge(saveRef.current);
+    const withWeekly = getOrCreateWeeklyChallenge(withDaily);
+    onSave(withWeekly);
     analytics.levelStart(level.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -137,7 +142,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
 
   const handleMouseCoins = useCallback((amount: number) => {
     const withCoins = addCoins(saveRef.current, amount);
-    const withProgress = progressDailyChallenge(withCoins, "catch_mice", 1);
+    const withDaily = progressDailyChallenge(withCoins, "catch_mice", 1);
+    const withProgress = progressWeeklyChallenge(withDaily, "catch_mice", 1);
     onSave(withProgress);
     analytics.coinsEarned(amount, "mouse_catch");
     const id = coinPopIdRef.current++;
@@ -182,6 +188,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     (timeRemaining: number, score: number, tookDamage: boolean) => {
       const stars = computeStars(timeRemaining, level.time);
       const prevBestStars = save.levels[level.id]?.bestStars ?? 0;
+      const prevBestTimeRemaining = save.levels[level.id]?.bestTimeRemaining ?? 0;
       const isMilestone = stars === 3 && prevBestStars < 3;
 
       sfx.win();
@@ -201,6 +208,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
       );
       let updated = progressDailyChallenge(recorded, "finish_levels", 1);
       if (!tookDamage) updated = progressDailyChallenge(updated, "no_damage_clear", 1);
+      updated = progressWeeklyChallenge(updated, "finish_levels", 1);
+      if (!tookDamage) updated = progressWeeklyChallenge(updated, "no_damage_clear", 1);
 
       sessionWinsRef.current += 1;
       const newAchIds = checkAchievements(prev, updated, {
@@ -234,10 +243,10 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         setShowMilestone(true);
         milestoneTimer.current = setTimeout(() => {
           setShowMilestone(false);
-          setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: true, coinsEarned, breakdown });
+          setOutcome({ kind: "win", stars, timeRemaining, prevBestTimeRemaining, score, isMilestone: true, coinsEarned, breakdown });
         }, 2200);
       } else {
-        setOutcome({ kind: "win", stars, timeRemaining, score, isMilestone: false, coinsEarned, breakdown });
+        setOutcome({ kind: "win", stars, timeRemaining, prevBestTimeRemaining, score, isMilestone: false, coinsEarned, breakdown });
       }
     },
     [level, save, onSave],
@@ -469,7 +478,8 @@ export const Play = ({ levelId, save, onSave }: Props) => {
               if (cheeseAvailableRef.current && !s.cheeseAvailable && !cheeseUsedTrackedRef.current) {
                 cheeseUsedTrackedRef.current = true;
                 const withCheese: SaveData = { ...saveRef.current, cheeseUsedTotal: (saveRef.current.cheeseUsedTotal ?? 0) + 1 };
-                onSave(progressDailyChallenge(withCheese, "collect_cheese", 1));
+                const withDaily2 = progressDailyChallenge(withCheese, "collect_cheese", 1);
+                onSave(progressWeeklyChallenge(withDaily2, "collect_cheese", 1));
               }
               cheeseAvailableRef.current = s.cheeseAvailable;
               if (s.activePower) usedPowerUpRef.current = true;
@@ -767,6 +777,7 @@ const WinPanel = ({
   outcome: {
     stars: number;
     timeRemaining: number;
+    prevBestTimeRemaining: number;
     score: number;
     isMilestone: boolean;
     coinsEarned: number;
@@ -877,6 +888,24 @@ const WinPanel = ({
             <div className="font-display font-bold text-2xl">{outcome.score.toLocaleString()}</div>
           </div>
         </div>
+
+        {/* Beat Your Best badge */}
+        {outcome.prevBestTimeRemaining > 0 && outcome.timeRemaining > outcome.prevBestTimeRemaining && (
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.15, type: "spring", stiffness: 300 }}
+            className="flex items-center justify-center gap-2 bg-green-50 border-2 border-green-400 rounded-2xl px-4 py-2.5"
+          >
+            <span className="text-xl">⚡</span>
+            <div className="text-left">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-green-600 leading-tight">New Personal Best!</div>
+              <div className="font-display font-bold text-sm text-green-800">
+                {outcome.timeRemaining.toFixed(1)}s &nbsp;<span className="text-green-500 font-normal text-xs">vs {outcome.prevBestTimeRemaining.toFixed(1)}s before</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
         {outcome.breakdown.total > 0 && (
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}

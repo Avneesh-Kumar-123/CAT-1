@@ -12,7 +12,7 @@ import { sfx, startBgMusic, stopBgMusic } from "@/game/audio";
 import { analytics } from "@/analytics";
 import { LEVELS } from "@/game/levels";
 import { ACHIEVEMENTS } from "@/game/achievements";
-import { claimDailyReward } from "@/game/storage";
+import { claimDailyReward, getOrCreateWeeklyChallenge } from "@/game/storage";
 import { useFullscreen, isFullscreenSupported } from "@/hooks/useFullscreen";
 import type { SaveData } from "@/game/types";
 
@@ -21,6 +21,13 @@ const FS_PROMPT_KEY = "cat-chase-fs-prompted";
 type Props = {
   save: SaveData;
   onSave: (s: SaveData) => void;
+};
+
+const WEEKLY_LABELS: Record<string, (t: number) => string> = {
+  catch_mice:      (t) => `Catch ${t} mice this week`,
+  finish_levels:   (t) => `Finish ${t} levels this week`,
+  no_damage_clear: (t) => `Complete ${t} levels without damage`,
+  collect_cheese:  (t) => `Use cheese bait ${t} times this week`,
 };
 
 const WORLDS = [
@@ -45,7 +52,12 @@ const DECO_EMOJIS = [
 export const Splash = ({ save, onSave }: Props) => {
   const [, setLoc] = useLocation();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [dailyReward, setDailyReward] = useState<{ reward: number; streak: number } | null>(null);
+  const [dailyReward, setDailyReward] = useState<{
+    reward: number;
+    streak: number;
+    exclusiveCosmeticName?: string;
+    exclusiveCosmeticEmoji?: string;
+  } | null>(null);
   const [showFsPrompt, setShowFsPrompt] = useState(false);
   const fsSupported = isFullscreenSupported();
   const { isFullscreen, toggle: toggleFullscreen, enter: enterFullscreen } = useFullscreen();
@@ -59,14 +71,23 @@ export const Splash = ({ save, onSave }: Props) => {
     return () => stopBgMusic();
   }, []);
 
-  // Claim daily login reward once per calendar day
+  // Claim daily login reward + initialise weekly challenge once on mount
   useEffect(() => {
-    const result = claimDailyReward(save);
+    let current = save;
+    const result = claimDailyReward(current);
     if (result) {
-      onSave(result.data);
-      setDailyReward({ reward: result.reward, streak: result.streak });
+      current = result.data;
+      onSave(current);
+      setDailyReward({
+        reward: result.reward,
+        streak: result.streak,
+        exclusiveCosmeticName: result.exclusiveCosmeticName,
+        exclusiveCosmeticEmoji: result.exclusiveCosmeticEmoji,
+      });
       sfx.achievement();
     }
+    const withWeekly = getOrCreateWeeklyChallenge(current);
+    if (withWeekly !== current) onSave(withWeekly);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -527,6 +548,38 @@ export const Splash = ({ save, onSave }: Props) => {
               </motion.div>
             </Link>
 
+            {/* Weekly Challenge — compact mobile card */}
+            {(() => {
+              const wc = save.weeklyChallenge;
+              if (!wc) return null;
+              const pct = Math.min(1, wc.progress / wc.target);
+              const label = WEEKLY_LABELS[wc.type]?.(wc.target) ?? `Complete ${wc.target} tasks`;
+              return (
+                <div className={`rounded-2xl border-2 px-4 py-3 shadow-sm ${wc.claimed ? "bg-green-50 border-green-300" : "bg-violet-50 border-violet-200"}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-display font-bold text-xs text-violet-700">📅 Weekly Challenge</span>
+                    {wc.claimed ? (
+                      <span className="text-[10px] font-bold text-green-600">✓ Done!</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-violet-600 flex items-center gap-0.5">
+                        <Coins className="h-3 w-3 fill-yellow-400 text-yellow-500" /> +{wc.reward}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground font-semibold leading-snug mb-2">{label}</p>
+                  <div className="w-full bg-foreground/10 rounded-full h-1.5 overflow-hidden">
+                    <motion.div
+                      className={`h-1.5 rounded-full ${wc.claimed ? "bg-green-500" : "bg-violet-500"}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct * 100}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-bold mt-1 text-right">{wc.progress} / {wc.target}</div>
+                </div>
+              );
+            })()}
+
             <Link href="/shop" onClick={() => sfx.click()}>
               <motion.div
                 whileTap={{ scale: 0.96 }}
@@ -624,6 +677,40 @@ export const Splash = ({ save, onSave }: Props) => {
               })}
             </div>
           </div>
+
+          {/* Weekly Challenge */}
+          {(() => {
+            const wc = save.weeklyChallenge;
+            if (!wc) return null;
+            const pct = Math.min(1, wc.progress / wc.target);
+            const label = WEEKLY_LABELS[wc.type]?.(wc.target) ?? `Complete ${wc.target} tasks`;
+            return (
+              <div className={`bg-card/80 backdrop-blur border-2 rounded-3xl p-5 shadow-lg ${wc.claimed ? "border-green-300" : "border-violet-200"}`}>
+                <div className="font-display font-bold text-xs uppercase tracking-widest text-violet-600 mb-3">
+                  📅 Weekly Challenge
+                </div>
+                <p className="text-sm font-semibold leading-snug mb-3">{label}</p>
+                <div className="w-full bg-foreground/10 rounded-full h-2.5 overflow-hidden mb-2">
+                  <motion.div
+                    className={`h-2.5 rounded-full ${wc.claimed ? "bg-green-500" : "bg-violet-500"}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct * 100}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-muted-foreground">{wc.progress} / {wc.target}</span>
+                  {wc.claimed ? (
+                    <span className="text-green-600">✓ Claimed!</span>
+                  ) : (
+                    <span className="text-violet-600 flex items-center gap-1">
+                      <Coins className="h-3 w-3 fill-yellow-400 text-yellow-500" /> +{wc.reward}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Pro tip */}
           <div className="bg-card/80 backdrop-blur border-2 border-card-border rounded-3xl p-5 shadow-lg">
@@ -813,12 +900,26 @@ export const Splash = ({ save, onSave }: Props) => {
               <p className="text-sm text-muted-foreground font-semibold mb-4">
                 Day {dailyReward.streak} login streak
               </p>
-              <div className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 rounded-full px-5 py-2 mb-5">
+              <div className="inline-flex items-center gap-2 bg-yellow-100 border-2 border-yellow-400 rounded-full px-5 py-2 mb-3">
                 <Coins className="h-6 w-6 text-yellow-500 fill-yellow-400" />
                 <span className="font-display font-bold text-2xl text-yellow-700">
                   +{dailyReward.reward}
                 </span>
               </div>
+              {dailyReward.exclusiveCosmeticName && (
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 280 }}
+                  className="flex items-center gap-2 bg-violet-100 border-2 border-violet-300 rounded-2xl px-4 py-2.5 mb-4 text-left"
+                >
+                  <span className="text-2xl flex-shrink-0">{dailyReward.exclusiveCosmeticEmoji}</span>
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-violet-600 leading-tight">Exclusive Unlocked!</div>
+                    <div className="font-display font-bold text-sm text-violet-900 truncate">{dailyReward.exclusiveCosmeticName}</div>
+                  </div>
+                </motion.div>
+              )}
               <Button
                 className="w-full font-display font-bold h-12 text-base game-button"
                 onClick={() => { sfx.click(); setDailyReward(null); }}

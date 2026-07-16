@@ -122,6 +122,23 @@ export const isDay7Streak = (streak: number): boolean =>
   streak % DAILY_REWARD_SCHEDULE.length === 0;
 
 // ─────────────────────────────────────────────────────────────────────────
+// 3b. Streak milestone cosmetics (exclusive unlocks at fixed streak counts)
+// ─────────────────────────────────────────────────────────────────────────
+
+export type StreakMilestone = {
+  streak: number;
+  cosmeticId: string;
+  label: string;
+  emoji: string;
+};
+
+export const STREAK_MILESTONES: StreakMilestone[] = [
+  { streak: 3,  cosmeticId: "streak3-clover",    label: "Lucky Clover Hat",    emoji: "🍀" },
+  { streak: 14, cosmeticId: "streak14-lightning", label: "Lightning Trail",     emoji: "⚡" },
+  { streak: 30, cosmeticId: "streak30-champion",  label: "Champion Crown",      emoji: "🏆" },
+];
+
+// ─────────────────────────────────────────────────────────────────────────
 // 4. Achievement coin rewards
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -230,3 +247,37 @@ export const pickDailyChallenge = (date = dateKey()): DailyChallengeDef => {
 };
 
 export const currentDateKey = dateKey;
+
+// ─────────────────────────────────────────────────────────────────────────
+// 8. Weekly challenges (rotate every Monday — bigger targets, bigger reward)
+// ─────────────────────────────────────────────────────────────────────────
+
+export type WeeklyChallengeDef = {
+  type: DailyChallengeType;
+  label: (target: number) => string;
+  target: number;
+  reward: number;
+};
+
+const WEEKLY_CHALLENGE_POOL: WeeklyChallengeDef[] = [
+  { type: "catch_mice",      label: (t) => `Catch ${t} mice this week`,            target: 60,  reward: 400 },
+  { type: "finish_levels",   label: (t) => `Finish ${t} levels this week`,          target: 15,  reward: 350 },
+  { type: "no_damage_clear", label: (t) => `Complete ${t} levels without damage`,   target: 5,   reward: 500 },
+  { type: "collect_cheese",  label: (t) => `Use cheese bait ${t} times this week`,  target: 25,  reward: 300 },
+  { type: "catch_mice",      label: (t) => `Catch ${t} mice this week`,             target: 100, reward: 600 },
+];
+
+/** ISO year + week number (Monday-based) so the challenge flips every Monday. */
+export const currentWeekKey = (d = new Date()): string => {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 4 - (date.getDay() || 7));
+  const yearStart = new Date(date.getFullYear(), 0, 1);
+  const weekNo = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${date.getFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+};
+
+export const pickWeeklyChallenge = (week = currentWeekKey()): WeeklyChallengeDef => {
+  const idx = hashString(week) % WEEKLY_CHALLENGE_POOL.length;
+  return WEEKLY_CHALLENGE_POOL[idx]!;
+};
