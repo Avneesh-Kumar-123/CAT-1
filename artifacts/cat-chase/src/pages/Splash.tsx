@@ -377,7 +377,7 @@ export const Splash = ({ save, onSave }: Props) => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring" }}
-            className="relative h-32 sm:h-40 w-full max-w-lg mb-5 sm:mb-8 overflow-hidden"
+            className="relative h-36 sm:h-44 w-full max-w-lg mb-5 sm:mb-8 overflow-x-hidden"
           >
             {/* Cheese bait at the right edge — what the mouse is racing toward */}
             <motion.span
@@ -429,7 +429,7 @@ export const Splash = ({ save, onSave }: Props) => {
             </motion.div>
 
             {/* Ground shadow */}
-            <div className="absolute bottom-4 inset-x-0 h-2 bg-gradient-to-r from-transparent via-foreground/20 to-transparent rounded-full" />
+            <div className="absolute bottom-6 inset-x-8 h-1 bg-gradient-to-r from-transparent via-foreground/10 to-transparent rounded-full" />
           </motion.div>
 
           {/* Stats */}
@@ -548,14 +548,14 @@ export const Splash = ({ save, onSave }: Props) => {
               </motion.div>
             </Link>
 
-            {/* Weekly Challenge — compact mobile card */}
+            {/* Weekly Challenge — compact card, hidden on desktop (shown in right panel) */}
             {(() => {
               const wc = save.weeklyChallenge;
               if (!wc) return null;
               const pct = Math.min(1, wc.progress / wc.target);
               const label = WEEKLY_LABELS[wc.type]?.(wc.target) ?? `Complete ${wc.target} tasks`;
               return (
-                <div className={`rounded-2xl border-2 px-4 py-3 shadow-sm ${wc.claimed ? "bg-green-50 border-green-300" : "bg-violet-50 border-violet-200"}`}>
+                <div className={`lg:hidden rounded-2xl border-2 px-4 py-3 shadow-sm ${wc.claimed ? "bg-green-50 border-green-300" : "bg-violet-50 border-violet-200"}`}>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-display font-bold text-xs text-violet-700">📅 Weekly Challenge</span>
                     {wc.claimed ? (
