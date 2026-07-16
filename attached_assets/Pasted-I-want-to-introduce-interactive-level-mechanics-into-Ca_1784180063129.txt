@@ -1,0 +1,156 @@
+I want to introduce interactive level mechanics into Cat Chase: Mouse Hunt.
+
+IMPORTANT:
+Do NOT create a separate puzzle mode or new world.
+
+Instead, integrate these mechanics naturally into selected existing levels (starting around Level 6 onwards).
+
+The goal is to make levels feel fresh while keeping the gameplay easy to understand, especially on mobile.
+
+=====================================
+CORE DESIGN RULES
+=====================================
+
+- Every level should introduce ONLY ONE new mechanic.
+- The mechanic must be understandable in under 5 seconds.
+- No tutorials should be required.
+- Mobile players should easily understand what to do.
+- Keep all existing controls unchanged.
+- Reuse the current obstacle and trigger systems wherever possible.
+- Make all mechanics modular so future interactive objects can reuse the same Trigger → Action architecture.
+
+=====================================
+MECHANIC 1 — MILK BOWL
+=====================================
+
+Add a Milk Bowl mechanic.
+
+Gameplay:
+
+- Some levels contain:
+  - An empty milk bowl
+  - A locked gate
+  - A milk bottle/carton nearby
+
+Objective:
+
+The player pushes the milk bottle into the bowl.
+
+When the bowl becomes full:
+
+✓ Play a satisfying sound.
+✓ Show:
+🥛 Gate Opened!
+✓ Gate smoothly opens.
+✓ Player continues chasing the mouse.
+
+Visual cues:
+
+- Empty bowl glows softly.
+- Gate has a red lock icon.
+- Filled bowl glows gold.
+- Gate turns green when opened.
+
+Mobile friendly:
+
+No precise dragging.
+Simply push the bottle with the cat.
+
+=====================================
+LEVEL PLACEMENT
+=====================================
+
+Only use this mechanic in a few levels.
+
+Example:
+
+Level 7
+Milk Bowl + Gate
+
+Level 13
+Milk Bowl + Greedy Mouse
+
+Level 22
+Milk Bowl + Trickster Mouse
+
+Do NOT place it in every level.
+
+=====================================
+FUTURE SYSTEM
+=====================================
+
+Design the mechanic as a reusable Trigger → Action system.
+
+Examples:
+
+Milk Bowl
+↓
+
+Open Gate
+
+Switch
+↓
+
+Disable Laser
+
+Cheese Plate
+↓
+
+Open Secret Door
+
+Pressure Plate
+↓
+
+Move Platform
+
+This should allow future mechanics without rewriting code.
+
+=====================================
+VISUAL FEEDBACK
+=====================================
+
+When the player gets close:
+
+Milk Bowl pulses softly.
+
+When activated:
+
+Small milk splash particles.
+
+Gate slides open smoothly.
+
+A satisfying unlock sound plays.
+
+=====================================
+GAMEPLAY
+=====================================
+
+Do NOT change:
+
+Cat movement
+
+Mouse AI
+
+Controls
+
+Camera
+
+Physics
+
+Desktop layout
+
+Only add this new interaction.
+
+=====================================
+GOAL
+=====================================
+
+I want every 3–5 levels to introduce one memorable interactive mechanic.
+
+Players should immediately understand:
+
+"I need to activate this object to continue."
+
+without reading instructions.
+
+Keep the implementation lightweight, polished, mobile-friendly, and easy to extend with future mechanics.
