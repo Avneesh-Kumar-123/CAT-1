@@ -15,6 +15,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { ShareButton } from "@/components/ShareButton";
 import { CountdownOverlay } from "@/components/CountdownOverlay";
 import { AchievementToastQueue } from "@/components/AchievementToastQueue";
+import { MouseDiscoveryToast } from "@/components/MouseDiscoveryToast";
 import { Button } from "@/components/ui/button";
 import { LEVELS } from "@/game/levels";
 import { sfx, setAudioMuted } from "@/game/audio";
@@ -26,10 +27,11 @@ import {
   addAchievementCoins,
   progressDailyChallenge,
   getOrCreateDailyChallenge,
+  recordMouseKindsCaught,
 } from "@/game/storage";
 import { checkAchievements } from "@/game/achievements";
 import type { LevelRewardBreakdown } from "@/game/economy";
-import type { PowerUpKind, SaveData } from "@/game/types";
+import type { MouseKind, PowerUpKind, SaveData } from "@/game/types";
 
 type Props = {
   levelId: number;
@@ -93,6 +95,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
   const usedPowerUpRef = useRef(false);
   const [toastAchievements, setToastAchievements] = useState<string[]>([]);
 
+  // Mouse Almanac — discoveries made this play session
+  const [toastDiscoveries, setToastDiscoveries] = useState<MouseKind[]>([]);
+
   // Fullscreen
   const gameRootRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen(gameRootRef);
@@ -140,6 +145,14 @@ export const Play = ({ levelId, save, onSave }: Props) => {
     setCoinPulseKey((k) => k + 1);
     setTimeout(() => setCoinPops((p) => p.filter((c) => c.id !== id)), 900);
   }, []);
+
+  const handleMouseCaughtKinds = useCallback((kinds: MouseKind[]) => {
+    const { data: updated, newKinds } = recordMouseKindsCaught(saveRef.current, kinds);
+    if (newKinds.length > 0) {
+      onSave(updated);
+      setToastDiscoveries(newKinds);
+    }
+  }, [onSave]);
 
   const [hud, setHud] = useState<{
     score: number;
@@ -451,6 +464,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             onTimeUp={handleTimeUp}
             onTrap={handleTrap}
             onMouseCoins={handleMouseCoins}
+            onMouseCaughtKinds={handleMouseCaughtKinds}
             onState={(s) => {
               if (cheeseAvailableRef.current && !s.cheeseAvailable && !cheeseUsedTrackedRef.current) {
                 cheeseUsedTrackedRef.current = true;
@@ -724,6 +738,15 @@ export const Play = ({ levelId, save, onSave }: Props) => {
           key={toastAchievements.join(",")}
           ids={toastAchievements}
           onDone={() => setToastAchievements([])}
+        />
+      )}
+
+      {/* Mouse Almanac discovery toasts */}
+      {toastDiscoveries.length > 0 && (
+        <MouseDiscoveryToast
+          key={toastDiscoveries.join(",")}
+          kinds={toastDiscoveries}
+          onDone={() => setToastDiscoveries([])}
         />
       )}
 

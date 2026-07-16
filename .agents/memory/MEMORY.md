@@ -1,0 +1,2 @@
+- [Mouse Almanac feature](mouse-almanac.md) — how tracking, discovery bonuses, and the Almanac page are wired together.
+- [Screenshot limitation](screenshot-limitation.md) — static pre-JS loading splash appears in all app screenshots; not a regression.

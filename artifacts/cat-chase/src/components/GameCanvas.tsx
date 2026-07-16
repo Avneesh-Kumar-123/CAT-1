@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type React from "react";
-import type { CheeseBait, LevelDef, Obstacle, PowerUp, PowerUpKind, Vec2 } from "@/game/types";
+import type { CheeseBait, LevelDef, MouseKind, Obstacle, PowerUp, PowerUpKind, Vec2 } from "@/game/types";
 import { ARENA } from "@/game/levels";
 import { getSkin, type CatSkin } from "@/game/skins";
 import { getShopItem } from "@/game/shop";
@@ -48,6 +48,8 @@ type GameCanvasProps = {
   onTimeUp: (score: number) => void;
   onTrap: () => void;
   onMouseCoins?: (amount: number) => void;
+  /** Fired with every distinct "kind" (personality + golden/boss, if applicable) represented by a catch — feeds the Mouse Almanac. */
+  onMouseCaughtKinds?: (kinds: MouseKind[]) => void;
   onState: (s: {
     score: number;
     timeLeft: number;
@@ -82,6 +84,7 @@ export const GameCanvas = ({
   onTimeUp,
   onTrap,
   onMouseCoins,
+  onMouseCaughtKinds,
   onState,
 }: GameCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -102,6 +105,7 @@ export const GameCanvas = ({
   const onTimeUpRef = useRef(onTimeUp);
   const onTrapRef = useRef(onTrap);
   const onMouseCoinsRef = useRef(onMouseCoins);
+  const onMouseCaughtKindsRef = useRef(onMouseCaughtKinds);
   const onStateRef = useRef(onState);
   useLayoutEffect(() => { pausedRef.current = paused; }, [paused]);
   useLayoutEffect(() => { joystickRef.current = joystick; }, [joystick]);
@@ -114,6 +118,7 @@ export const GameCanvas = ({
   useLayoutEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
   useLayoutEffect(() => { onTrapRef.current = onTrap; }, [onTrap]);
   useLayoutEffect(() => { onMouseCoinsRef.current = onMouseCoins; }, [onMouseCoins]);
+  useLayoutEffect(() => { onMouseCaughtKindsRef.current = onMouseCaughtKinds; }, [onMouseCaughtKinds]);
   useLayoutEffect(() => { onStateRef.current = onState; }, [onState]);
   const controlModeRef = useRef(controlMode);
   useLayoutEffect(() => { controlModeRef.current = controlMode; }, [controlMode]);
@@ -614,6 +619,11 @@ export const GameCanvas = ({
               onMouseCoinsRef.current?.(mouseCoins);
               s.floatTexts.push({ x: m.pos.x, y: m.pos.y - 60, text: `🪙+${mouseCoins}`, life: 1.1, color: "#fde047" });
             }
+            // ── Mouse Almanac: report every kind this catch represents ──────
+            const caughtKinds: MouseKind[] = [m.mouseType ?? "normal"];
+            if (m.isGolden) caughtKinds.push("golden");
+            if (level.mouseAI === "boss") caughtKinds.push("boss");
+            onMouseCaughtKindsRef.current?.(caughtKinds);
             // Golden Mouse: +8s bonus + fanfare
             if (m.isGolden) {
               s.timeLeft = Math.min(level.time + 8, s.timeLeft + 8);

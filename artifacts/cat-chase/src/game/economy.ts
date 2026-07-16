@@ -98,6 +98,15 @@ export const coinsForMouseCatch = (level: LevelDef, isGolden: boolean): number =
 };
 
 // ─────────────────────────────────────────────────────────────────────────
+// 2b. Mouse Almanac — one-time discovery bonus the first time a kind is caught
+// ─────────────────────────────────────────────────────────────────────────
+
+export const MOUSE_DISCOVERY_COINS = 15;
+
+export const coinsForMouseDiscoveries = (newKindCount: number): number =>
+  Math.max(0, newKindCount) * MOUSE_DISCOVERY_COINS;
+
+// ─────────────────────────────────────────────────────────────────────────
 // 3. Daily login rewards (7-day cycle, day 7 grants an exclusive cosmetic)
 // ─────────────────────────────────────────────────────────────────────────
 

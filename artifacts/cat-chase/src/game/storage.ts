@@ -1,4 +1,4 @@
-import type { SaveData, GameSettings, LevelProgress, DailyChallengeState } from "./types";
+import type { SaveData, GameSettings, LevelProgress, DailyChallengeState, MouseKind } from "./types";
 import { LEVELS } from "./levels";
 import {
   calculateLevelCompleteReward,
@@ -6,6 +6,7 @@ import {
   isDay7Streak,
   DAY7_EXCLUSIVE_COSMETIC_ID,
   coinsForAchievements,
+  coinsForMouseDiscoveries,
   STAR_MILESTONES,
   totalStars,
   worldForLevel,
@@ -51,6 +52,7 @@ const defaultSave = (): SaveData => {
     claimedWorldBonuses: [],
     dailyChallenge: null,
     cheeseUsedTotal: 0,
+    caughtMouseKinds: [],
   };
 };
 
@@ -76,6 +78,7 @@ export const loadSave = (): SaveData => {
       claimedWorldBonuses: parsed.claimedWorldBonuses ?? [],
       dailyChallenge: parsed.dailyChallenge ?? null,
       cheeseUsedTotal: parsed.cheeseUsedTotal ?? 0,
+      caughtMouseKinds: parsed.caughtMouseKinds ?? [],
     };
   } catch {
     return defaultSave();
@@ -197,6 +200,28 @@ export const addAchievementCoins = (data: SaveData, newAchievementIds: string[])
   const amount = coinsForAchievements(newAchievementIds);
   if (amount <= 0) return data;
   return addCoins(data, amount);
+};
+
+/**
+ * Records freshly-caught mouse kinds for the Mouse Almanac, paying a small
+ * one-time discovery bonus for any kind never seen before. Returns the kinds
+ * that were newly discovered (empty if all had already been caught) so the
+ * caller can show a "New mouse discovered!" toast.
+ */
+export const recordMouseKindsCaught = (
+  data: SaveData,
+  kinds: MouseKind[],
+): { data: SaveData; newKinds: MouseKind[] } => {
+  const known = new Set(data.caughtMouseKinds ?? []);
+  const newKinds = kinds.filter((k) => !known.has(k));
+  if (newKinds.length === 0) return { data, newKinds: [] };
+  const updated: SaveData = {
+    ...data,
+    caughtMouseKinds: [...known, ...newKinds],
+    coins: (data.coins ?? 0) + coinsForMouseDiscoveries(newKinds.length),
+  };
+  saveSave(updated);
+  return { data: updated, newKinds };
 };
 
 export const purchaseItem = (

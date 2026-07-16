@@ -13,6 +13,7 @@ import { PrivacyPolicy } from "@/pages/PrivacyPolicy";
 import { AboutUs } from "@/pages/AboutUs";
 import { ContactUs } from "@/pages/ContactUs";
 import { Achievements } from "@/pages/Achievements";
+import { MouseAlmanac } from "@/pages/MouseAlmanac";
 import { TimeAttack } from "@/pages/TimeAttack";
 import { Survival } from "@/pages/Survival";
 import { Shop } from "@/pages/Shop";
@@ -68,6 +69,9 @@ function App() {
           </Route>
           <Route path="/achievements">
             <Achievements save={save} />
+          </Route>
+          <Route path="/mouse-almanac">
+            <MouseAlmanac save={save} />
           </Route>
           <Route path="/time-attack">
             <TimeAttack save={save} onSave={setSave} />

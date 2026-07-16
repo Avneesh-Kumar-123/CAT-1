@@ -510,6 +510,23 @@ export const Splash = ({ save, onSave }: Props) => {
               </Link>
             </div>
 
+            {/* Mouse Almanac — full-width row, violet style */}
+            <Link href="/mouse-almanac" onClick={() => sfx.click()}>
+              <motion.div
+                whileTap={{ scale: 0.96 }}
+                data-testid="button-almanac"
+                className="h-16 flex items-center justify-center gap-3 bg-violet-100 border-2 border-violet-200 rounded-2xl shadow-sm cursor-pointer hover:bg-violet-200 transition-colors select-none"
+              >
+                <span className="text-2xl leading-none">🐭</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-display font-bold text-sm text-violet-700">Mouse Almanac</span>
+                  <span className="text-[10px] text-violet-500">
+                    {(save.caughtMouseKinds ?? []).length} / 10 discovered
+                  </span>
+                </div>
+              </motion.div>
+            </Link>
+
             <Link href="/shop" onClick={() => sfx.click()}>
               <motion.div
                 whileTap={{ scale: 0.96 }}

@@ -40,6 +40,9 @@ export type LevelTheme = {
 
 export type MouseType = "normal" | "dash" | "teleport" | "sleepy" | "zigzag" | "stubborn" | "greedy" | "trickster";
 
+/** Every catchable "kind" tracked by the Mouse Almanac — the 8 personalities plus the two cross-cutting special mice. */
+export type MouseKind = MouseType | "golden" | "boss";
+
 export type LevelDef = {
   id: number;
   name: string;
@@ -110,4 +113,6 @@ export type SaveData = {
   claimedWorldBonuses: number[];
   dailyChallenge: DailyChallengeState | null;
   cheeseUsedTotal: number;
+  /** Mouse Almanac — every distinct mouse kind the player has ever caught. */
+  caughtMouseKinds: MouseKind[];
 };
