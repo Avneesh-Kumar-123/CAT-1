@@ -1,3 +1,4 @@
+- [Auth & Cloud Save setup](auth-cloud-save-setup.md) — Better Auth + Neon wiring, env vars, key gotchas (React dedupe, opentelemetry external, lazy DB pool).
 - [Mouse Almanac feature](mouse-almanac.md) — how tracking, discovery bonuses, and the Almanac page are wired together.
 - [Retention features](retention-features.md) — Beat Your Best, Weekly Challenge, Streak Milestone cosmetics: where each lives in the codebase.
 - [Screenshot limitation](screenshot-limitation.md) — static pre-JS loading splash appears in all app screenshots; not a regression.
