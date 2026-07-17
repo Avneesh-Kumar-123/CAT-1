@@ -775,7 +775,7 @@ export const GameCanvas = ({
       // Extend tile pattern across the whole canvas so dead zones look seamless
       if (scale > 0) {
         const tilePx = 80 * scale;
-        ctx.globalAlpha = 0.11;
+        ctx.globalAlpha = 0.18;            // match arena floor exactly — no visual distinction
         ctx.fillStyle = level.theme.floorTile;
         const sx = ((offX % (tilePx * 2)) + tilePx * 2) % (tilePx * 2) - tilePx * 2;
         const sy = ((offY % (tilePx * 2)) + tilePx * 2) % (tilePx * 2) - tilePx * 2;
@@ -787,6 +787,10 @@ export const GameCanvas = ({
         }
         ctx.globalAlpha = 1;
       }
+
+      // Themed backdrop across the FULL canvas (fills margin dead zones too, so the
+      // whole viewport looks like the game world rather than an arena floating in a void)
+      drawThemedBackdrop(ctx, level.name, cw, ch, now, isMobile);
 
       // arena bg
       ctx.save();
@@ -932,13 +936,14 @@ export const GameCanvas = ({
         ctx.restore();
       }
 
-      // ── Themed backdrop decorations (pure visual, zero game-logic) ──────────
-      drawThemedBackdrop(ctx, level.name, W, H, now, isMobile);
-
-      // arena border — thinner on mobile to save visual space
+      // arena border — fades to near-invisible when large margins are present
+      // (big margins mean arena is small relative to viewport, so we soften the "box" feel)
+      const hasLargeMargins = (offX > 20 || offY > 20) && !isMobile;
+      ctx.globalAlpha = hasLargeMargins ? 0.30 : 1;
       ctx.strokeStyle = level.theme.accent;
-      ctx.lineWidth = isMobile ? 4 : 8;
+      ctx.lineWidth = isMobile ? 4 : hasLargeMargins ? 2 : 8;
       ctx.strokeRect(2, 2, W - 4, H - 4);
+      ctx.globalAlpha = 1;
 
       // obstacles
       for (const o of s.obstacles) {
