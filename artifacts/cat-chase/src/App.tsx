@@ -14,6 +14,7 @@ import { AboutUs } from "@/pages/AboutUs";
 import { ContactUs } from "@/pages/ContactUs";
 import { Achievements } from "@/pages/Achievements";
 import { MouseAlmanac } from "@/pages/MouseAlmanac";
+import { ResetPassword } from "@/pages/ResetPassword";
 import { TimeAttack } from "@/pages/TimeAttack";
 import { Survival } from "@/pages/Survival";
 import { Shop } from "@/pages/Shop";
@@ -107,6 +108,9 @@ function AppRoutes({
           </Route>
           <Route path="/shop">
             <Shop save={save} onSave={handleSave} />
+          </Route>
+          <Route path="/reset-password">
+            <ResetPassword />
           </Route>
           <Route>
             <NotFound />

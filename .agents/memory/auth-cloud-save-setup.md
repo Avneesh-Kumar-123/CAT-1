@@ -19,6 +19,17 @@ description: Better Auth + Neon DB + Vite proxy wiring decisions and gotchas for
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — optional Google OAuth
 - `API_PORT` — `8080` (non-secret env var); Vite proxy reads this
 
+## Better Auth password-reset endpoints (v1.6.x)
+- **Request reset**: `POST /api/auth/request-password-reset` with `{ email, redirectTo }` — NOT `/forget-password`
+- **Apply reset**: `POST /api/auth/reset-password` with `{ newPassword, token }` — token from email link
+- The Better Auth client does NOT expose `forgetPassword()` or `resetPassword()` as named client methods — use direct `fetch()` calls with `credentials: "include"`
+- `sendResetPassword` must be defined in `emailAndPassword` config or the endpoint is disabled
+
+## CORS gotcha with Vite proxy in Replit
+- Vite proxy forwards the browser's `Origin` header unchanged, so the API server sees the Replit dev domain (`.pike.replit.dev`) as the origin, not `localhost`
+- Fix: include `REPLIT_DEV_DOMAIN` env var in the trustedOrigins list in `app.ts` — it's auto-set by Replit
+- Also add `REPLIT_DEV_DOMAIN` to Better Auth's `trustedOrigins` array in `lib/auth.ts`
+
 ## Gotchas fixed
 - **React duplicate hook error** (`useRef` null in better-auth/react): Fixed by adding `better-auth` to `resolve.dedupe` AND `optimizeDeps.include: ["better-auth/react"]` in vite.config.ts.
 - **`@opentelemetry/*` external**: Was in `build.mjs` external list but not installed — removed from list so esbuild bundles it inline.

@@ -50,6 +50,21 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }: { user: { email: string }; url: string }) => {
+      if (process.env.NODE_ENV !== "production") {
+        // In development: log the reset URL so you can test without an email service.
+        // Replace this block with your email provider (Resend, SendGrid, etc.) for production.
+        console.log(
+          `\n[Dev] Password reset requested for ${user.email}\nOpen this link to reset:\n  ${url}\n`,
+        );
+        return;
+      }
+      // TODO: add production email sending here.
+      // Example with Resend:
+      //   await resend.emails.send({ from: "noreply@...", to: user.email,
+      //     subject: "Reset your password", html: `<a href="${url}">Reset</a>` });
+      console.warn("[Auth] sendResetPassword: no email provider configured for production.");
+    },
   },
 
   socialProviders: googleProvider,

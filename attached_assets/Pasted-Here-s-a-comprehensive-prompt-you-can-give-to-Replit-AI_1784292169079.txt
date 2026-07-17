@@ -1,0 +1,102 @@
+Here's a comprehensive prompt you can give to Replit AI to make your authentication system production-ready:
+
+---
+
+```text
+The authentication backend is working (Better Auth + Neon + Email/Password), but the authentication experience is incomplete.
+
+Please implement a complete modern authentication system similar to Discord, Steam, or GitHub.
+
+Requirements:
+
+1. Google Authentication
+- Add a "Continue with Google" button.
+- Use the existing Better Auth Google provider.
+- Use the configured GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.
+- After successful login, redirect back to the game.
+- Merge guest progress into the signed-in account.
+- Store cloud save automatically.
+
+2. Forgot Password
+- Add a "Forgot Password?" link below the password field.
+- Clicking it should open a reset password modal.
+- User enters email.
+- Send a secure reset email using Better Auth.
+- User should be able to create a new password.
+- Show success and error messages.
+
+3. Create Account
+- Keep Email + Password sign up.
+- Validate password strength.
+- Confirm password field.
+- Prevent duplicate email registration.
+- Show friendly validation messages.
+
+4. Sign In
+- Email/password login.
+- Remember login session.
+- Loading state while signing in.
+- Friendly error messages.
+- Keep users logged in after page refresh.
+
+5. User Menu
+After login show:
+- User avatar
+- Display name
+- Email
+- Cloud Sync status
+- Sign Out button
+- Account Settings button
+
+6. Cloud Save
+After login automatically:
+- Upload local save if cloud save doesn't exist.
+- Otherwise download latest cloud save.
+- Ask before overwriting conflicting saves.
+- Sync:
+  - Coins
+  - Skins
+  - Achievements
+  - Levels
+  - Statistics
+  - Inventory
+  - Settings
+
+7. Guest Account
+- Allow playing without signing in.
+- Show "Guest" badge.
+- Allow upgrading guest account to Google or Email account without losing progress.
+
+8. UI Improvements
+- Add Google icon.
+- Add password visibility toggle.
+- Loading spinner.
+- Better animations.
+- Responsive mobile design.
+- Disable buttons while requests are running.
+
+9. Security
+- Never expose secrets on the client.
+- Use Better Auth sessions only.
+- Secure cookies.
+- CSRF protection.
+- Proper validation.
+- Rate limit login and password reset endpoints.
+
+10. Final Testing
+Verify:
+✓ Email Sign Up
+✓ Email Sign In
+✓ Google Sign In
+✓ Forgot Password
+✓ Reset Password
+✓ Guest Mode
+✓ Cloud Save
+✓ Sign Out
+✓ Session persistence
+✓ Mobile compatibility
+
+The project already has Better Auth configured, Neon PostgreSQL connected, and authentication routes working. Please extend the existing implementation without breaking the current login system.
+```
+
+This prompt covers the missing Google Sign-In button, adds a proper "Forgot Password" flow, improves the UI, and ensures cloud saves and guest account migration work correctly.

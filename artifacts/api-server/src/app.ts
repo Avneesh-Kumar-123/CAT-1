@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import rateLimit from "express-rate-limit";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 import router from "./routes";
@@ -28,11 +29,18 @@ app.use(
   }),
 );
 
-// Trusted origins for CORS (credentials: true required for Better Auth cookies)
-const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "http://localhost:5000")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+// Trusted origins for CORS (credentials: true required for Better Auth cookies).
+// Also automatically trust the Replit dev-proxy origin when running in a Repl,
+// because the Vite proxy forwards the browser's Origin header unchanged.
+const trustedOrigins = [
+  ...(process.env.TRUSTED_ORIGINS ?? "http://localhost:5000")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+  ...(process.env.REPLIT_DEV_DOMAIN
+    ? [`https://${process.env.REPLIT_DEV_DOMAIN}`]
+    : []),
+];
 
 app.use(
   cors({
@@ -48,9 +56,19 @@ app.use(
   }),
 );
 
+// Rate-limit auth endpoints (login, sign-up, password reset)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,                   // requests per window per IP
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many requests — please wait a few minutes and try again." },
+  skip: (req) => req.method === "GET", // don't rate-limit session checks
+});
+
 // Better Auth handles all /api/auth/* routes directly
 const authHandler = toNodeHandler(auth);
-app.all("/api/auth/{*path}", (req, res) => authHandler(req, res));
+app.all("/api/auth/{*path}", authLimiter, (req, res) => authHandler(req, res));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
