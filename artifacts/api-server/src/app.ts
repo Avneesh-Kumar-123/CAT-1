@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -25,7 +27,31 @@ app.use(
     },
   }),
 );
-app.use(cors());
+
+// Trusted origins for CORS (credentials: true required for Better Auth cookies)
+const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "http://localhost:5000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. server-to-server, curl)
+      if (!origin || trustedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
+    credentials: true,
+  }),
+);
+
+// Better Auth handles all /api/auth/* routes directly
+const authHandler = toNodeHandler(auth);
+app.all("/api/auth/{*path}", (req, res) => authHandler(req, res));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

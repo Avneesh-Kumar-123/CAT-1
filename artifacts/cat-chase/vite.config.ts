@@ -34,7 +34,13 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
       "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
     },
-    dedupe: ["react", "react-dom"],
+    // Dedupe react + better-auth to prevent "multiple React copies" hook errors
+    dedupe: ["react", "react-dom", "better-auth"],
+  },
+  optimizeDeps: {
+    // Force Vite to bundle better-auth/react together with the project's React
+    // so that hook calls share the same React instance.
+    include: ["better-auth/react"],
   },
   root: path.resolve(import.meta.dirname),
   build: {
@@ -46,6 +52,13 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    // Proxy /api/* to the API server so the browser stays on one origin
+    proxy: {
+      "/api": {
+        target: `http://localhost:${process.env.API_PORT ?? "8080"}`,
+        changeOrigin: true,
+      },
+    },
     fs: {
       strict: true,
     },

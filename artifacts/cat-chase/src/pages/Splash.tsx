@@ -7,6 +7,8 @@ import { MenuShell } from "@/components/MenuShell";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AdBanner } from "@/components/AdBanner";
 import { Modal } from "@/components/Modal";
+import { AccountModal } from "@/components/AccountModal";
+import { AccountButton } from "@/components/AccountButton";
 import { CatSprite, MouseSprite } from "@/game/sprites";
 import { sfx, startBgMusic, stopBgMusic } from "@/game/audio";
 import { analytics } from "@/analytics";
@@ -14,6 +16,7 @@ import { LEVELS } from "@/game/levels";
 import { ACHIEVEMENTS } from "@/game/achievements";
 import { claimDailyReward, getOrCreateWeeklyChallenge } from "@/game/storage";
 import { useFullscreen, isFullscreenSupported } from "@/hooks/useFullscreen";
+import { useAuth } from "@/contexts/AuthContext";
 import type { SaveData } from "@/game/types";
 
 const FS_PROMPT_KEY = "cat-chase-fs-prompted";
@@ -92,6 +95,8 @@ export const Splash = ({ save, onSave }: Props) => {
   }, []);
 
   const [modesOpen, setModesOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const { user } = useAuth();
 
   const currentLevel = Math.min(save.highestUnlocked, LEVELS.length);
   const earned = save.earnedAchievements ?? [];
@@ -366,9 +371,15 @@ export const Splash = ({ save, onSave }: Props) => {
               <span className="block text-xs sm:text-sm text-muted-foreground font-semibold mt-1.5 sm:mt-2">
                 30 levels · 3 worlds · 24 achievements
               </span>
+              {user ? (
+              <span className="inline-flex items-center gap-1.5 mt-1.5 sm:mt-2 bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full cursor-pointer hover:bg-blue-200 transition-colors" onClick={() => { sfx.click(); setAccountOpen(true); }}>
+                ☁️ Signed in · progress synced
+              </span>
+            ) : (
               <span className="inline-flex items-center gap-1.5 mt-1.5 sm:mt-2 bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
                 ✅ Free · No download · No login
               </span>
+            )}
             </p>
           </motion.div>
 
@@ -594,6 +605,28 @@ export const Splash = ({ save, onSave }: Props) => {
                 </span>
               </motion.div>
             </Link>
+
+            {/* ── Cloud Save / Account ── */}
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={() => { sfx.click(); setAccountOpen(true); }}
+              data-testid="button-account"
+              className={`h-14 flex items-center justify-center gap-2.5 rounded-2xl border-2 shadow-sm transition-colors select-none w-full ${
+                user
+                  ? "bg-blue-50 border-blue-200 hover:bg-blue-100"
+                  : "bg-card/80 backdrop-blur border-card-border hover:bg-card"
+              }`}
+            >
+              <span className="text-xl leading-none">☁️</span>
+              <div className="flex flex-col items-start">
+                <span className={`font-display font-bold text-xs ${user ? "text-blue-800" : "text-foreground/70"}`}>
+                  {user ? `Signed in as ${user.name ?? user.email}` : "Save Progress to Cloud"}
+                </span>
+                <span className={`text-[10px] font-semibold ${user ? "text-blue-600" : "text-muted-foreground"}`}>
+                  {user ? "Tap to manage account" : "Optional — play without signing in"}
+                </span>
+              </div>
+            </motion.button>
 
             <Link href="/credits">
               <Button
@@ -968,6 +1001,9 @@ export const Splash = ({ save, onSave }: Props) => {
           </div>
         </div>
       </Modal>
+
+      {/* ── Account / Cloud Save modal ── */}
+      <AccountModal open={accountOpen} onClose={() => setAccountOpen(false)} />
     </MenuShell>
   );
 };

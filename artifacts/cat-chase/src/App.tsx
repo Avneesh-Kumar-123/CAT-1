@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Switch, Route, Router as WouterRouter, useParams } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,6 +21,7 @@ import { LEVELS } from "@/game/levels";
 import { loadSave } from "@/game/storage";
 import { setAudioMuted } from "@/game/audio";
 import type { SaveData } from "@/game/types";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 const PlayRoute = ({ save, onSave }: { save: SaveData; onSave: (s: SaveData) => void }) => {
   const params = useParams<{ id: string }>();
@@ -29,25 +30,50 @@ const PlayRoute = ({ save, onSave }: { save: SaveData; onSave: (s: SaveData) => 
   return <Play levelId={safeId} save={save} onSave={onSave} />;
 };
 
-function App() {
-  const [save, setSave] = useState<SaveData>(() => loadSave());
+/**
+ * Routes — rendered inside AuthProvider so it can call useAuth().
+ */
+function AppRoutes({
+  save,
+  setSave,
+}: {
+  save: SaveData;
+  setSave: (s: SaveData) => void;
+}) {
+  const { syncSave, pendingMerge, clearPendingMerge } = useAuth();
+
+  // When AuthContext merges a cloud save on login, apply it to local state
+  useEffect(() => {
+    if (!pendingMerge) return;
+    setSave(pendingMerge);
+    clearPendingMerge();
+  }, [pendingMerge, clearPendingMerge, setSave]);
 
   useEffect(() => {
     setAudioMuted(!save.settings.sound);
   }, [save.settings.sound]);
+
+  /** Drop-in replacement for bare setSave — also queues a cloud sync. */
+  const handleSave = useCallback(
+    (newSave: SaveData) => {
+      setSave(newSave);
+      syncSave(newSave);
+    },
+    [setSave, syncSave],
+  );
 
   return (
     <TooltipProvider>
       <WouterRouter hook={useHashLocation}>
         <Switch>
           <Route path="/">
-            <Splash save={save} onSave={setSave} />
+            <Splash save={save} onSave={handleSave} />
           </Route>
           <Route path="/play/:id">
-            <PlayRoute save={save} onSave={setSave} />
+            <PlayRoute save={save} onSave={handleSave} />
           </Route>
           <Route path="/play">
-            <PlayRoute save={save} onSave={setSave} />
+            <PlayRoute save={save} onSave={handleSave} />
           </Route>
           <Route path="/levels">
             <Levels save={save} />
@@ -74,13 +100,13 @@ function App() {
             <MouseAlmanac save={save} />
           </Route>
           <Route path="/time-attack">
-            <TimeAttack save={save} onSave={setSave} />
+            <TimeAttack save={save} onSave={handleSave} />
           </Route>
           <Route path="/survival">
-            <Survival save={save} onSave={setSave} />
+            <Survival save={save} onSave={handleSave} />
           </Route>
           <Route path="/shop">
-            <Shop save={save} onSave={setSave} />
+            <Shop save={save} onSave={handleSave} />
           </Route>
           <Route>
             <NotFound />
@@ -89,6 +115,25 @@ function App() {
         <Toaster />
       </WouterRouter>
     </TooltipProvider>
+  );
+}
+
+function App() {
+  const [save, setSave] = useState<SaveData>(() => loadSave());
+
+  // Keep a ref so AuthProvider's getCurrentSave() always returns the latest
+  // save without re-creating the closure on every render.
+  const saveRef = useRef(save);
+
+  const handleSetSave = useCallback((newSave: SaveData) => {
+    setSave(newSave);
+    saveRef.current = newSave;
+  }, []);
+
+  return (
+    <AuthProvider getCurrentSave={() => saveRef.current}>
+      <AppRoutes save={save} setSave={handleSetSave} />
+    </AuthProvider>
   );
 }
 

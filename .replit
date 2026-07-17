@@ -74,3 +74,10 @@ externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+API_PORT = "8080"
+BETTER_AUTH_URL = "http://localhost:5000"
+TRUSTED_ORIGINS = "http://localhost:5000,http://localhost:5173"
