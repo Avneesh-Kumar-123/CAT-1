@@ -8,10 +8,22 @@ import {
   authVerification,
 } from "@workspace/db/schema";
 
-const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "http://localhost:5000")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+// Build the public base URL.
+// In Replit the browser reaches the app through the dev proxy domain, not localhost.
+const publicBaseURL = process.env.REPLIT_DEV_DOMAIN
+  ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+  : (process.env.BETTER_AUTH_URL ?? "http://localhost:5000");
+
+// Trusted origins for Better Auth's own origin validation.
+// Must include every host the browser will send requests from, including the
+// Replit preview domain (which is forwarded as-is through the Vite proxy).
+const trustedOrigins = [
+  ...(process.env.TRUSTED_ORIGINS ?? "http://localhost:5000")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+  publicBaseURL,
+];
 
 const googleProvider =
   process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -30,10 +42,9 @@ if (!process.env.BETTER_AUTH_SECRET) {
 export const auth = betterAuth({
   /**
    * The public URL where Better Auth can be reached.
-   * Used to build OAuth redirect URIs and email verification links.
-   * In local dev with the Vite proxy, this is the FRONTEND URL (which proxies /api → API server).
+   * In Replit this is the preview domain; locally it's the Vite dev server (which proxies /api → API server).
    */
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:5000",
+  baseURL: publicBaseURL,
 
   secret: process.env.BETTER_AUTH_SECRET,
 
