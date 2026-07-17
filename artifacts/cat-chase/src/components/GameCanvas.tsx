@@ -41,6 +41,9 @@ type GameCanvasProps = {
   equippedHat?: string;
   equippedTrail?: string;
   equippedPaw?: string;
+  equippedMouseSkin?: string;
+  equippedMouseEye?: string;
+  equippedMouseTail?: string;
   controlMode?: "tap" | "joystick";
   tapTargetRef?: React.RefObject<{ x: number; y: number } | null>;
   cheesePlaceRef?: React.RefObject<{ x: number; y: number } | null>;
@@ -77,6 +80,9 @@ export const GameCanvas = ({
   equippedHat = "none-hat",
   equippedTrail = "none-trail",
   equippedPaw = "none-paw",
+  equippedMouseSkin = "mouse-gray",
+  equippedMouseEye = "eye-default",
+  equippedMouseTail = "tail-default",
   controlMode = "joystick",
   tapTargetRef,
   cheesePlaceRef,
@@ -101,6 +107,9 @@ export const GameCanvas = ({
   const equippedHatRef = useRef(equippedHat);
   const equippedTrailRef = useRef(equippedTrail);
   const equippedPawRef = useRef(equippedPaw);
+  const equippedMouseSkinRef = useRef(equippedMouseSkin);
+  const equippedMouseEyeRef = useRef(equippedMouseEye);
+  const equippedMouseTailRef = useRef(equippedMouseTail);
   const onCatchRef = useRef(onCatch);
   const onTimeUpRef = useRef(onTimeUp);
   const onTrapRef = useRef(onTrap);
@@ -114,6 +123,9 @@ export const GameCanvas = ({
   useLayoutEffect(() => { equippedHatRef.current = equippedHat; }, [equippedHat]);
   useLayoutEffect(() => { equippedTrailRef.current = equippedTrail; }, [equippedTrail]);
   useLayoutEffect(() => { equippedPawRef.current = equippedPaw; }, [equippedPaw]);
+  useLayoutEffect(() => { equippedMouseSkinRef.current = equippedMouseSkin; }, [equippedMouseSkin]);
+  useLayoutEffect(() => { equippedMouseEyeRef.current = equippedMouseEye; }, [equippedMouseEye]);
+  useLayoutEffect(() => { equippedMouseTailRef.current = equippedMouseTail; }, [equippedMouseTail]);
   useLayoutEffect(() => { onCatchRef.current = onCatch; }, [onCatch]);
   useLayoutEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
   useLayoutEffect(() => { onTrapRef.current = onTrap; }, [onTrap]);
@@ -1309,7 +1321,8 @@ export const GameCanvas = ({
         const eatingBounce = isEating ? Math.abs(Math.sin(now / 90)) * 3 : 0;
 
         const variant = level.mouseAI === "boss" ? "boss" : "normal";
-        drawMouse(ctx, m.pos.x, m.pos.y - eatingBounce, m.facing, now, variant, level.theme.accent, objMul);
+        drawMouse(ctx, m.pos.x, m.pos.y - eatingBounce, m.facing, now, variant, level.theme.accent, objMul,
+          equippedMouseSkinRef.current, equippedMouseEyeRef.current, equippedMouseTailRef.current);
 
         if (isEating) {
           ctx.save();
@@ -1367,7 +1380,8 @@ export const GameCanvas = ({
         const decoyVariant = d.expiresAt !== undefined
           ? (level.mouseAI === "boss" ? "boss" : "normal")
           : "decoy";
-        drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, decoyVariant, level.theme.accent, objMul);
+        drawMouse(ctx, d.pos.x, d.pos.y, d.facing, now, decoyVariant, level.theme.accent, objMul,
+          equippedMouseSkinRef.current, equippedMouseEyeRef.current, equippedMouseTailRef.current);
       }
 
       // ── Cat spotlight: warm radial glow around the cat ───────────────────────
@@ -1702,7 +1716,32 @@ const drawCat = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: nu
   ctx.restore();
 };
 
-const drawMouse = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: number, now: number, variant: "normal" | "decoy" | "boss", _accent?: string, sizeMul = 1) => {
+// ── Mouse skin colour palettes ────────────────────────────────────────────────
+const MOUSE_SKINS: Record<string, { body: string; stroke: string; ear: string; nose: string }> = {
+  "mouse-gray":   { body: "#d1d5db", stroke: "#475569", ear: "#fda4af", nose: "#fb7185" },
+  "mouse-brown":  { body: "#b45309", stroke: "#78350f", ear: "#fca5a5", nose: "#fb7185" },
+  "mouse-black":  { body: "#374151", stroke: "#111827", ear: "#f9a8d4", nose: "#f472b6" },
+  "mouse-white":  { body: "#f1f5f9", stroke: "#94a3b8", ear: "#fecdd3", nose: "#fb7185" },
+  "mouse-blue":   { body: "#3b82f6", stroke: "#1d4ed8", ear: "#ddd6fe", nose: "#f0abfc" },
+  "mouse-purple": { body: "#8b5cf6", stroke: "#5b21b6", ear: "#fda4af", nose: "#fb7185" },
+  "mouse-orange": { body: "#f97316", stroke: "#c2410c", ear: "#fed7aa", nose: "#fde68a" },
+  "mouse-pink":   { body: "#ec4899", stroke: "#9d174d", ear: "#fde68a", nose: "#fbbf24" },
+  "mouse-green":  { body: "#22c55e", stroke: "#15803d", ear: "#bbf7d0", nose: "#fb7185" },
+  "mouse-gold":   { body: "#eab308", stroke: "#713f12", ear: "#fde68a", nose: "#dc2626" },
+};
+
+const drawMouse = (
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number,
+  facing: number,
+  now: number,
+  variant: "normal" | "decoy" | "boss",
+  _accent?: string,
+  sizeMul = 1,
+  skinId = "mouse-gray",
+  eyeId = "eye-default",
+  tailId = "tail-default",
+) => {
   ctx.save();
   ctx.translate(x, y);
   const flip = Math.cos(facing) < 0 ? -1 : 1;
@@ -1711,6 +1750,7 @@ const drawMouse = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: 
   ctx.scale(sz, sz);
   const bob = Math.sin(now / 90) * 1.5;
   ctx.translate(0, bob);
+
   // shadow
   ctx.globalAlpha = 0.25;
   ctx.fillStyle = "#000";
@@ -1718,48 +1758,205 @@ const drawMouse = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: 
   ctx.ellipse(0, 14, 12, 3, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
-  const body = variant === "boss" ? "#9ca3af" : variant === "decoy" ? "#cbd5e1" : "#d1d5db";
-  const stroke = variant === "boss" ? "#1e293b" : "#475569";
-  // tail
+
+  // resolve colours — boss/decoy keep their fixed look; normal mice use player skin
+  const skinColors =
+    variant === "boss"  ? { body: "#9ca3af", stroke: "#1e293b", ear: "#fda4af", nose: "#fb7185" } :
+    variant === "decoy" ? { body: "#cbd5e1", stroke: "#475569", ear: "#fda4af", nose: "#fb7185" } :
+    (MOUSE_SKINS[skinId] ?? MOUSE_SKINS["mouse-gray"]!);
+
+  const { body, stroke, ear, nose } = skinColors;
+  // for decoys/boss, never apply custom eye/tail
+  const resolvedEye  = variant === "normal" ? eyeId  : "eye-default";
+  const resolvedTail = variant === "normal" ? tailId : "tail-default";
+
+  // ── tail ──────────────────────────────────────────────────────────────────
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(-12, 6);
-  ctx.quadraticCurveTo(-22, 0, -18, -8);
-  ctx.stroke();
-  // body
+  ctx.lineCap = "round";
+
+  if (resolvedTail === "tail-curly") {
+    ctx.beginPath();
+    ctx.moveTo(-12, 6);
+    ctx.bezierCurveTo(-28, 2, -32, -10, -22, -12);
+    ctx.bezierCurveTo(-14, -14, -12, -6, -18, -4);
+    ctx.stroke();
+  } else if (resolvedTail === "tail-striped") {
+    // sample points along the default quadratic and draw alternating segments
+    const seg = 6;
+    const altC = ["#f97316", "#fbbf24"];
+    for (let i = 0; i < seg; i++) {
+      const t0 = i / seg, t1 = (i + 1) / seg;
+      const qx = (t: number) => (1-t)*(1-t)*(-12) + 2*t*(1-t)*(-22) + t*t*(-18);
+      const qy = (t: number) => (1-t)*(1-t)*6    + 2*t*(1-t)*0     + t*t*(-8);
+      ctx.strokeStyle = i % 2 === 0 ? stroke : (altC[i % 2] ?? "#f97316");
+      ctx.beginPath();
+      ctx.moveTo(qx(t0), qy(t0));
+      ctx.lineTo(qx(t1), qy(t1));
+      ctx.stroke();
+    }
+    ctx.strokeStyle = stroke; // reset
+  } else if (resolvedTail === "tail-lightning") {
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-12, 6);
+    ctx.lineTo(-17, 1);
+    ctx.lineTo(-13, -3);
+    ctx.lineTo(-20, -9);
+    ctx.stroke();
+    ctx.lineWidth = 1.5;
+  } else if (resolvedTail === "tail-fluffy") {
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(-12, 6);
+    ctx.quadraticCurveTo(-21, 1, -19, -7);
+    ctx.stroke();
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(-17, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.5;
+  } else if (resolvedTail === "tail-rainbow") {
+    const rColors = ["#f87171","#fb923c","#fbbf24","#4ade80","#60a5fa","#a78bfa"];
+    const seg = rColors.length;
+    for (let i = 0; i < seg; i++) {
+      const t0 = i / seg, t1 = (i + 1) / seg;
+      const qx = (t: number) => (1-t)*(1-t)*(-12) + 2*t*(1-t)*(-22) + t*t*(-18);
+      const qy = (t: number) => (1-t)*(1-t)*6    + 2*t*(1-t)*0     + t*t*(-8);
+      ctx.strokeStyle = rColors[i]!;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(qx(t0), qy(t0));
+      ctx.lineTo(qx(t1), qy(t1));
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1.5;
+  } else {
+    // default
+    ctx.beginPath();
+    ctx.moveTo(-12, 6);
+    ctx.quadraticCurveTo(-22, 0, -18, -8);
+    ctx.stroke();
+  }
+  ctx.lineCap = "butt";
+
+  // ── body ──────────────────────────────────────────────────────────────────
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1.5;
   ctx.fillStyle = body;
   ctx.beginPath();
   ctx.ellipse(0, 6, 12, 8, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  // head
+
+  // ── head ──────────────────────────────────────────────────────────────────
   ctx.beginPath();
   ctx.arc(10, -2, 8, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  // ears
+
+  // ── ears ──────────────────────────────────────────────────────────────────
   ctx.beginPath();
   ctx.arc(5, -10, 4, 0, Math.PI * 2);
   ctx.arc(13, -10, 4, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = "#fda4af";
+  ctx.fillStyle = ear;
   ctx.beginPath();
   ctx.arc(5, -10, 2, 0, Math.PI * 2);
   ctx.arc(13, -10, 2, 0, Math.PI * 2);
   ctx.fill();
-  // eyes
-  ctx.fillStyle = "#0f172a";
-  ctx.beginPath();
-  ctx.arc(9, -2, 1.4, 0, Math.PI * 2);
-  ctx.arc(13, -2, 1.4, 0, Math.PI * 2);
-  ctx.fill();
-  // nose
-  ctx.fillStyle = "#fb7185";
+
+  // ── eyes ──────────────────────────────────────────────────────────────────
+  if (resolvedEye === "eye-sleepy") {
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(9,  -2, 1.8, Math.PI, 0);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(13, -2, 1.8, Math.PI, 0);
+    ctx.stroke();
+  } else if (resolvedEye === "eye-heart") {
+    ctx.fillStyle = "#f43f5e";
+    for (const [ex, ey] of [[9, -2], [13, -2]] as [number, number][]) {
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.scale(0.065, 0.065);
+      ctx.beginPath();
+      ctx.moveTo(0, 6);
+      ctx.bezierCurveTo(-20, -8, -22, -26, 0, -16);
+      ctx.bezierCurveTo(22, -26, 20, -8, 0, 6);
+      ctx.fill();
+      ctx.restore();
+    }
+  } else if (resolvedEye === "eye-star") {
+    ctx.fillStyle = "#fbbf24";
+    for (const [ex, ey] of [[9, -2], [13, -2]] as [number, number][]) {
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = (i * Math.PI * 2) / 5 - Math.PI / 2;
+        const ia = a + Math.PI / 5;
+        const x1 = Math.cos(a) * 2, y1 = Math.sin(a) * 2;
+        const x2 = Math.cos(ia) * 0.9, y2 = Math.sin(ia) * 0.9;
+        if (i === 0) ctx.moveTo(x1, y1); else ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  } else if (resolvedEye === "eye-angry") {
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.arc(9,  -2, 1.4, 0, Math.PI * 2);
+    ctx.arc(13, -2, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#dc2626";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(7, -5); ctx.lineTo(11, -3.5);
+    ctx.moveTo(15, -5); ctx.lineTo(11, -3.5);
+    ctx.stroke();
+  } else if (resolvedEye === "eye-spiral") {
+    const phase = now / 600;
+    for (const [ex, ey] of [[9, -2], [13, -2]] as [number, number][]) {
+      ctx.save();
+      ctx.translate(ex, ey);
+      ctx.strokeStyle = "#7c3aed";
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      for (let t = 0; t < Math.PI * 3.5; t += 0.15) {
+        const r = t * 0.28;
+        const px = r * Math.cos(t + phase);
+        const py = r * Math.sin(t + phase);
+        t < 0.15 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  } else {
+    // default beady eyes
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.arc(9,  -2, 1.4, 0, Math.PI * 2);
+    ctx.arc(13, -2, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ── nose ──────────────────────────────────────────────────────────────────
+  ctx.fillStyle = nose;
   ctx.beginPath();
   ctx.arc(17, 0, 1.3, 0, Math.PI * 2);
   ctx.fill();
+
+  // ── boss crown ────────────────────────────────────────────────────────────
   if (variant === "boss") {
     ctx.fillStyle = "#fbbf24";
     ctx.beginPath();
@@ -1773,8 +1970,10 @@ const drawMouse = (ctx: CanvasRenderingContext2D, x: number, y: number, facing: 
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = "#92400e";
+    ctx.lineWidth = 1.5;
     ctx.stroke();
   }
+
   ctx.restore();
 };
 

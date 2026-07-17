@@ -43,6 +43,9 @@ const defaultSave = (): SaveData => {
       equippedHat: "none-hat",
       equippedTrail: "none-trail",
       equippedPaw: "none-paw",
+      equippedMouseSkin: "mouse-gray",
+      equippedMouseEye: "eye-default",
+      equippedMouseTail: "tail-default",
     },
     earnedAchievements: [],
     timeAttackBest: 0,
@@ -252,10 +255,16 @@ export const purchaseItem = (
 
 export const equipCosmetic = (
   data: SaveData,
-  category: "hat" | "trail" | "paw",
+  category: string,
   itemId: string,
 ): SaveData => {
-  const key = category === "hat" ? "equippedHat" : category === "trail" ? "equippedTrail" : "equippedPaw";
+  const key =
+    category === "hat"        ? "equippedHat"       :
+    category === "trail"      ? "equippedTrail"      :
+    category === "paw"        ? "equippedPaw"        :
+    category === "mouse-skin" ? "equippedMouseSkin"  :
+    category === "mouse-eye"  ? "equippedMouseEye"   :
+                                "equippedMouseTail";
   const updated: SaveData = { ...data, settings: { ...data.settings, [key]: itemId } };
   saveSave(updated);
   return updated;

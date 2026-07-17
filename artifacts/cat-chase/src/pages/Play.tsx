@@ -466,6 +466,9 @@ export const Play = ({ levelId, save, onSave }: Props) => {
             equippedHat={save.settings.equippedHat}
             equippedTrail={save.settings.equippedTrail}
             equippedPaw={save.settings.equippedPaw}
+            equippedMouseSkin={save.settings.equippedMouseSkin ?? "mouse-gray"}
+            equippedMouseEye={save.settings.equippedMouseEye ?? "eye-default"}
+            equippedMouseTail={save.settings.equippedMouseTail ?? "tail-default"}
             controlMode={controlMode}
             tapTargetRef={tapTargetRef}
             cheesePlaceRef={cheesePlaceRef}

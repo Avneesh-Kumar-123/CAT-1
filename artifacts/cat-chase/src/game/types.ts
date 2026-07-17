@@ -79,6 +79,9 @@ export type GameSettings = {
   equippedHat: string;
   equippedTrail: string;
   equippedPaw: string;
+  equippedMouseSkin: string;
+  equippedMouseEye: string;
+  equippedMouseTail: string;
 };
 
 export type LevelProgress = {

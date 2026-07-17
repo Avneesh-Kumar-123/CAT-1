@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Check, Lock } from "lucide-react";
 import { MenuShell } from "@/components/MenuShell";
 import { sfx } from "@/game/audio";
@@ -13,28 +13,47 @@ type Props = {
   onSave: (s: SaveData) => void;
 };
 
-const CATEGORIES: { id: CosmeticCategory; label: string; emoji: string }[] = [
-  { id: "hat", label: "Hats", emoji: "🎩" },
+type MainTab = "hat" | "trail" | "paw" | "mice";
+type MouseSubTab = "mouse-skin" | "mouse-eye" | "mouse-tail";
+
+const MAIN_TABS: { id: MainTab; label: string; emoji: string }[] = [
+  { id: "hat",   label: "Hats",   emoji: "🎩" },
   { id: "trail", label: "Trails", emoji: "✨" },
-  { id: "paw", label: "Paw Effects", emoji: "🐾" },
+  { id: "paw",   label: "Paw FX", emoji: "🐾" },
+  { id: "mice",  label: "Mice",   emoji: "🐭" },
 ];
 
-const equippedKey = (cat: CosmeticCategory): keyof SaveData["settings"] =>
-  cat === "hat" ? "equippedHat" : cat === "trail" ? "equippedTrail" : "equippedPaw";
+const MOUSE_SUB_TABS: { id: MouseSubTab; label: string; emoji: string }[] = [
+  { id: "mouse-skin", label: "Fur",   emoji: "🎨" },
+  { id: "mouse-eye",  label: "Eyes",  emoji: "👀" },
+  { id: "mouse-tail", label: "Tails", emoji: "〰️" },
+];
+
+const equippedKey = (cat: CosmeticCategory): keyof SaveData["settings"] => {
+  if (cat === "hat")        return "equippedHat";
+  if (cat === "trail")      return "equippedTrail";
+  if (cat === "paw")        return "equippedPaw";
+  if (cat === "mouse-skin") return "equippedMouseSkin";
+  if (cat === "mouse-eye")  return "equippedMouseEye";
+  return "equippedMouseTail";
+};
 
 export const Shop = ({ save, onSave }: Props) => {
-  const [tab, setTab] = useState<CosmeticCategory>("hat");
+  const [tab, setTab] = useState<MainTab>("hat");
+  const [mouseSubTab, setMouseSubTab] = useState<MouseSubTab>("mouse-skin");
   const [insufficient, setInsufficient] = useState<string | null>(null);
 
+  // Which CosmeticCategory is currently active
+  const activeCat: CosmeticCategory = tab === "mice" ? mouseSubTab : (tab as CosmeticCategory);
   const owned = save.ownedCosmetics ?? [];
-  const items = itemsByCategory(tab);
-  const equipped = save.settings[equippedKey(tab)] as string;
+  const items = itemsByCategory(activeCat);
+  const equipped = save.settings[equippedKey(activeCat)] as string;
 
   const handleBuyOrEquip = (itemId: string, price: number) => {
     const item = SHOP_ITEMS.find((i) => i.id === itemId)!;
     if (isOwned(owned, item)) {
       sfx.click();
-      onSave(equipCosmetic(save, tab, itemId));
+      onSave(equipCosmetic(save, activeCat, itemId));
       return;
     }
     const { data, success } = purchaseItem(save, itemId, price);
@@ -45,7 +64,7 @@ export const Shop = ({ save, onSave }: Props) => {
       return;
     }
     sfx.win?.();
-    onSave(equipCosmetic(data, tab, itemId));
+    onSave(equipCosmetic(data, activeCat, itemId));
     analytics.shopPurchase(item.name, price);
     analytics.coinsSpent(price, item.name);
   };
@@ -53,6 +72,7 @@ export const Shop = ({ save, onSave }: Props) => {
   return (
     <MenuShell showBack>
       <div className="relative z-10 min-h-screen px-4 py-12 max-w-xl mx-auto">
+        {/* Header */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -68,9 +88,9 @@ export const Shop = ({ save, onSave }: Props) => {
           </div>
         </motion.div>
 
-        {/* Category tabs */}
-        <div className="grid grid-cols-3 gap-2 mb-5">
-          {CATEGORIES.map((c) => (
+        {/* Main category tabs — 2×2 grid */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          {MAIN_TABS.map((c) => (
             <button
               key={c.id}
               onClick={() => { sfx.click(); setTab(c.id); }}
@@ -81,11 +101,47 @@ export const Shop = ({ save, onSave }: Props) => {
                   : "border-card-border bg-card/60 hover:border-primary/40"
               }`}
             >
-              <span className="text-2xl leading-none">{c.emoji}</span>
-              <span className="font-display font-bold text-xs">{c.label}</span>
+              <span className="text-xl leading-none">{c.emoji}</span>
+              <span className="font-display font-bold text-[10px]">{c.label}</span>
             </button>
           ))}
         </div>
+
+        {/* Mouse sub-tabs — only shown when Mice tab is active */}
+        <AnimatePresence>
+          {tab === "mice" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden mb-4"
+            >
+              <div className="grid grid-cols-3 gap-2">
+                {MOUSE_SUB_TABS.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => { sfx.click(); setMouseSubTab(s.id); }}
+                    className={`rounded-xl py-2.5 flex flex-col items-center gap-0.5 border-2 transition-all text-sm ${
+                      mouseSubTab === s.id
+                        ? "border-primary bg-primary/10 shadow"
+                        : "border-card-border bg-card/60 hover:border-primary/40"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">{s.emoji}</span>
+                    <span className="font-display font-bold text-[10px]">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Context tip */}
+              <p className="text-center text-[11px] text-muted-foreground font-semibold mt-2">
+                {mouseSubTab === "mouse-skin" && "Change the fur colour of every mouse in the game."}
+                {mouseSubTab === "mouse-eye"  && "Give mice a brand-new look — from sleepy to hypnotic!"}
+                {mouseSubTab === "mouse-tail" && "Style the tail — curly, lightning, rainbow and more."}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Items grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -94,6 +150,8 @@ export const Shop = ({ save, onSave }: Props) => {
             const isEquipped = equipped === item.id;
             const canAfford = (save.coins ?? 0) >= item.price;
             const shake = insufficient === item.id;
+            const isSkin = item.category === "mouse-skin";
+
             return (
               <motion.button
                 key={item.id}
@@ -126,12 +184,34 @@ export const Shop = ({ save, onSave }: Props) => {
                     <Lock className="h-2.5 w-2.5" />
                   </div>
                 )}
-                <div
-                  className="text-3xl w-14 h-14 flex items-center justify-center rounded-xl mb-2"
-                  style={{ background: item.color && item.color !== "rainbow" ? `${item.color}22` : undefined }}
-                >
-                  {item.emoji}
-                </div>
+
+                {/* Item preview */}
+                {isSkin && item.color ? (
+                  /* Mouse skin: coloured swatch circle with emoji overlay */
+                  <div
+                    className="w-14 h-14 rounded-xl mb-2 flex items-center justify-center relative overflow-hidden border-2"
+                    style={{
+                      background: item.color,
+                      borderColor: isEquipped ? "var(--primary)" : `${item.color}88`,
+                    }}
+                  >
+                    <span className="text-2xl drop-shadow-sm">🐭</span>
+                  </div>
+                ) : (
+                  <div
+                    className="text-3xl w-14 h-14 flex items-center justify-center rounded-xl mb-2"
+                    style={{
+                      background: item.color && item.color !== "rainbow"
+                        ? `${item.color}22`
+                        : item.category === "mouse-eye" || item.category === "mouse-tail"
+                        ? "rgba(99,102,241,0.1)"
+                        : undefined,
+                    }}
+                  >
+                    {item.emoji}
+                  </div>
+                )}
+
                 <div className="font-display font-bold text-xs mb-1">{item.name}</div>
                 {owns ? (
                   <div className="text-[10px] font-bold text-primary">
