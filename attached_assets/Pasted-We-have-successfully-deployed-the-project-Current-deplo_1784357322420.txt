@@ -1,0 +1,85 @@
+We have successfully deployed the project.
+
+Current deployment:
+
+Frontend:
+https://www.catchasegame.com
+Hosted on Vercel.
+
+Backend:
+https://cat-2-updh.onrender.com
+Hosted on Render.
+
+Database:
+Neon PostgreSQL.
+
+Authentication:
+Better Auth.
+
+Problem:
+
+The frontend is still requesting:
+
+https://www.catchasegame.com/api/auth/get-session
+
+which returns:
+
+404 NOT_FOUND (Vercel)
+
+This means the frontend is still using relative "/api" URLs instead of communicating with the Render backend.
+
+I want you to inspect the ENTIRE project and fix this correctly.
+
+Tasks:
+
+1. Find how the frontend determines the Better Auth API base URL.
+
+2. Update it so every authentication request (get-session, sign-up, sign-in, sign-out, Google OAuth, callback, session, etc.) uses:
+
+https://cat-2-updh.onrender.com
+
+instead of relative "/api".
+
+3. If the project should use an environment variable instead, create the correct implementation using something like:
+
+VITE_API_URL=https://cat-2-updh.onrender.com
+
+or whatever is appropriate for this project.
+
+4. Tell me EXACTLY which Vercel environment variables must be added or updated.
+
+5. Verify Better Auth configuration matches the production deployment.
+
+6. Verify Google OAuth callback URLs match the Render backend.
+
+7. Verify CORS / TRUSTED_ORIGINS are correct.
+
+8. Verify cookies/session configuration works across:
+
+https://www.catchasegame.com
+
+and
+
+https://cat-2-updh.onrender.com
+
+9. Search for EVERY occurrence of:
+
+/api
+fetch(
+axios
+createAuthClient
+better-auth
+api base URL
+
+and update any incorrect production URLs.
+
+10. Make only the required code changes.
+Do NOT change unrelated game logic or UI.
+
+11. After completing the changes, tell me:
+- every modified file
+- every environment variable
+- every deployment step required
+- whether Vercel or Render must be redeployed.
+
+The goal is that signing up, signing in, Google Login, cloud save, and session retrieval all work correctly in production.
