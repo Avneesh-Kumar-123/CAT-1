@@ -9,6 +9,11 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// Replit (and most cloud platforms) sit behind a reverse proxy that sets
+// X-Forwarded-For. Without this, express-rate-limit can't identify clients
+// accurately and emits a ValidationError on every proxied request.
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
