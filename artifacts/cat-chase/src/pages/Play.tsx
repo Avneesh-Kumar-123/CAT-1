@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { updateLeaderboard } from "@/lib/leaderboard-api";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play as PlayIcon, RotateCcw, ChevronRight, Home, Settings as SettingsIcon, Trophy, Coins } from "lucide-react";
@@ -66,6 +68,7 @@ const computeStars = (timeRemaining: number, totalTime: number) => {
 };
 
 export const Play = ({ levelId, save, onSave }: Props) => {
+  const { user } = useAuth();
   const [, setLoc] = useLocation();
   const level = useMemo(() => LEVELS.find((l) => l.id === levelId) ?? LEVELS[0]!, [levelId]);
   const [paused, setPaused] = useState(false);
@@ -239,6 +242,31 @@ export const Play = ({ levelId, save, onSave }: Props) => {
       analytics.levelComplete(level.id, stars, score, coinsEarned);
       if (coinsEarned > 0) analytics.coinsEarned(coinsEarned, "level_complete");
 
+      // Fire-and-forget leaderboard update — only when signed in
+      if (user) {
+        const levelsData = updated.levels ?? {};
+        const snapTotalStars = Object.values(levelsData).reduce(
+          (sum, lp) => sum + (lp.bestStars ?? 0),
+          0,
+        );
+        const snapLevelsCompleted = Object.values(levelsData).filter(
+          (lp) => (lp.bestStars ?? 0) > 0,
+        ).length;
+        updateLeaderboard({
+          levelId: level.id,
+          stars,
+          timeRemaining,
+          miceCaught: hud.miceTotal,
+          coinsEarned,
+          snapshot: {
+            totalStars: snapTotalStars,
+            levelsCompleted: snapLevelsCompleted,
+            totalMiceCaught: updated.totalCaught ?? 0,
+            totalCoinsEarned: updated.coins ?? 0,
+          },
+        }).catch(() => {/* silent — leaderboard is non-critical */});
+      }
+
       if (isMilestone) {
         setShowMilestone(true);
         milestoneTimer.current = setTimeout(() => {
@@ -249,7 +277,7 @@ export const Play = ({ levelId, save, onSave }: Props) => {
         setOutcome({ kind: "win", stars, timeRemaining, prevBestTimeRemaining, score, isMilestone: false, coinsEarned, breakdown });
       }
     },
-    [level, save, onSave],
+    [level, save, onSave, user],
   );
 
   const handleTimeUp = useCallback((score: number) => {

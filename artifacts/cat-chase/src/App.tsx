@@ -14,6 +14,7 @@ import { AboutUs } from "@/pages/AboutUs";
 import { ContactUs } from "@/pages/ContactUs";
 import { Achievements } from "@/pages/Achievements";
 import { MouseAlmanac } from "@/pages/MouseAlmanac";
+import { Leaderboard } from "@/pages/Leaderboard";
 import { ResetPassword } from "@/pages/ResetPassword";
 import { TimeAttack } from "@/pages/TimeAttack";
 import { Survival } from "@/pages/Survival";
@@ -99,6 +100,9 @@ function AppRoutes({
           </Route>
           <Route path="/mouse-almanac">
             <MouseAlmanac save={save} />
+          </Route>
+          <Route path="/leaderboard">
+            <Leaderboard />
           </Route>
           <Route path="/time-attack">
             <TimeAttack save={save} onSave={handleSave} />

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star, Coins, ShoppingBag, Maximize2 } from "lucide-react";
+import { Play, Map, BookOpen, Heart, Trophy, Medal, Timer, Waves, Gamepad2, X, Star, Coins, ShoppingBag, Maximize2, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MenuShell } from "@/components/MenuShell";
 import { SettingsPanel } from "@/components/SettingsPanel";
@@ -555,6 +555,21 @@ export const Splash = ({ save, onSave }: Props) => {
                   <span className="text-[10px] text-violet-500">
                     {(save.caughtMouseKinds ?? []).length} / 10 discovered
                   </span>
+                </div>
+              </motion.div>
+            </Link>
+
+            {/* Leaderboard — full-width row, orange accent */}
+            <Link href="/leaderboard" onClick={() => sfx.click()}>
+              <motion.div
+                whileTap={{ scale: 0.96 }}
+                data-testid="button-leaderboard"
+                className="h-16 flex items-center justify-center gap-3 bg-orange-50 border-2 border-orange-200 rounded-2xl shadow-sm cursor-pointer hover:bg-orange-100 transition-colors select-none"
+              >
+                <span className="text-2xl leading-none">🏆</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-display font-bold text-sm text-orange-700">Leaderboard</span>
+                  <span className="text-[10px] text-orange-500">Global &amp; weekly rankings</span>
                 </div>
               </motion.div>
             </Link>

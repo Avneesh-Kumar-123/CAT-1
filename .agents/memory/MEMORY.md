@@ -2,3 +2,4 @@
 - [Mouse Almanac feature](mouse-almanac.md) — how tracking, discovery bonuses, and the Almanac page are wired together.
 - [Retention features](retention-features.md) — Beat Your Best, Weekly Challenge, Streak Milestone cosmetics: where each lives in the codebase.
 - [Screenshot limitation](screenshot-limitation.md) — static pre-JS loading splash appears in all app screenshots; not a regression.
+- [Leaderboard system](leaderboard-system.md) — global + weekly tables, upsert strategy, implicit-any TS errors are pre-existing lib/db dist issue.
