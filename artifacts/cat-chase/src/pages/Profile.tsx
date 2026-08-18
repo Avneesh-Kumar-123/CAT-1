@@ -355,6 +355,16 @@ export const Profile = ({ save, onSave }: Props) => {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </Link>
+          <button
+            onClick={() => { sfx.click(); setAvatarPickerOpen(true); }}
+            className="w-full flex items-center justify-between bg-card/80 border-2 border-card-border rounded-2xl px-4 py-3 hover:bg-card cursor-pointer transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">🎨</span>
+              <span className="font-display font-bold text-sm">Change Avatar</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
         </motion.div>
 
         {/* Sign out */}

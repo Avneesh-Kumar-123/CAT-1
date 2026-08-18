@@ -7,6 +7,7 @@ import type { GameSettings, SaveData, Difficulty, ControlMode } from "@/game/typ
 import { CAT_SKINS, getUnlockedSkins, nextLockedSkin } from "@/game/skins";
 import { useState } from "react";
 import { RotateCcw, X, Lock } from "lucide-react";
+import { useLocation } from "wouter";
 
 type Props = {
   open: boolean;
@@ -17,6 +18,7 @@ type Props = {
 
 export const SettingsPanel = ({ open, onClose, save, onSave }: Props) => {
   const [confirmReset, setConfirmReset] = useState(false);
+  const [, setLocation] = useLocation();
 
   const totalStars = Object.values(save.levels).reduce((s, p) => s + (p?.bestStars ?? 0), 0);
   const unlockedSkins = getUnlockedSkins(totalStars);
@@ -178,6 +180,19 @@ export const SettingsPanel = ({ open, onClose, save, onSave }: Props) => {
           </div>
 
           {/* Reset */}
+          <Button
+            variant="outline"
+            className="w-full font-display font-bold"
+            onClick={() => {
+              sfx.click();
+              onClose();
+              setLocation("/profile");
+            }}
+            data-testid="button-player-profile"
+          >
+            👤 Player Profile
+          </Button>
+
           <div className="pt-2 border-t border-border">
             {!confirmReset ? (
               <Button
