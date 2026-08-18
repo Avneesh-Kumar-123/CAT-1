@@ -17,6 +17,7 @@ import { ACHIEVEMENTS } from "@/game/achievements";
 import { claimDailyReward, getOrCreateWeeklyChallenge } from "@/game/storage";
 import { useFullscreen, isFullscreenSupported } from "@/hooks/useFullscreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import type { SaveData } from "@/game/types";
 
 const FS_PROMPT_KEY = "cat-chase-fs-prompted";
@@ -97,6 +98,7 @@ export const Splash = ({ save, onSave }: Props) => {
   const [modesOpen, setModesOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const { user } = useAuth();
+  const { displayName } = useProfile();
 
   const currentLevel = Math.min(save.highestUnlocked, LEVELS.length);
   const earned = save.earnedAchievements ?? [];
@@ -635,13 +637,28 @@ export const Splash = ({ save, onSave }: Props) => {
               <span className="text-xl leading-none">☁️</span>
               <div className="flex flex-col items-start">
                 <span className={`font-display font-bold text-xs ${user ? "text-blue-800" : "text-foreground/70"}`}>
-                  {user ? `Signed in as ${user.name ?? user.email}` : "Save Progress to Cloud"}
+                   {user ? `Signed in as ${displayName || user.email}` : "Save Progress to Cloud"}
                 </span>
                 <span className={`text-[10px] font-semibold ${user ? "text-blue-600" : "text-muted-foreground"}`}>
                   {user ? "Tap to manage account" : "Optional — play without signing in"}
                 </span>
               </div>
             </motion.button>
+
+            {user && (
+              <Link href="/profile" onClick={() => sfx.click()}>
+                <motion.div
+                  whileTap={{ scale: 0.96 }}
+                  data-testid="button-profile"
+                  className="h-14 flex items-center justify-center gap-2.5 rounded-2xl border-2 border-violet-200 bg-violet-50 shadow-sm cursor-pointer hover:bg-violet-100 transition-colors select-none w-full"
+                >
+                  <span className="text-xl leading-none">👤</span>
+                  <span className="font-display font-bold text-xs text-violet-800">
+                    Open Player Profile
+                  </span>
+                </motion.div>
+              </Link>
+            )}
 
             <Link href="/credits">
               <Button

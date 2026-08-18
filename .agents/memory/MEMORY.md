@@ -3,3 +3,4 @@
 - [Retention features](retention-features.md) — Beat Your Best, Weekly Challenge, Streak Milestone cosmetics: where each lives in the codebase.
 - [Screenshot limitation](screenshot-limitation.md) — static pre-JS loading splash appears in all app screenshots; not a regression.
 - [Leaderboard system](leaderboard-system.md) — global + weekly tables, upsert strategy, implicit-any TS errors are pre-existing lib/db dist issue.
+- [Profile schema migration quirk](profile-migration-quirk.md) — Drizzle push can pause on interactive rename/constraint prompts for new profile tables in this workspace.

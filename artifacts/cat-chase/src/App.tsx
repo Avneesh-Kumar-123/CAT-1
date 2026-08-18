@@ -19,11 +19,15 @@ import { ResetPassword } from "@/pages/ResetPassword";
 import { TimeAttack } from "@/pages/TimeAttack";
 import { Survival } from "@/pages/Survival";
 import { Shop } from "@/pages/Shop";
+import { Profile } from "@/pages/Profile";
 import { LEVELS } from "@/game/levels";
 import { loadSave } from "@/game/storage";
 import { setAudioMuted } from "@/game/audio";
 import type { SaveData } from "@/game/types";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ProfileProvider, useProfile } from "@/contexts/ProfileContext";
+import { ChooseUsernameModal } from "@/components/ChooseUsernameModal";
+import { startPlayTimeTracking } from "@/lib/play-time";
 
 const PlayRoute = ({ save, onSave }: { save: SaveData; onSave: (s: SaveData) => void }) => {
   const params = useParams<{ id: string }>();
@@ -42,7 +46,19 @@ function AppRoutes({
   save: SaveData;
   setSave: (s: SaveData) => void;
 }) {
-  const { syncSave, pendingMerge, clearPendingMerge } = useAuth();
+  const { syncSave, pendingMerge, clearPendingMerge, user } = useAuth();
+  const { needsUsername } = useProfile();
+  const [usernamePromptDismissed, setUsernamePromptDismissed] = useState(false);
+
+  useEffect(() => {
+    setUsernamePromptDismissed(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    // The tracker is mounted inside the app shell but only counts /play routes.
+    // The current route is read from the hash so this does not alter gameplay.
+    return startPlayTimeTracking(() => window.location.hash.startsWith("#/play"));
+  }, []);
 
   // When AuthContext merges a cloud save on login, apply it to local state
   useEffect(() => {
@@ -104,6 +120,9 @@ function AppRoutes({
           <Route path="/leaderboard">
             <Leaderboard />
           </Route>
+          <Route path="/profile">
+            <Profile save={save} onSave={handleSave} />
+          </Route>
           <Route path="/time-attack">
             <TimeAttack save={save} onSave={handleSave} />
           </Route>
@@ -122,6 +141,12 @@ function AppRoutes({
         </Switch>
         <Toaster />
       </WouterRouter>
+      {needsUsername && !usernamePromptDismissed && (
+        <ChooseUsernameModal
+          mode="setup"
+          onClose={() => setUsernamePromptDismissed(true)}
+        />
+      )}
     </TooltipProvider>
   );
 }
@@ -140,7 +165,9 @@ function App() {
 
   return (
     <AuthProvider getCurrentSave={() => saveRef.current}>
-      <AppRoutes save={save} setSave={handleSetSave} />
+      <ProfileProvider>
+        <AppRoutes save={save} setSave={handleSetSave} />
+      </ProfileProvider>
     </AuthProvider>
   );
 }

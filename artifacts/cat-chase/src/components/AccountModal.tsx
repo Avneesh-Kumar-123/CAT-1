@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/contexts/AuthContext";
 import { sfx } from "@/game/audio";
+import { useLocation } from "wouter";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,7 @@ function PasswordInput({
 
 function LoggedInView({ onClose }: { onClose: () => void }) {
   const { user, signOut, forceSync, syncStatus } = useAuth();
+  const [, setLocation] = useLocation();
   const [signingOut, setSigningOut] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
 
@@ -129,7 +131,7 @@ function LoggedInView({ onClose }: { onClose: () => void }) {
   };
 
   const initials = user?.name
-    ? user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+    ? user.name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
   return (
@@ -174,6 +176,20 @@ function LoggedInView({ onClose }: { onClose: () => void }) {
           <Cloud className="h-4 w-4" />
         )}
         {syncStatus === "syncing" ? "Syncing…" : syncDone ? "Synced!" : "Sync Now"}
+      </Button>
+
+      {/* Profile / username / avatar management */}
+      <Button
+        variant="outline"
+        className="w-full gap-2"
+        onClick={() => {
+          sfx.click();
+          onClose();
+          setLocation("/profile");
+        }}
+      >
+        <User className="h-4 w-4" />
+        Manage Player Profile
       </Button>
 
       {/* Sign out */}

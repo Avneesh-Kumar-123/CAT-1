@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, and, or, gt, count, desc, sql } from "drizzle-orm";
-import { db, leaderboardGlobal, leaderboardWeekly } from "@workspace/db";
+import { db, leaderboardGlobal, leaderboardWeekly, playerProfiles } from "@workspace/db";
 import { requireAuth } from "../middleware/require-auth";
 import { auth } from "../lib/auth";
 import { fromNodeHeaders } from "better-auth/node";
@@ -42,6 +42,27 @@ function isoWeekKey(date: Date): string {
     (((d.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7,
   );
   return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+}
+
+async function hydrateLeaderboardIdentity<
+  T extends { userId: string; displayName: string; avatarUrl: string | null },
+>(entries: T[]): Promise<T[]> {
+  return Promise.all(
+    entries.map(async (entry) => {
+      const profile = await db.query.playerProfiles.findFirst({
+        where: eq(playerProfiles.userId, entry.userId),
+      });
+      return {
+        ...entry,
+        // Never expose the Google display name as a leaderboard identity.
+        displayName: profile?.username ?? "Player",
+        avatarUrl:
+          profile?.avatarType === "game" && profile.selectedAvatar
+            ? `game:${profile.selectedAvatar}`
+            : entry.avatarUrl,
+      };
+    }),
+  );
 }
 
 /**
@@ -94,7 +115,9 @@ router.get("/global", optionalAuth, async (req, res) => {
       .from(leaderboardGlobal);
 
     // Assign ranks (1-based from offset)
-    const ranked = entries.map((e, i) => ({ ...e, rank: offset + i + 1 }));
+    const ranked = await hydrateLeaderboardIdentity(
+      entries.map((e, i) => ({ ...e, rank: offset + i + 1 })),
+    );
 
     // Current user's entry + rank (if authenticated)
     let myEntry: (typeof ranked[0]) | null = null;
@@ -131,7 +154,8 @@ router.get("/global", optionalAuth, async (req, res) => {
                 ),
               ),
             );
-          myEntry = { ...myRow, rank: Number(betterCount) + 1 };
+          const [hydratedMyRow] = await hydrateLeaderboardIdentity([myRow]);
+          myEntry = { ...hydratedMyRow, rank: Number(betterCount) + 1 };
         }
       }
     }
@@ -171,7 +195,9 @@ router.get("/weekly", optionalAuth, async (req, res) => {
       .from(leaderboardWeekly)
       .where(eq(leaderboardWeekly.weekKey, weekKey));
 
-    const ranked = entries.map((e, i) => ({ ...e, rank: offset + i + 1 }));
+    const ranked = await hydrateLeaderboardIdentity(
+      entries.map((e, i) => ({ ...e, rank: offset + i + 1 })),
+    );
 
     let myEntry: (typeof ranked[0]) | null = null;
     if (req.authUser) {
@@ -208,7 +234,8 @@ router.get("/weekly", optionalAuth, async (req, res) => {
                 ),
               ),
             );
-          myEntry = { ...myRow, rank: Number(betterCount) + 1 };
+          const [hydratedMyRow] = await hydrateLeaderboardIdentity([myRow]);
+          myEntry = { ...hydratedMyRow, rank: Number(betterCount) + 1 };
         }
       }
     }
@@ -293,8 +320,15 @@ router.post("/update", requireAuth, async (req, res) => {
 
     const { totalStars, levelsCompleted, totalMiceCaught, totalCoinsEarned } = snapshot;
     const user = req.authUser!;
-    const displayName = user.name || user.email;
-    const avatarUrl = (user as { image?: string }).image ?? null;
+    // Prefer custom username + selected game avatar over Google identity
+    const profileRow = await db.query.playerProfiles.findFirst({
+      where: eq(playerProfiles.userId, user.id),
+    });
+    const displayName = profileRow?.username ?? "Player";
+    const avatarUrl =
+      profileRow?.avatarType === "game" && profileRow.selectedAvatar
+        ? `game:${profileRow.selectedAvatar}`
+        : ((user as { image?: string }).image ?? null);
     const now = new Date();
     const weekKey = isoWeekKey(now);
 

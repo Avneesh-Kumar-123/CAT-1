@@ -1,0 +1,107 @@
+Since you've already completed the leaderboard, the next logical improvement is to give players a real identity with a username and avatar.
+
+Use this prompt with Replit Agent:
+
+```text
+Continue from the current working project.
+
+Do NOT modify authentication, Google Login, cloud save, leaderboard logic, shop, gameplay, or database schema unless required for the avatar/profile feature.
+
+Implement a complete Player Profile system.
+
+Requirements
+
+1. Username
+- Google Login should only be used for authentication.
+- Do NOT display the Google display name on the leaderboard.
+- If a player has no username, show a "Choose Username" modal after first login.
+- Username must be:
+  - Unique
+  - 3–20 characters
+  - Letters, numbers, and underscores only
+- Prevent duplicate usernames.
+- Store the username in the database.
+- Allow username changes from Settings with a configurable cooldown (default: 30 days).
+
+2. Avatar System
+- Keep the Google profile picture as the default avatar.
+- Allow players to switch between:
+  - Google Profile Picture
+  - Game Avatar
+- Create an Avatar Gallery with unlockable game-themed avatars.
+
+Starter avatars:
+- Orange Cat
+- Black Cat
+- White Cat
+- Mouse
+- Cheese
+- King Cat
+- Ninja Cat
+- Ghost Mouse
+- Robot Cat
+- Pirate Mouse
+
+3. Avatar Unlocks
+- Some avatars are free.
+- Others unlock with coins.
+- Others unlock by achievements or level progression.
+- Save unlocked avatars permanently.
+
+4. Profile Page
+Create a modern profile screen showing:
+- Avatar
+- Username
+- Current Rank
+- Stars
+- Coins
+- Mice Caught
+- Levels Completed
+- Best Time
+- Join Date
+- Login Streak
+- Total Play Time
+
+Buttons:
+- Change Username
+- Change Avatar
+- View Achievements
+
+5. Leaderboard
+Replace the Google display name with the custom username.
+Display the selected avatar beside every player.
+
+6. Database
+Persist:
+- username
+- avatarType (Google or Game)
+- selectedAvatar
+- unlockedAvatars
+- usernameLastChanged
+
+7. Mobile UI
+Fully responsive.
+Smooth animations.
+Lazy-load avatar images.
+Fast loading.
+
+8. Security
+Validate usernames server-side.
+Prevent duplicate usernames.
+Only allow unlocked avatars to be selected.
+Never trust client-side data.
+
+9. Testing
+Verify:
+- Existing Google Login still works.
+- Existing leaderboard still works.
+- Existing cloud save still works.
+- Existing shop still works.
+- Username appears everywhere instead of Google name.
+- Avatar changes update immediately.
+- Build passes without errors.
+
+When everything is fully implemented and tested, STOP and wait for my approval.
+```
+
+This will give your game a much more polished feel. Players will have a unique in-game identity instead of their Gmail name, and the avatar system will make the leaderboard and profiles look far more professional.

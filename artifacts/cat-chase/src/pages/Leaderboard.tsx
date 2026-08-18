@@ -10,6 +10,7 @@ import {
   type GlobalEntry,
   type WeeklyEntry,
 } from "@/lib/leaderboard-api";
+import { AVATARS, gameAvatarIdFromUrl, isGameAvatarUrl } from "@/lib/avatars";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,6 +76,24 @@ function Avatar({
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
   const colorClass = colors[Math.abs(hash) % colors.length];
 
+  if (url && isGameAvatarUrl(url)) {
+    const avatar = AVATARS.find((item) => item.id === gameAvatarIdFromUrl(url));
+    return (
+      <div
+        className="rounded-full flex items-center justify-center flex-shrink-0"
+        style={{
+          width: size,
+          height: size,
+          fontSize: size * 0.5,
+          backgroundColor: avatar?.bg ?? "#FED7AA",
+        }}
+        aria-label={name}
+      >
+        {avatar?.emoji ?? "🐱"}
+      </div>
+    );
+  }
+
   if (url && !imgFailed) {
     return (
       <img
@@ -83,6 +102,7 @@ function Avatar({
         width={size}
         height={size}
         className="rounded-full object-cover flex-shrink-0"
+        loading="lazy"
         style={{ width: size, height: size }}
         onError={() => setImgFailed(true)}
       />
