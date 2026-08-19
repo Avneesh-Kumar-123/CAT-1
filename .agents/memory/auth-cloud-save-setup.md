@@ -43,3 +43,11 @@ description: Better Auth + Neon DB + Vite proxy wiring decisions and gotchas for
 - `src/pages/Splash.tsx` — AccountButton + AccountModal wired in; badge toggles between "No login" and "☁️ Signed in"
 
 **Why:** Keeping baseURL empty means all auth fetches go to the same origin, letting Vite proxy them — zero cross-origin cookie issues in dev.
+
+## Preview origin and cookie rule
+- Prefer an explicitly configured `BETTER_AUTH_URL`; otherwise derive the public auth URL from `REPLIT_DEV_DOMAIN`, with localhost as the local fallback.
+- Keep Better Auth's default OAuth state-cookie validation and same-site session-cookie behavior for the Replit Preview, where the browser and API are presented through one origin.
+
+**Why:** Replit's Vite `/api` proxy makes Preview same-origin. Cross-domain `SameSite=None` and skipped OAuth state-cookie checks weaken or break this flow and should only be reconsidered for a deliberately separate production frontend/API deployment.
+
+**How to apply:** If production uses separate domains, configure and test that deployment explicitly rather than changing the Preview defaults.

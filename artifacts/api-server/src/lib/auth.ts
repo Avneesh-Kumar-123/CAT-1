@@ -10,9 +10,11 @@ import {
 
 // Build the public base URL.
 // In Replit the browser reaches the app through the dev proxy domain, not localhost.
-const publicBaseURL = process.env.REPLIT_DEV_DOMAIN
-  ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-  : (process.env.BETTER_AUTH_URL ?? "http://localhost:5000");
+const configuredBaseURL = process.env.BETTER_AUTH_URL?.trim();
+const publicBaseURL = configuredBaseURL ||
+  (process.env.REPLIT_DEV_DOMAIN
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+    : "http://localhost:5000");
 
 // Trusted origins for Better Auth's own origin validation.
 // Must include every host the browser will send requests from, including the
@@ -23,7 +25,10 @@ const trustedOrigins = [
     .map((o) => o.trim())
     .filter(Boolean),
   publicBaseURL,
-];
+  ...(process.env.REPLIT_DEV_DOMAIN
+    ? [`https://${process.env.REPLIT_DEV_DOMAIN}`]
+    : []),
+].filter((origin, index, origins) => origins.indexOf(origin) === index);
 
 const googleProvider =
   process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -82,23 +87,6 @@ export const auth = betterAuth({
 
   trustedOrigins,
 
-  /**
-   * Cross-domain OAuth fix.
-   *
-   * By default Better Auth's database state strategy validates the OAuth state
-   * via BOTH the verification table AND a signed state cookie.  The state cookie
-   * is set during the cross-origin fetch from the frontend
-   * (www.catchasegame.com → cat-2-updh.onrender.com).  Modern Chrome treats
-   * this cookie as a third-party context cookie and does not send it back when
-   * Google redirects to the callback URL, causing "state_mismatch".
-   *
-   * skipStateCookieCheck keeps only the database verification, which is the
-   * standard CSRF protection used by every major OAuth library.
-   */
-  account: {
-    skipStateCookieCheck: true,
-  },
-
   session: {
     cookieCache: {
       enabled: true,
@@ -106,30 +94,6 @@ export const auth = betterAuth({
     },
   },
 
-  /**
-   * Cross-domain session cookie fix.
-   *
-   * The frontend (www.catchasegame.com) and the API (cat-2-updh.onrender.com)
-   * are on different domains.  SameSite=Lax cookies are NOT sent on cross-origin
-   * fetch requests (only on top-level navigations), so authClient.getSession()
-   * and cloud-save calls would receive no session cookie and see the user as
-   * logged-out immediately after login.
-   *
-   * SameSite=None allows cookies to be sent on any cross-origin request as long
-   * as Secure is set (which it is automatically because baseURL is https://).
-   * The server-side CORS config (specific trusted origins + credentials:true)
-   * ensures only www.catchasegame.com can actually use these cookies.
-   */
-  advanced: {
-    cookies: {
-      session_token: {
-        attributes: { sameSite: "none" },
-      },
-      session_data: {
-        attributes: { sameSite: "none" },
-      },
-    },
-  },
 });
 
 export type Auth = typeof auth;
