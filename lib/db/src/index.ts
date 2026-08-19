@@ -20,7 +20,14 @@ function getPool(): pg.Pool {
           "(Neon, Supabase, Railway, etc.) as the DATABASE_URL secret.",
       );
     }
-    _pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    _pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      // Keep a stalled database connection from consuming the whole API.
+      connectionTimeoutMillis: 10_000,
+      query_timeout: 15_000,
+      idleTimeoutMillis: 30_000,
+      max: 10,
+    });
   }
   return _pool;
 }

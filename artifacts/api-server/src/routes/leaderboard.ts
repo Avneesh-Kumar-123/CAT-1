@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, or, gt, count, desc, sql } from "drizzle-orm";
+import { eq, and, or, gt, count, desc, sql, inArray } from "drizzle-orm";
 import { db, leaderboardGlobal, leaderboardWeekly, playerProfiles } from "@workspace/db";
 import { requireAuth } from "../middleware/require-auth";
 import { auth } from "../lib/auth";
@@ -47,22 +47,34 @@ function isoWeekKey(date: Date): string {
 async function hydrateLeaderboardIdentity<
   T extends { userId: string; displayName: string; avatarUrl: string | null },
 >(entries: T[]): Promise<T[]> {
-  return Promise.all(
-    entries.map(async (entry) => {
-      const profile = await db.query.playerProfiles.findFirst({
-        where: eq(playerProfiles.userId, entry.userId),
-      });
-      return {
-        ...entry,
-        // Never expose the Google display name as a leaderboard identity.
-        displayName: profile?.username ?? "Player",
-        avatarUrl:
-          profile?.avatarType === "game" && profile.selectedAvatar
-            ? `game:${profile.selectedAvatar}`
-            : entry.avatarUrl,
-      };
-    }),
-  );
+  if (entries.length === 0) return entries;
+
+  // Fetch all identities in one query. The previous per-entry Promise.all
+  // exhausted the small PostgreSQL pool on a full leaderboard page and caused
+  // unrelated session/profile/save requests to sit until the browser aborted.
+  const profiles = await db
+    .select({
+      userId: playerProfiles.userId,
+      username: playerProfiles.username,
+      avatarType: playerProfiles.avatarType,
+      selectedAvatar: playerProfiles.selectedAvatar,
+    })
+    .from(playerProfiles)
+    .where(inArray(playerProfiles.userId, entries.map((entry) => entry.userId)));
+  const profileByUserId = new Map(profiles.map((profile) => [profile.userId, profile]));
+
+  return entries.map((entry) => {
+    const profile = profileByUserId.get(entry.userId);
+    return {
+      ...entry,
+      // Never expose the Google display name as a leaderboard identity.
+      displayName: profile?.username ?? "Player",
+      avatarUrl:
+        profile?.avatarType === "game" && profile.selectedAvatar
+          ? `game:${profile.selectedAvatar}`
+          : entry.avatarUrl,
+    };
+  });
 }
 
 /**

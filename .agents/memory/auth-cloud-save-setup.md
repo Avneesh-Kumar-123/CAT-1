@@ -51,3 +51,10 @@ description: Better Auth + Neon DB + Vite proxy wiring decisions and gotchas for
 **Why:** Replit's Vite `/api` proxy makes Preview same-origin. Cross-domain `SameSite=None` and skipped OAuth state-cookie checks weaken or break this flow and should only be reconsidered for a deliberately separate production frontend/API deployment.
 
 **How to apply:** If production uses separate domains, configure and test that deployment explicitly rather than changing the Preview defaults.
+
+## Leaderboard query volume
+- Leaderboard identity hydration must remain batched; never issue one profile query per visible leaderboard row.
+
+**Why:** A full page of parallel profile queries can exhaust the PostgreSQL pool, making unrelated Better Auth session requests hang until the browser aborts them and reports a misleading `signal is aborted without reason`.
+
+**How to apply:** When adding leaderboard identity fields, join or batch-fetch profiles and keep database pool/query timeouts bounded.
