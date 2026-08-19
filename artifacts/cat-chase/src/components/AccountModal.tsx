@@ -217,7 +217,6 @@ function AuthForm({ onClose }: { onClose: () => void }) {
   const [loading, setLoading]             = useState(false);
   const [error, setError]                 = useState<string | null>(null);
 
-  const hasGoogle = Boolean(import.meta.env.VITE_GOOGLE_AUTH_ENABLED);
   const strength  = getPasswordStrength(password);
 
   const switchView = (v: View) => {
@@ -292,9 +291,20 @@ function AuthForm({ onClose }: { onClose: () => void }) {
 
   // ── Google ──
   const handleGoogle = async () => {
+    if (loading) return;
     sfx.click();
-    const callbackURL = `${window.location.origin}/`;
-    await authClient.signIn.social({ provider: "google", callbackURL });
+    setError(null);
+    setLoading(true);
+    try {
+      const callbackURL = `${window.location.origin}/`;
+      const res = await authClient.signIn.social({ provider: "google", callbackURL });
+      if (res.error) throw new Error(res.error.message ?? "Google sign-in failed");
+      // Better Auth normally redirects immediately. Keep the loading state until
+      // navigation so a slow provider cannot receive duplicate requests.
+    } catch (err: unknown) {
+      setError(friendlyError(err instanceof Error ? err.message : null));
+      setLoading(false);
+    }
   };
 
   // ─── Forgot-sent success screen ───
@@ -384,25 +394,24 @@ function AuthForm({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Google button */}
-      {hasGoogle && (
+      <>
         <Button
           variant="outline"
           className="w-full gap-2.5 font-display font-bold h-11 border-2"
           onClick={handleGoogle}
           type="button"
+          disabled={loading}
         >
           <GoogleIcon className="h-4 w-4" />
           Continue with Google
         </Button>
-      )}
 
-      {hasGoogle && (
         <div className="flex items-center gap-2">
           <div className="flex-1 h-px bg-border" />
           <span className="text-xs text-muted-foreground font-bold">or</span>
           <div className="flex-1 h-px bg-border" />
         </div>
-      )}
+      </>
 
       {/* Email form */}
       <form onSubmit={handleEmailAuth} className="flex flex-col gap-3">

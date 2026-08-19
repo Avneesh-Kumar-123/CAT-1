@@ -71,20 +71,24 @@ export function AuthProvider({
 
     (async () => {
       setSyncStatus("syncing");
-      const cloudSave = await fetchCloudSave();
+      try {
+        const cloudSave = await fetchCloudSave();
 
-      if (cloudSave) {
-        const local = getCurrentSave();
-        const merged = mergeSaves(local, cloudSave);
-        setPendingMerge(merged);
-        // Push the merged result back so cloud is authoritative
-        await pushCloudSave(merged);
-      } else {
-        // No cloud save yet — push local progress to cloud immediately
-        await pushCloudSave(getCurrentSave());
+        if (cloudSave) {
+          const local = getCurrentSave();
+          const merged = mergeSaves(local, cloudSave);
+          setPendingMerge(merged);
+          // Push the merged result back so cloud is authoritative
+          await pushCloudSave(merged);
+        } else {
+          // No cloud save yet — push local progress to cloud immediately
+          await pushCloudSave(getCurrentSave());
+        }
+        setSyncStatus("synced");
+      } catch {
+        // Authentication must remain usable even if cloud storage is unavailable.
+        setSyncStatus("error");
       }
-
-      setSyncStatus("synced");
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, isPending]);

@@ -1,0 +1,259 @@
+I need you to fully fix the authentication system in my Cat Chase game.
+
+IMPORTANT CONTEXT:
+- I am currently testing in the Replit Preview/development environment.
+- I have NOT pushed these latest changes to GitHub yet.
+- The production game is catchasegame.com, but do NOT worry about deployment/GitHub yet.
+- Neon/PostgreSQL is already connected.
+- The user table already exists and contains users.
+- Leaderboard functionality has already been implemented.
+- Do NOT remove or reset existing users, leaderboard data, game progress, coins, levels, skins, or database tables.
+- I previously ran some database/Neon SQL queries for testing, so inspect the existing database before changing anything.
+- My Replit credits have renewed, but please still avoid unnecessary large rewrites.
+
+CURRENT PROBLEM:
+The "Save to Cloud" authentication modal appears correctly, but authentication is not working.
+
+Problems I am seeing:
+1. "Continue with Google" does not properly open/complete Google authentication.
+2. Email/password account creation also appears to keep loading.
+3. Email/password sign-in appears to keep loading.
+4. The authentication/session request such as /get-session has previously remained pending for a very long time.
+5. In Chrome DevTools Network I have seen requests such as:
+   - get-session
+   - global?page=0&limit=100
+   - weekly?page=0&limit=100
+   - social
+   remaining pending.
+6. The leaderboard can therefore show a loading state when authentication/session requests are stuck.
+7. The frontend itself loads correctly, but the authentication flow does not complete.
+
+GOAL:
+Make authentication work reliably in the Replit Preview first.
+
+I want all of these to work:
+
+A. Google Sign-In
+- Click "Continue with Google"
+- Google authentication opens correctly
+- User can select a Google account
+- OAuth callback returns to the application
+- User is created or matched in Neon
+- Session is created
+- User is shown as signed in
+- Refreshing the page keeps the user signed in
+- The user's profile/name/image can be retrieved
+- Existing users should NOT receive duplicate accounts
+
+B. Email/password registration
+- User enters name/email/password/confirmation
+- Account creation succeeds
+- Password is securely hashed
+- User is inserted into the existing user table
+- Session is created
+- User becomes signed in
+- Duplicate email should show a proper error
+- Invalid input should show a proper error
+- The loading spinner must stop on both success and failure
+
+C. Email/password login
+- Existing user can sign in
+- Correct credentials create a session
+- Incorrect credentials show a useful error
+- Loading state always stops
+- Session survives page refresh
+
+D. Session handling
+- Inspect /get-session or the equivalent session endpoint.
+- Find out why requests may remain pending.
+- Every backend request must eventually return a response.
+- Check for database queries that never resolve.
+- Check for missing error handling.
+- Check session creation and session lookup.
+- Check cookies and credentials.
+- Check HTTPS/secure cookie behavior.
+- Check SameSite settings.
+- Check CORS if applicable.
+- Check whether the frontend and backend are using the correct origin.
+- Make sure the production configuration and Replit Preview configuration are not accidentally conflicting.
+
+GOOGLE OAUTH:
+Carefully inspect the existing Google OAuth implementation.
+
+Check:
+- Google Client ID
+- Google Client Secret
+- OAuth authorization URL
+- callback/redirect route
+- redirect URI
+- allowed origins
+- environment variables/secrets
+- Replit Preview URL configuration
+- production domain configuration
+- www vs non-www
+- http vs https
+- callback route handling
+
+DO NOT expose any secrets in frontend code, logs, screenshots, responses, or GitHub.
+
+Use environment variables/Replit Secrets for credentials.
+
+If Google OAuth is currently configured for the wrong callback URL, identify the exact required callback URL and fix the application configuration/code appropriately.
+
+DATABASE:
+Inspect the existing Neon/PostgreSQL schema before modifying it.
+
+Important:
+- Do NOT drop tables.
+- Do NOT delete users.
+- Do NOT reset the database.
+- Do NOT recreate the database unnecessarily.
+- Do NOT delete leaderboard data.
+- Reuse the existing user/account/session structure if possible.
+- Check whether the authentication implementation is using the correct existing tables.
+
+Check:
+- user table
+- account table
+- session table
+- verification table
+- relationships/foreign keys
+- email uniqueness
+- Google provider/account linking
+- session storage
+
+If a schema change is absolutely necessary, explain why before making a destructive change. Prefer additive/non-destructive changes.
+
+LEADERBOARD:
+Do NOT redesign or rewrite the leaderboard.
+
+The leaderboard is already implemented.
+
+However, make sure authentication failures do not cause the leaderboard API to hang indefinitely.
+
+If an unauthenticated user is allowed to view the leaderboard, the leaderboard should still load.
+
+If authentication is required for submitting a score, return a clear 401/403 response instead of leaving the request pending.
+
+Also make sure:
+- global leaderboard loads
+- weekly leaderboard loads
+- social leaderboard loads when applicable
+- API errors are handled
+- loading states eventually finish
+- refresh buttons don't create endless duplicate requests
+
+FRONTEND:
+Inspect the authentication modal and its handlers.
+
+Check:
+- Continue with Google button
+- Create account
+- Sign in
+- Forgot password
+- loading states
+- error states
+- success states
+- modal closing
+- session refresh after login
+- user profile display
+
+Make sure no button accidentally remains disabled after a failed request.
+
+Make sure errors from the backend are displayed to the user rather than silently swallowed.
+
+SECURITY:
+Do NOT:
+- expose database credentials
+- expose Google Client Secret
+- store passwords as plaintext
+- put secrets in frontend JavaScript
+- commit secrets to Git
+- log passwords or tokens
+- weaken authentication just to make it work
+
+Use secure password hashing and secure session handling.
+
+PRODUCTION READINESS:
+Although I am currently testing in Replit Preview, structure the fix so that it can later work on:
+
+https://catchasegame.com/
+
+Do not hard-code a temporary Replit URL into the application.
+
+Use environment-specific configuration where necessary.
+
+TESTING:
+After implementing the fix, test the complete flow.
+
+Test 1:
+Guest opens Save to Cloud → modal appears.
+
+Test 2:
+Click Continue with Google → Google OAuth opens → login completes → user returns to game.
+
+Test 3:
+Refresh page → user remains signed in.
+
+Test 4:
+Sign out → user becomes guest.
+
+Test 5:
+Create a new email/password account → account is created → user becomes signed in.
+
+Test 6:
+Try registering with the same email → proper error appears.
+
+Test 7:
+Sign out → sign in with existing email/password → successful login.
+
+Test 8:
+Wrong password → proper error.
+
+Test 9:
+Open leaderboard while logged out → leaderboard should not hang.
+
+Test 10:
+Open leaderboard while logged in → leaderboard should load.
+
+Test 11:
+Refresh leaderboard → it should load normally.
+
+IMPORTANT ABOUT MY REPLIT CREDITS:
+Please work efficiently.
+
+Do not:
+- rewrite unrelated components
+- redesign the UI
+- modify game mechanics
+- modify levels
+- modify sounds
+- modify coins
+- modify skins
+- modify achievements
+- modify leaderboard design
+- create unnecessary new files
+- run repeated expensive operations without reason
+
+FIRST inspect the existing implementation and reuse it wherever possible.
+
+Then make the smallest reliable changes required to fix authentication.
+
+When finished, give me:
+1. The exact root cause(s) you found.
+2. The files you changed.
+3. What you changed in each file.
+4. Any Google Cloud OAuth configuration that I need to update manually.
+5. Any Replit Secrets/environment variables that need to exist.
+6. How you tested Google login.
+7. How you tested email/password login.
+8. Whether Neon is correctly storing the authenticated user/session.
+9. Whether /get-session is now returning correctly.
+10. Whether the leaderboard still works.
+
+VERY IMPORTANT:
+Do not tell me "it should work" without testing the actual authentication flow.
+
+If something cannot be tested because Google OAuth requires a configuration change outside the code, clearly tell me exactly what I need to change and where.
+
+Do not push to GitHub or make any Git commits. I will do that after I verify everything works.
